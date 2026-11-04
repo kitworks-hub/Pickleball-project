@@ -393,10 +393,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       <div><button class="btn primary" type="submit" id="l-submit">Log in</button></div>
       <p class="note">Forgot your password? Ask an admin to reset it from the Users page, then enter your email above and choose a new one.</p>
       <p class="note">Don't have an account? <button class="link" type="button" id="to-signup">Sign up</button></p>
-      <div id="owner-reset" hidden>
-        <p class="note">You are the site owner, so you can start a reset yourself for the email above.</p>
-        <button class="btn small" type="button" id="l-reset">Reset password for this email</button>
-      </div>
     </form>
     <form id="pw-form" class="panel" hidden novalidate>
       <p class="eyebrow-dark">Password reset</p>
@@ -618,16 +614,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
-    me: null, email: '', isOwner: false, canWrite: true, db: null,
+    me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
     view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
   };
-  // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
+  // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
   var savedName = '';
   try { savedName = localStorage.getItem('kl-name') || ''; } catch (e) {}
-  try { state.me = localStorage.getItem('kl-acct') || null; state.email = localStorage.getItem('kl-email') || ''; } catch (e) {}
+  try { state.me = localStorage.getItem('kl-acct') || null; state.email = localStorage.getItem('kl-email') || ''; state.token = localStorage.getItem('kl-token') || ''; } catch (e) {}
   var flashTimer = null;
   var chain = Promise.resolve();
   var ownerSyncing = false;
@@ -2231,19 +2227,24 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     return !!at && at > Number((a && a.pwSetAt) || 0);
   }
   function endSession() {
-    state.me = null;
+    state.me = null; state.token = '';
     state.menuOpen = false; state.hostOpen = false; state.edit = null; state.view = 'schedule';
     state.email = '';
-    try { localStorage.removeItem('kl-acct'); localStorage.removeItem('kl-email'); } catch (e) {}
+    try { localStorage.removeItem('kl-acct'); localStorage.removeItem('kl-email'); localStorage.removeItem('kl-token'); } catch (e) {}
+  }
+  // Leave the account and start fresh, so no data from the last login stays on the page.
+  function forceLogout(msg) {
+    try { sessionStorage.setItem('kl-flash', msg || ''); } catch (e) {}
+    endSession();
+    location.reload();
   }
   function gateState() {
-    if (state.phase === 'nodb') return 'nodb';
     if (state.phase === 'error') return 'error';
+    if (!state.me) return state.resetId ? 'setpw' : (state.authMode === 'signup' ? 'signup' : 'login');
     var l = state.loaded;
     if (!(l.sessions && l.players && l.accounts && l.roles && l.cfg)) return 'loading';
     // Drop the saved login if that account was removed, or an admin reset its password.
-    if (state.me && (!state.accounts[state.me] || needsReset(state.me) || !state.email)) endSession();
-    if (!state.me) return state.resetId ? 'setpw' : (state.authMode === 'signup' ? 'signup' : 'login');
+    if (!state.accounts[state.me] || needsReset(state.me) || !state.email) { forceLogout('Please log in again.'); return 'loading'; }
     var r = state.roles[state.me];
     if (r && r.suspended) return 'suspended';
     if (!can('view')) return 'noview';
@@ -2251,7 +2252,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
   var MESSAGES = {
     loading: ['Loading', 'Checking your account and the latest schedule.'],
-    nodb: ['Sign in to continue', 'Accounts and sign-ups are shared live, so this page needs you to be signed in to Claude. Open it from your Claude account and the log in page will appear here.'],
     error: ['Something went wrong', 'The schedule could not be loaded. Reload the page to try again.'],
     suspended: ['Your access is paused', 'An admin has paused your account. Ask them to restore it and this page will open for you.'],
     noview: ['The schedule is hidden for your role', 'Your role does not include viewing sessions. Ask an admin or super admin to change your access.']
@@ -2266,7 +2266,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (msg) { $('#gate-title').textContent = msg[0]; $('#gate-text').textContent = msg[1]; }
     $('#login-form').hidden = (g !== 'login');
     $('#pw-form').hidden = (g !== 'setpw');
-    $('#owner-reset').hidden = !state.isOwner;
     $('#gate-logout').hidden = !(state.me && (g === 'suspended' || g === 'noview'));
     if (g === 'setpw') $('#p-email').value = state.resetEmail;
   }
@@ -2275,35 +2274,90 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
      An account id is a hash of its email, so the same email is the same account on any Claude sign-in.
      The password is stored only as a salted hash in logins/{id}. The site has no server, so this is a
      lock screen: anyone with access to the page's data could tamper with it. */
-  var PW_ITER = 200000;
-  var loginFails = 0, lockUntil = 0;
-  function toB64(buf) { var s = ''; new Uint8Array(buf).forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s); }
-  function fromB64(str) { var s = atob(str), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
-  function hashPw(pw, salt, iter) {
-    var subtle = window.crypto && window.crypto.subtle;
-    if (!subtle) return Promise.reject(new Error('This browser cannot protect passwords.'));
-    return subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits'])
-      .then(function (key) { return subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt, iterations: iter }, key, 256); })
-      .then(toB64);
-  }
   function normEmail(v) { return String(v || '').trim().toLowerCase(); }
   function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-  // The 'kitchen-line:' text below is the site's original name. It is part of every account id, so it must never change.
-  function emailId(email) {
-    var subtle = window.crypto && window.crypto.subtle;
-    if (!subtle) return Promise.reject(new Error('This browser cannot protect passwords.'));
-    return subtle.digest('SHA-256', new TextEncoder().encode('kitchen-line:' + email)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf).slice(0, 16), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
-    });
+  // Sign-up, log in and password changes go to the site's own server (/api/auth). It keeps each password only as a
+  // salted hash and answers with a signed token that every data request carries.
+  function authCall(body, token) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    return fetch('/api/auth', { method: 'POST', headers: headers, body: JSON.stringify(body), cache: 'no-store' }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || 'The server said no.');
+        return j;
+      });
+    }, function () { throw new Error('Could not reach the server. Check your connection.'); });
   }
-  function checkPw(cred, email, pw) {
-    return hashPw(email + '\n' + pw, fromB64(cred.salt), cred.iter || PW_ITER).then(function (hash) { return hash === cred.hash; });
-  }
-  function saveCred(id, email, pw) {
-    var salt = window.crypto.getRandomValues(new Uint8Array(16));
-    return hashPw(email + '\n' + pw, salt, PW_ITER).then(function (hash) {
-      return state.db.doc('logins/' + id).set({ salt: toB64(salt), hash: hash, iter: PW_ITER, setAt: Date.now() });
-    });
+
+  /* ---------- live data ----------
+     The page reads and writes through /api/data. This small client gives it the same shape it always used
+     (collection().onSnapshot / add, doc().get / set / update / delete / acquire / onSnapshot) and refreshes
+     by asking the server whether anything changed. The server decides who may write what. */
+  function makeDb(onUnauth) {
+    var snap = null, rev = -1, subs = [], timer = null, busy = null;
+    function call(method, url, body) {
+      return fetch(url, {
+        method: method, cache: 'no-store', body: body ? JSON.stringify(body) : undefined,
+        headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' }
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (r.status === 401) { onUnauth(); throw new Error(j.error || 'Please log in again.'); }
+          if (!r.ok) throw new Error(j.error || 'The server said no.');
+          return j;
+        });
+      }, function () { throw new Error('Could not reach the server.'); });
+    }
+    function lookup(path) { var p = path.split('/'); return p[0] === 'config' ? (snap.config || {})[p[1]] : ((snap.cols || {})[p[0]] || {})[p[1]]; }
+    function docSnap(path) { var d = snap ? lookup(path) : null; return { id: path.split('/')[1], exists: !!d, data: function () { return d; } }; }
+    function colSnap(name) {
+      var o = (snap && snap.cols[name]) || {};
+      return { docs: Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; }) };
+    }
+    function notify() {
+      if (!snap) return;
+      subs.slice().forEach(function (s) {
+        var sig = JSON.stringify(s.col ? ((snap.cols || {})[s.col] || {}) : (lookup(s.path) || null));
+        if (sig === s.sig) return;
+        s.sig = sig;
+        s.cb(s.col ? colSnap(s.col) : docSnap(s.path));
+      });
+    }
+    function sync(force) {
+      if (busy && !force) return busy;
+      var p = call('GET', '/api/data?rev=' + (force ? -1 : rev)).then(function (j) {
+        if (!j.same) { rev = j.rev; snap = j; }
+        notify();
+      }).catch(function (e) { if (!snap) subs.forEach(function (s) { if (s.err) s.err(e); }); });
+      busy = p;
+      p.then(function () { if (busy === p) busy = null; });
+      return p;
+    }
+    function start() {
+      if (timer) return;
+      timer = setInterval(function () { if (!document.hidden) sync(); }, 6000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) sync(); });
+    }
+    function subscribe(s) { subs.push(s); start(); if (snap) notify(); else sync(); }
+    function write(body) { return call('POST', '/api/data', body).then(function (j) { return sync(true).then(function () { return j; }); }); }
+    return {
+      collection: function (name) {
+        return {
+          onSnapshot: function (cb, err) { subscribe({ col: name, cb: cb, err: err, sig: null }); },
+          add: function (data) { return write({ op: 'add', path: name, data: data }); }
+        };
+      },
+      doc: function (path) {
+        return {
+          id: path.split('/')[1],
+          onSnapshot: function (cb, err) { subscribe({ path: path, cb: cb, err: err, sig: null }); },
+          get: function () { return sync(true).then(function () { return docSnap(path); }); },
+          set: function (data) { return write({ op: 'set', path: path, data: data }); },
+          update: function (data) { return write({ op: 'update', path: path, data: data }); },
+          delete: function () { return write({ op: 'delete', path: path }); },
+          acquire: function (opts) { return call('POST', '/api/data', { op: 'acquire', path: path, data: { holder: opts.holder, ttlMs: opts.ttlMs } }); }
+        };
+      }
+    };
   }
   function checkNewPw(p1, p2, focusId) {
     if (p1.length < 8) { flash('Use at least 8 characters for your password.', 'err'); $(focusId).focus(); return false; }
@@ -2337,17 +2391,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     $(focusId).focus();
   }
   function closeHost() { state.hostOpen = false; render(); }
-  function logOut() {
-    endSession();
-    state.authMode = 'login'; state.resetId = null;
-    $('#l-email').value = ''; $('#l-pass').value = '';
-    render();
-    flash('You are logged out.', 'ok');
-    $('#l-email').focus();
+  function logOut() { forceLogout('You are logged out.'); }
+  function afterAuth(res, email) {
+    state.token = res.token;
+    try { localStorage.setItem('kl-token', res.token); } catch (e) {}
+    logIn(res.id, email);
   }
   function logIn(id, email) {
     state.me = id; state.email = email || ''; state.resetId = null; state.resetEmail = '';
     try { localStorage.setItem('kl-acct', id); localStorage.setItem('kl-email', state.email); } catch (e) {}
+    startData();
     render();
     if (gateState() === 'ok') flash('Welcome, ' + myName() + '.', 'ok');
   }
@@ -2387,7 +2440,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       var n = all.length, p = Object.keys(ids).length;
       el.textContent = n + (n === 1 ? ' session' : ' sessions') + ' coming up · ' + p + (p === 1 ? ' player' : ' players') + ' signed up';
     } else if (g === 'signup') el.textContent = 'Set up your account to see the schedule.';
-    else if (g === 'nodb') el.textContent = 'Sign in to see live sign-ups.';
     else if (g === 'login') el.textContent = 'Log in to see the schedule.';
     else if (g === 'setpw') el.textContent = 'Choose a new password to continue.';
     else el.textContent = 'Loading the schedule…';
@@ -2579,34 +2631,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     $('#pf-cancel').addEventListener('click', closePwForm);
     $('#pf-pw-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      var me = state.me, email = state.email;
-      if (!state.db || !me || !email) { flash('Log out and log in again, then change your password.', 'err'); return; }
-      var wait = lockUntil - Date.now();
-      if (wait > 0) { flash('Too many tries. Wait ' + Math.ceil(wait / 1000) + ' seconds.', 'err'); return; }
+      var email = state.email;
+      if (!state.token || !email) { flash('Log out and log in again, then change your password.', 'err'); return; }
       var cur = $('#pf-cur').value;
       if (!cur) { flash('Enter your current password.', 'err'); $('#pf-cur').focus(); return; }
       if (!checkNewPw($('#pf-new').value, $('#pf-new2').value, '#pf-new')) return;
-      var pw = $('#pf-new').value;
       $('#pf-save').disabled = true;
-      emailId(email).then(function (id) {
-        if (id !== me) throw new Error('Log out and log in again first.');
-        return state.db.doc('logins/' + me).get();
-      }).then(function (snap) {
-        if (!snap.exists) throw new Error('No password was found for this account.');
-        return checkPw(snap.data(), email, cur);
-      }).then(function (ok) {
-        if (!ok) {
-          loginFails++;
-          if (loginFails >= 5) { loginFails = 0; lockUntil = Date.now() + 30000; flash('Too many tries. Wait 30 seconds.', 'err'); }
-          else flash('Your current password is not right.', 'err');
-          return;
-        }
-        loginFails = 0;
-        return saveCred(me, email, pw).then(function () {
-          var member = Object.assign({}, state.accounts[me], { pwSetAt: Date.now() });
-          return state.db.doc('members/' + me).set(member).then(function () { state.accounts[me] = member; });
-        }).then(function () { closePwForm(); flash('Password changed. Use the new one next time you log in.', 'ok'); });
-      }).catch(fail('Could not change your password.')).then(function () { $('#pf-save').disabled = false; });
+      authCall({ action: 'password', email: email, current: cur, next: $('#pf-new').value }, state.token)
+        .then(function () { closePwForm(); flash('Password changed. Use the new one next time you log in.', 'ok'); })
+        .catch(fail('Could not change your password.'))
+        .then(function () { $('#pf-save').disabled = false; });
     });
 
     $('#to-signup').addEventListener('click', function () { state.authMode = 'signup'; render(); $('#s-name').focus(); });
@@ -2620,97 +2654,45 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 
     $('#login-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!state.db) { flash('Sign in to Claude first.', 'err'); return; }
-      var wait = lockUntil - Date.now();
-      if (wait > 0) { flash('Too many tries. Wait ' + Math.ceil(wait / 1000) + ' seconds.', 'err'); return; }
       var email = normEmail($('#l-email').value), pw = $('#l-pass').value;
       if (!validEmail(email) || !pw) { flash('Enter your email and password.', 'err'); return; }
       $('#l-submit').disabled = true;
-      var id;
-      emailId(email).then(function (i) {
-        id = i;
-        if (!state.accounts[id]) return 'nomatch';
-        if (needsReset(id)) { state.resetId = id; state.resetEmail = email; return 'reset'; }
-        return state.db.doc('logins/' + id).get().then(function (snap) {
-          if (!snap.exists) return 'nomatch';
-          return checkPw(snap.data(), email, pw).then(function (ok) { return ok ? 'ok' : 'nomatch'; });
-        });
-      }).then(function (res) {
+      authCall({ action: 'login', email: email, password: pw }).then(function (res) {
         $('#l-pass').value = '';
-        if (res === 'ok') { loginFails = 0; logIn(id, email); }
-        else if (res === 'reset') { render(); $('#p-pass').focus(); flash('An admin reset this password. Choose a new one.', 'ok'); }
-        else {
-          loginFails++;
-          if (loginFails >= 5) { loginFails = 0; lockUntil = Date.now() + 30000; flash('Too many tries. Wait 30 seconds, or ask an admin to reset your password.', 'err'); }
-          else flash('That email and password do not match.', 'err');
-        }
-      }).catch(fail('Could not log in.')).then(function () { $('#l-submit').disabled = false; });
-    });
-
-    // Site owner only: start a password reset for any email (recovery if the owner is locked out).
-    $('#l-reset').addEventListener('click', function () {
-      var email = normEmail($('#l-email').value);
-      if (!state.isOwner || !state.db) return;
-      if (!validEmail(email)) { flash('Type the account email in the Email box first.', 'err'); $('#l-email').focus(); return; }
-      emailId(email).then(function (id) {
-        if (!state.accounts[id]) { flash('There is no account with that email.', 'err'); return; }
-        var nr = Object.assign({ role: 'player' }, state.roles[id], { pwReset: Date.now(), at: Date.now() });
-        return queue(function () { return state.db.doc('roles/' + id).set(nr); }, 'Could not start the reset.')
-          .then(function () { flash('Reset started. Now press Log in with that email to choose a new password.', 'ok'); });
-      }).catch(fail('Could not start the reset.'));
+        if (res.status === 'reset') { state.resetId = res.id; state.resetEmail = email; render(); $('#p-pass').focus(); flash('An admin reset this password. Choose a new one.', 'ok'); }
+        else afterAuth(res, email);
+      }).catch(function (err) { $('#l-pass').value = ''; flash(err.message, 'err'); })
+        .then(function () { $('#l-submit').disabled = false; });
     });
 
     // Choosing a new password after an admin reset.
     $('#pw-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      var id = state.resetId, email = state.resetEmail;
-      if (!state.db || !id) return;
+      var email = state.resetEmail;
+      if (!state.resetId || !email) return;
       if (!checkNewPw($('#p-pass').value, $('#p-pass2').value, '#p-pass')) return;
-      var pw = $('#p-pass').value;
       $('#p-submit').disabled = true;
-      saveCred(id, email, pw)
-        .then(function () {
-          var member = Object.assign({}, state.accounts[id], { pwSetAt: Date.now() });
-          return state.db.doc('members/' + id).set(member).then(function () { state.accounts[id] = member; });
-        })
-        .then(function () { $('#p-pass').value = ''; $('#p-pass2').value = ''; logIn(id, email); })
-        .catch(fail('Could not save your password.'))
+      authCall({ action: 'setpw', email: email, password: $('#p-pass').value }).then(function (res) {
+        $('#p-pass').value = ''; $('#p-pass2').value = '';
+        afterAuth(res, email);
+      }).catch(fail('Could not save your password.'))
         .then(function () { $('#p-submit').disabled = false; });
     });
 
     $('#signup-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!state.db) { flash('Sign in to Claude first.', 'err'); return; }
       var name = $('#s-name').value.trim();
       var email = normEmail($('#s-email').value);
       if (!name) { flash('Enter your full name.', 'err'); $('#s-name').focus(); return; }
       if (!validEmail(email)) { flash('Enter a valid email address.', 'err'); $('#s-email').focus(); return; }
       if (!checkNewPw($('#s-pass').value, $('#s-pass2').value, '#s-pass')) return;
-      var pw = $('#s-pass').value;
       $('#s-submit').disabled = true;
-      var id;
-      emailId(email).then(function (i) {
-        id = i;
-        return state.db.doc('members/' + id).get();
-      }).then(function (snap) {
-        if (snap.exists) { flash('An account with that email already exists. Log in instead.', 'err'); return; }
-        var member = { name: name, createdAt: Date.now(), pwSetAt: Date.now() };
-        return saveCred(id, email, pw)
-          .then(function () { return state.db.doc('members/' + id).set(member); })
-          .then(function () {
-            state.accounts[id] = member;   // keep it locally until the live data catches up, so the page doesn't log it out
-            // The first account the site owner creates becomes the super admin. Everyone else starts as a player.
-            if (state.isOwner && !superExists()) {
-              var role = { role: 'super_admin', owner: true, by: id, at: Date.now() };
-              return state.db.doc('roles/' + id).set(role).then(function () { state.roles[id] = role; });
-            }
-          })
-          .then(function () {
-            $('#s-pass').value = ''; $('#s-pass2').value = '';
-            ['#s-name', '#s-email'].forEach(function (s) { $(s).value = ''; });
-            logIn(id, email);
-          });
-      }).catch(fail('Could not create your account.')).then(function () { $('#s-submit').disabled = false; });
+      authCall({ action: 'signup', name: name, email: email, password: $('#s-pass').value }).then(function (res) {
+        $('#s-pass').value = ''; $('#s-pass2').value = '';
+        ['#s-name', '#s-email'].forEach(function (s) { $(s).value = ''; });
+        afterAuth(res, email);
+      }).catch(fail('Could not create your account.'))
+        .then(function () { $('#s-submit').disabled = false; });
     });
 
     $('#host-form').addEventListener('submit', function (e) {
@@ -2770,25 +2752,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     render();
   }
 
-  async function init() {
-    setup();
-    render();
-    setInterval(clockTick, 15000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) clockTick(); });
-    setTimeout(function () { if (gateState() === 'loading') { state.slow = true; $('#gate-text').textContent = 'This is taking longer than usual. The page will open as soon as the connection answers.'; } }, 10000);
-    var c = window.claude;
-    if (!c || typeof c.use !== 'function') { state.phase = 'nodb'; render(); return; }
-    var db = null, user = null;
-    try {
-      var r = await Promise.all([c.use('db'), c.use('user')]);
-      db = r[0]; user = r[1];
-    } catch (e) {}
-    if (!db) { state.phase = 'nodb'; render(); return; }
-    state.db = db;
-    if (user) {
-      try { state.isOwner = await user.isOwner(); } catch (e) {}
-      try { if ((await user.can('data.write')) === false) state.canWrite = false; } catch (e) {}
-    }
+  // Opens the live data once someone is logged in (nothing is loaded before that).
+  function startData() {
+    if (state.db || !state.token) return;
+    var db = state.db = makeDb(function () { forceLogout('Your session ended. Please log in again.'); });
     function onErr(e) { state.phase = 'error'; render(); }
     db.collection('sessions').onSnapshot(function (snap) {
       state.sessions = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
@@ -2827,6 +2794,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       state.options = snap.exists ? (snap.data() || {}) : {};
       render();
     }, function () {});
+  }
+
+  function init() {
+    setup();
+    if (state.me && !state.token) endSession();   // a login saved before the site had its own server
+    render();
+    try { var msg = sessionStorage.getItem('kl-flash'); if (msg) { sessionStorage.removeItem('kl-flash'); flash(msg, 'ok'); } } catch (e) {}
+    setInterval(clockTick, 15000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clockTick(); });
+    setTimeout(function () { if (gateState() === 'loading') { state.slow = true; $('#gate-text').textContent = 'This is taking longer than usual. The page will open as soon as the connection answers.'; } }, 10000);
+    startData();
   }
   init();
 })();

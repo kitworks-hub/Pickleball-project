@@ -1,0 +1,11 @@
+{
+  "name": "mpc-pickleball",
+  "private": true,
+  "version": "1.0.0",
+  "description": "MPC pickleball scheduling and court booking",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "import": "node scripts/import-data.js"
+  }
+}
