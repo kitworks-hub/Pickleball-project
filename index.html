@@ -179,6 +179,11 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 
 /* People and roles */
 .view-stack { display: flex; flex-direction: column; gap: 24px; padding-block: 12px 40px; }
+.opt-panel { max-width: 560px; }
+.opt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.opt-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--rule); overflow-wrap: anywhere; }
+.opt-list .link:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+.rule-note { font-size: var(--fs-s); color: var(--muted); }
 .panel h3 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
 .profile { max-width: 560px; }
 .pw-form { display: flex; flex-direction: column; gap: 14px; }
@@ -315,19 +320,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
             <input id="h-start" type="time" value="18:00" required>
           </label>
           <label class="field" for="h-dur">Length
-            <select id="h-dur">
-              <option value="60">1 hour</option>
-              <option value="90" selected>1 hour 30 min</option>
-              <option value="120">2 hours</option>
-              <option value="150">2 hours 30 min</option>
-              <option value="180">3 hours</option>
-            </select>
+            <select id="h-dur"></select>
           </label>
           <label class="field" for="h-court">Court number
-            <input id="h-court" type="text" maxlength="30" placeholder="Court 3 or Courts 1–4">
+            <span id="h-court-slot"></span>
           </label>
           <label class="field" for="h-venue">Venue
-            <input id="h-venue" type="text" maxlength="60" placeholder="Riverside">
+            <span id="h-venue-slot"></span>
           </label>
           <label class="field" for="h-level">Level
             <select id="h-level"></select>
@@ -391,6 +390,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         </form>
       </div>
     </section>
+    <section id="view-options" class="view-stack" aria-label="Session options" hidden></section>
     <section id="view-people" class="view-stack" aria-label="People" hidden></section>
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
   </div>
@@ -403,25 +403,46 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 <script>
 (function () {
   'use strict';
-  var LEVELS = ['Open play', 'Beginner 2.0–2.5', 'Intermediate 3.0–3.5', 'Advanced 4.0+'];
-  function lvl(v) { return !v || v === 'All levels' ? LEVELS[0] : v; }
-  var FORMATS = ['Open play', 'Ladder', 'Clinic', 'Round robin'];
+  // The choices offered when adding or editing a session. Staff and above can change them (config/options).
+  var DEFAULT_OPTIONS = {
+    levels: ['Open play', 'Beginner 2.0–2.5', 'Intermediate 3.0–3.5', 'Advanced 4.0+'],
+    formats: ['Open play', 'Ladder', 'Clinic', 'Round robin'],
+    courts: [],
+    venues: [],
+    durations: [60, 90, 120, 150, 180]
+  };
+  function opts() {
+    var stored = state.options || {}, out = {};
+    Object.keys(DEFAULT_OPTIONS).forEach(function (k) {
+      var v = stored[k];
+      var canBeEmpty = k === 'courts' || k === 'venues';
+      out[k] = Array.isArray(v) && (v.length || canBeEmpty) ? v.slice() : DEFAULT_OPTIONS[k].slice();
+    });
+    return out;
+  }
+  function lvl(v) { return !v || v === 'All levels' ? 'Open play' : v; }
+  function durLabel(m) {
+    var hrs = Math.floor(m / 60), min = m % 60;
+    if (hrs && !min) return hrs + (hrs === 1 ? ' hour' : ' hours');
+    return hrs ? hrs + ' hr ' + min + ' min' : min + ' min';
+  }
   var FEATURES = [
     { key: 'view', label: 'See the schedule', hint: 'Sessions, days and filters' },
-    { key: 'join', label: 'Join and leave sessions', hint: 'Sign up, waitlist, leave' },
+    { key: 'join', label: 'Join sessions', hint: 'Sign up or join the waitlist, one session at a time. Joining is final until the session ends' },
     { key: 'roster', label: 'See player names', hint: 'Who is on each roster' },
     { key: 'host', label: 'Add sessions', hint: 'Host a new session' },
     { key: 'edit', label: 'Edit any session', hint: 'Name, day, time, court and more' },
     { key: 'remove', label: 'Remove sessions', hint: 'Delete a session for everyone' },
-    { key: 'people', label: 'Manage users', hint: 'Users page: roles, password resets, pause or remove access' }
+    { key: 'people', label: 'Manage users', hint: 'Users page: roles, password resets, pause or remove access' },
+    { key: 'options', label: 'Manage session options', hint: 'Levels, formats, courts, venues and lengths' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false } }
   };
   var state = {
-    sessions: [], players: {}, accounts: {}, roles: {}, cfg: {},
+    sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
@@ -616,11 +637,20 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }, 'Could not save role access.');
   }
 
-  function join(s) {
-    saveMine(function (cur) { cur.joined[s.id] = Date.now(); }).then(function () { flash('You are signed up for ' + s.title + '.', 'ok'); });
+  // Rules: joining is final until the session ends (there is no leave), and nobody can be in two sessions at once.
+  // Waitlisted counts as joined. Sessions that already ended are deleted, so only upcoming ones are checked.
+  var activeSession = null;
+  function myActiveSession() {
+    var j = (state.me && state.players[state.me] && state.players[state.me].joined) || {};
+    return upcoming().filter(function (s) { return j[s.id]; })[0] || null;
   }
-  function leave(s) {
-    saveMine(function (cur) { delete cur.joined[s.id]; }).then(function () { flash('You left ' + s.title + '.', 'ok'); });
+  function join(s) {
+    var cur = myActiveSession();
+    if (cur && cur.id !== s.id) { flash('You are already in ' + (cur.title || 'another session') + '. You can join another session once it ends.', 'err'); return; }
+    saveMine(function (c) {
+      Object.keys(c.joined).forEach(function (id) { if (!state.sessions.some(function (x) { return x.id === id; })) delete c.joined[id]; });   // tidy entries for deleted sessions
+      c.joined[s.id] = Date.now();
+    }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   function removeSession(s) {
     if (pendingRemove !== s.id) {
@@ -638,8 +668,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     state.edit = {
       id: s.id,
       draft: {
-        title: s.title || '', date: s.date || '', start: s.start || '18:00', duration: String(s.duration || 90),
-        court: s.court || '', venue: s.venue || '', level: lvl(s.level), format: s.format || FORMATS[0], capacity: String(s.capacity || 12)
+        title: s.title && s.title !== '-' ? s.title : '', date: s.date || '', start: s.start || '18:00', duration: String(s.duration || 90),
+        court: s.court && s.court !== '-' ? s.court : '', venue: s.venue && s.venue !== '-' ? s.venue : '', level: lvl(s.level), format: s.format || opts().formats[0], capacity: String(s.capacity || 12)
       }
     };
     render();
@@ -681,10 +711,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       el.value = d[key];
       return h('label', { class: 'field', for: 'e-' + key }, label, el);
     }
-    var durs = [['60', '1 hour'], ['90', '1 hr 30 min'], ['120', '2 hours'], ['150', '2 hr 30 min'], ['180', '3 hours']];
-    if (!durs.some(function (o) { return o[0] === d.duration; })) durs.push([d.duration, d.duration + ' min']);
-    var lvls = LEVELS.slice(); if (lvls.indexOf(d.level) < 0) lvls.push(d.level);
-    var fmts = FORMATS.slice(); if (fmts.indexOf(d.format) < 0) fmts.push(d.format);
+    var o = opts();
+    var durs = o.durations.map(function (m) { return [String(m), durLabel(m)]; });
+    if (!durs.some(function (x) { return x[0] === d.duration; })) durs.push([d.duration, durLabel(parseInt(d.duration, 10) || 0)]);
+    var lvls = o.levels.slice(); if (lvls.indexOf(d.level) < 0) lvls.push(d.level);
+    var fmts = o.formats.slice(); if (fmts.indexOf(d.format) < 0) fmts.push(d.format);
+    // Court and venue are lists when staff have set some up, otherwise free text. "-" means not set.
+    function optField(key, label, list, maxlen) {
+      if (!list.length) return inp(key, label, 'text', { maxlength: String(maxlen) });
+      var vals = list.slice(); if (d[key] && vals.indexOf(d[key]) < 0) vals.push(d[key]);
+      return sel(key, label, [['', '-']].concat(vals.map(function (v) { return [v, v]; })));
+    }
     return h('article', { class: 'card editing' },
       h('p', { class: 'time' }, 'Editing session'),
       h('div', { class: 'form-grid' },
@@ -692,8 +729,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         inp('date', 'Day', 'date'),
         inp('start', 'Start time', 'time'),
         sel('duration', 'Length', durs),
-        inp('court', 'Court number', 'text', { maxlength: '30' }),
-        inp('venue', 'Venue', 'text', { maxlength: '60' }),
+        optField('court', 'Court number', o.courts, 30),
+        optField('venue', 'Venue', o.venues, 60),
         sel('level', 'Level', lvls.map(function (x) { return [x, x]; })),
         sel('format', 'Format', fmts.map(function (x) { return [x, x]; })),
         inp('capacity', 'Player spots', 'number', { min: '2', max: '32', step: '1' })),
@@ -775,12 +812,15 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     var moreBtn = showNames ? h('button', { id: 'players-' + s.id, class: 'btn small players-btn', type: 'button', 'aria-haspopup': 'dialog',
       onclick: function () { openPlayers(s.id); } }, 'View players') : null;
 
+    var blocked = !!(activeSession && activeSession.id !== s.id);
+    var ruleNote = null;
     var actions = [];
     if (myIdx >= 0) {
-      actions.push(h('button', { class: 'btn', type: 'button', disabled: !canJoin, onclick: function () { leave(s); } }, 'Leave session'));
       actions.push(myIdx < cap ? h('span', { class: 'pill' }, "✓ You're in") : h('span', { class: 'pill wl' }, 'Waitlist #' + (myIdx - cap + 1)));
+      ruleNote = 'You cannot leave a session once you have joined it.';
     } else if (can('join')) {
-      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join session'));
+      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin || blocked, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join session'));
+      if (blocked) ruleNote = 'You are already in ' + (activeSession.title || 'another session') + '. You can join another once it ends.';
     }
     if (canEditSession(s)) actions.push(h('button', { class: 'link', type: 'button', onclick: function () { startEdit(s); } }, 'Edit'));
     if (canRemoveSession(s)) actions.push(h('button', { class: 'link' + (pendingRemove === s.id ? ' danger' : ''), type: 'button', onclick: function () { removeSession(s); } }, pendingRemove === s.id ? 'Tap again to remove' : 'Remove'));
@@ -794,7 +834,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         h('span', { class: 'chip fmt' }, s.format || 'Open play'),
         h('span', { class: 'chip' }, lvl(s.level))),
       h('p', { class: 'count' + (full ? ' full' : '') }, countText),
-      h('div', { class: 'actions' }, actions));
+      h('div', { class: 'actions' }, actions),
+      ruleNote ? h('p', { class: 'rule-note' }, ruleNote) : null);
   }
 
   /* ---------- calendar: an icon opens a date picker ---------- */
@@ -872,6 +913,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
 
   function renderList(all) {
+    activeSession = myActiveSession();
     var box = $('#list');
     box.replaceChildren();
     var shown = all.filter(function (s) { return passes(s, false); });
@@ -1020,6 +1062,118 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         h('div', { class: 'ctl' }, ctl));
     });
     box.append(h('div', { class: 'rows' }, rows));
+  }
+
+  /* ---------- session options: the lists behind the add / edit / filter forms ---------- */
+  var hostSig = '', filterSig = '';
+  function fillSelect(sel, pairs, fallback) {
+    var prev = sel.value;
+    sel.replaceChildren();
+    pairs.forEach(function (p) { sel.append(h('option', { value: p[0] }, p[1])); });
+    var vals = pairs.map(function (p) { return p[0]; });
+    sel.value = vals.indexOf(prev) >= 0 ? prev : (vals.indexOf(fallback) >= 0 ? fallback : vals[0]);
+  }
+  function fillSlot(slotId, id, list, placeholder, maxlen) {
+    var cur = document.getElementById(id), prev = cur ? cur.value : '', ctl;
+    if (list.length) {
+      ctl = h('select', { id: id }, h('option', { value: '' }, '-'), list.map(function (v) { return h('option', { value: v }, v); }));
+      ctl.value = list.indexOf(prev) >= 0 ? prev : '';
+    } else {
+      ctl = h('input', { id: id, type: 'text', maxlength: String(maxlen), placeholder: placeholder, value: prev });
+    }
+    $('#' + slotId).replaceChildren(ctl);
+  }
+  function fillHostForm() {
+    var o = opts(), sig = JSON.stringify(o);
+    if (sig === hostSig) return;
+    hostSig = sig;
+    fillSelect($('#h-level'), o.levels.map(function (v) { return [v, v]; }), 'Open play');
+    fillSelect($('#h-format'), o.formats.map(function (v) { return [v, v]; }), 'Open play');
+    fillSelect($('#h-dur'), o.durations.map(function (m) { return [String(m), durLabel(m)]; }), '90');
+    fillSlot('h-court-slot', 'h-court', o.courts, 'Court 3 or Courts 1–4', 30);
+    fillSlot('h-venue-slot', 'h-venue', o.venues, 'Riverside', 60);
+  }
+  // The filter lists also include any level or format still used by an existing session.
+  function fillFilters() {
+    var o = opts(), levels = o.levels.slice(), formats = o.formats.slice();
+    state.sessions.forEach(function (s) {
+      var l = lvl(s.level); if (levels.indexOf(l) < 0) levels.push(l);
+      if (s.format && formats.indexOf(s.format) < 0) formats.push(s.format);
+    });
+    var sig = JSON.stringify([levels, formats]);
+    if (sig === filterSig) return;
+    filterSig = sig;
+    function build(id, any, list, key) {
+      var sel = $(id);
+      sel.replaceChildren();
+      sel.append(h('option', { value: 'all' }, any));
+      list.forEach(function (v) { sel.append(h('option', { value: v }, v)); });
+      if (list.indexOf(filters[key]) < 0) filters[key] = 'all';
+      sel.value = filters[key];
+    }
+    build('#f-level', 'Any level', levels, 'level');
+    build('#f-format', 'Any format', formats, 'format');
+  }
+
+  var OPTION_KINDS = [
+    { key: 'levels', title: 'Level', hint: 'Offered as the session level, and in the Level filter.', placeholder: 'Intermediate 3.0–3.5', max: 40 },
+    { key: 'formats', title: 'Format', hint: 'Offered as the session format, and in the Format filter.', placeholder: 'Round robin', max: 30 },
+    { key: 'courts', title: 'Court number', hint: 'When there are courts here, session forms offer them as a list. With none, people type the court.', placeholder: 'Court 3', max: 30 },
+    { key: 'venues', title: 'Venue', hint: 'When there are venues here, session forms offer them as a list. With none, people type the venue.', placeholder: 'Riverside', max: 60 },
+    { key: 'durations', title: 'Length', hint: 'Session lengths, in minutes.', placeholder: '90', max: 4, number: true }
+  ];
+  function setOption(key, list, message) {
+    if (!state.db || !can('options')) { flash('Your role cannot change session options.', 'err'); return; }
+    var next = Object.assign({}, state.options); next[key] = list;
+    state.options = next;
+    render();
+    state.db.doc('config/options').set(next).then(function () { flash(message, 'ok'); }).catch(fail('Could not save the options.'));
+  }
+  function addOption(kind) {
+    var raw = String(state.optDraft[kind.key] || '').trim(), list = opts()[kind.key], value;
+    if (kind.number) {
+      value = parseInt(raw, 10);
+      if (!(value >= 15 && value <= 600)) { flash('Enter a length between 15 and 600 minutes.', 'err'); return; }
+    } else {
+      if (!raw) { flash('Type the ' + kind.title.toLowerCase() + ' to add first.', 'err'); return; }
+      if (raw.length > kind.max) { flash('That is too long. Use ' + kind.max + ' characters or fewer.', 'err'); return; }
+      value = raw;
+    }
+    if (list.some(function (x) { return String(x).toLowerCase() === String(value).toLowerCase(); })) { flash('That is already in the list.', 'err'); return; }
+    var next = list.concat([value]);
+    if (kind.number) next.sort(function (a, b) { return a - b; });
+    state.optDraft[kind.key] = '';
+    setOption(kind.key, next, 'Added ' + (kind.number ? durLabel(value) : value) + '.');
+  }
+  function renderOptions() {
+    var box = $('#view-options');
+    box.replaceChildren();
+    if (!can('options')) { box.append(h('p', { class: 'note' }, 'Your role cannot manage session options.')); return; }
+    box.append(h('h2', null, 'Session options'));
+    box.append(h('p', { class: 'note' }, 'These are the choices people see when they add or edit a session. Changing a list does not change sessions that already exist.'));
+    var o = opts();
+    OPTION_KINDS.forEach(function (kind) {
+      var list = o[kind.key], keepOne = kind.key !== 'courts' && kind.key !== 'venues';
+      var rows = list.map(function (v) {
+        var label = kind.number ? durLabel(v) : v;
+        return h('li', null, h('span', null, label),
+          h('button', { class: 'link', type: 'button', disabled: keepOne && list.length <= 1, 'aria-label': 'Remove ' + label,
+            onclick: function () { setOption(kind.key, list.filter(function (x) { return x !== v; }), 'Removed ' + label + '.'); } }, 'Remove'));
+      });
+      var input = h('input', { id: 'opt-in-' + kind.key, type: kind.number ? 'number' : 'text', placeholder: kind.placeholder, value: state.optDraft[kind.key] || '',
+        oninput: function (e) { state.optDraft[kind.key] = e.target.value; } });
+      if (kind.number) { input.min = '15'; input.max = '600'; input.step = '5'; } else input.maxLength = kind.max;
+      box.append(h('div', { class: 'panel opt-panel' },
+        h('h3', null, kind.title),
+        h('p', { class: 'note' }, kind.hint),
+        list.length ? h('ul', { class: 'opt-list' }, rows) : h('p', { class: 'note' }, 'Nothing here yet.'),
+        h('form', { class: 'add-role', novalidate: true, onsubmit: function (e) { e.preventDefault(); addOption(kind); } },
+          h('label', { class: 'field', for: 'opt-in-' + kind.key }, 'Add ' + kind.title.toLowerCase(), input),
+          h('button', { class: 'btn', type: 'submit' }, 'Add')),
+        h('div', null, h('button', { class: 'link', type: 'button',
+          onclick: function () { setOption(kind.key, DEFAULT_OPTIONS[kind.key].slice(), kind.title + ' list ' + (DEFAULT_OPTIONS[kind.key].length ? 'reset to the defaults.' : 'cleared.')); } },
+          DEFAULT_OPTIONS[kind.key].length ? 'Reset to defaults' : 'Clear list'))));
+    });
   }
 
   /* ---------- profile: name and email (read-only), level rating, change password ---------- */
@@ -1217,6 +1371,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
+    if (can('options')) views.push(['options', 'Session options']);
     if (can('people')) views.push(['people', 'Users']);
     if (isSuper()) views.push(['roles', 'Role access']);
     if (!views.some(function (i) { return i[0] === state.view; })) state.view = 'schedule';
@@ -1269,14 +1424,18 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (g !== 'ok') setMenu(false);
     if (g === 'ok') {
       renderBar();
+      fillHostForm();
+      fillFilters();
       $('#view-schedule').hidden = state.view !== 'schedule';
       $('#view-profile').hidden = state.view !== 'profile';
+      $('#view-options').hidden = state.view !== 'options';
       $('#view-people').hidden = state.view !== 'people';
       $('#view-roles').hidden = state.view !== 'roles';
       if (!can('host')) state.hostOpen = false;
       $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
       else if (state.view === 'profile') renderProfile();
+      else if (state.view === 'options') renderOptions();
       else if (state.view === 'people') renderUsers();
       else renderRoles();
     }
@@ -1292,14 +1451,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 
   /* ---------- setup ---------- */
   function setup() {
-    LEVELS.forEach(function (l) {
-      $('#f-level').append(h('option', { value: l }, l));
-      $('#h-level').append(h('option', { value: l }, l));
-    });
-    FORMATS.forEach(function (f) {
-      $('#f-format').append(h('option', { value: f }, f));
-      $('#h-format').append(h('option', { value: f }, f));
-    });
+    fillHostForm();
+    fillFilters();
     var today = dkey(new Date());
     $('#h-date').min = today;
     $('#h-date').value = today;
@@ -1582,6 +1735,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       state.cfg = snap.exists ? (snap.data() || {}) : {};
       state.loaded.cfg = true; render();
     }, onErr);
+    db.doc('config/options').onSnapshot(function (snap) {
+      state.options = snap.exists ? (snap.data() || {}) : {};
+      render();
+    }, function () {});
   }
   init();
 })();
