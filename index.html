@@ -203,6 +203,20 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .confirm-panel { width: min(420px, 100%); }
 .edit-panel { width: min(560px, 100%); max-height: min(90vh, 780px); }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.book-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.book-head .btn { display: inline-flex; align-items: center; gap: 6px; }
+.book-head svg { width: 16px; height: 16px; }
+.cfg-panel { width: min(640px, 100%); max-height: min(92vh, 860px); }
+.cfg-block { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.cfg-block h3 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.hr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+.hr-chip { min-height: 38px; padding: 4px; border: 1.5px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--muted); font: 600 var(--fs-s)/1 var(--body); cursor: pointer; }
+.hr-chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.rate-list { display: flex; flex-direction: column; gap: 8px; }
+.rate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.rate-row select, .price-in input { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.price-in { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.price-in input { width: 92px; }
 .book-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
 .book-bar .field { width: 180px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: var(--fs-s); }
@@ -464,8 +478,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       </div>
     </section>
     <section id="view-book" class="view-stack" aria-label="Book a court" hidden>
-      <h2>Book a court</h2>
-      <p class="note">Pick a date, then tap the hours you want. Price is per court, per hour: ₱200 from 7:00 AM to 5:00 PM, and ₱300 from 5:00 PM to 10:00 PM.</p>
+      <div class="book-head">
+        <h2>Book a court</h2>
+        <button id="bk-config" class="btn small" type="button" hidden aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <span>Configure</span>
+        </button>
+      </div>
+      <p class="note">Pick a date, then tap the hours you want. <span id="bk-rates"></span></p>
       <div class="book-bar">
         <button id="bk-prev" class="cal-nav" type="button" aria-label="Previous day">‹</button>
         <label class="field" for="bk-date">Date
@@ -473,6 +493,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         </label>
         <button id="bk-next" class="cal-nav" type="button" aria-label="Next day">›</button>
         <button id="bk-today" class="btn small" type="button">Today</button>
+        <label class="field" for="bk-venue" id="bk-venue-wrap" hidden>Venue
+          <select id="bk-venue"></select>
+        </label>
       </div>
       <ul class="legend" aria-label="Legend">
         <li><span class="sw av"></span>Available</li>
@@ -487,7 +510,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       </div>
       <div id="bk-mine"></div>
     </section>
-    <section id="view-options" class="view-stack" aria-label="Session options" hidden></section>
+    <section id="view-options" class="view-stack" aria-label="Session Configurations" hidden></section>
     <section id="view-people" class="view-stack" aria-label="People" hidden></section>
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
   </div>
@@ -498,6 +521,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 <div id="modal" class="modal" hidden></div>
 <div id="confirm" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
+<div id="bookcfg" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -532,21 +556,22 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     { key: 'edit', label: 'Edit any session', hint: 'Name, day, time, court and more' },
     { key: 'remove', label: 'Remove sessions', hint: 'Delete a session for everyone' },
     { key: 'people', label: 'Manage users', hint: 'Users page: roles, password resets, pause or remove access' },
-    { key: 'options', label: 'Manage session options', hint: 'Levels, formats, courts, venues and lengths' },
+    { key: 'options', label: 'Manage session configurations', hint: 'Levels, formats, courts, venues and lengths' },
     { key: 'moveplayers', label: 'Remove or move players', hint: 'Take a player out of a session, or move them to another session' },
-    { key: 'book', label: 'Book courts', hint: 'Use the Book a Court page to reserve hours' }
+    { key: 'book', label: 'Book courts', hint: 'Use the Book a Court page to reserve hours' },
+    { key: 'bookconfig', label: 'Configure booking', hint: 'Time slots, courts, venues and hourly rates on the Book a Court page' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false } }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, bookingMap: {}, bookingList: [], authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', venue: '', sel: {}, busy: false, done: null, error: '' }, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -752,7 +777,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1306,29 +1331,56 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
 
   /* ---------- court booking ---------- */
-  // Hourly slots from 7:00 AM (the first) to the one ending at 10:00 PM. Price is per court, per hour.
-  var BOOK_FIRST = 7, BOOK_LAST = 21;
-  var RATES = [{ from: 7, to: 17, price: 200 }, { from: 17, to: 22, price: 300 }];   // 7:00 AM to 5:00 PM = 200; 5:00 PM to 10:00 PM = 300
+  // What can be booked and what it costs is set in the booking configuration (config/booking and the court / venue lists in config/options).
+  // Until an admin saves something, the defaults apply: 7:00 AM to 10:00 PM in one-hour slots, 200 pesos before 5:00 PM and 300 after.
+  var DEFAULT_BOOKING = {
+    hours: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],   // the hour each slot starts
+    rates: [{ from: 7, to: 17, price: 200 }, { from: 17, to: 22, price: 300 }]
+  };
+  function bcfg() {
+    var s = state.bookingCfg || {}, hours = [], rates = [];
+    (Array.isArray(s.hours) ? s.hours : []).forEach(function (x) { x = parseInt(x, 10); if (x >= 0 && x <= 23 && hours.indexOf(x) < 0) hours.push(x); });
+    (Array.isArray(s.rates) ? s.rates : []).forEach(function (r) {
+      var f = parseInt(r && r.from, 10), t = parseInt(r && r.to, 10), p = parseInt(r && r.price, 10);
+      if (f >= 0 && t <= 24 && t > f && p > 0) rates.push({ from: f, to: t, price: p });
+    });
+    hours.sort(function (a, b) { return a - b; }); rates.sort(function (a, b) { return a.from - b.from; });
+    return { hours: hours.length ? hours : DEFAULT_BOOKING.hours.slice(), rates: rates.length ? rates : DEFAULT_BOOKING.rates.map(function (r) { return Object.assign({}, r); }) };
+  }
   function slotPrice(hour) {
-    for (var i = 0; i < RATES.length; i++) if (hour >= RATES[i].from && hour < RATES[i].to) return RATES[i].price;
+    var rates = bcfg().rates;
+    for (var i = 0; i < rates.length; i++) if (hour >= rates[i].from && hour < rates[i].to) return rates[i].price;
     return null;
   }
   function peso(n) { return '₱' + Number(n).toLocaleString('en-PH'); }
   function hourText(hr) { return (hr % 12 || 12) + ':00 ' + (hr % 24 < 12 ? 'AM' : 'PM'); }
+  function hourShort(hr) { return (hr % 12 || 12) + (hr % 24 < 12 ? ' AM' : ' PM'); }
   function bookingCourts() { var c = opts().courts; return c.length ? c : ['Court 1', 'Court 2', 'Court 3', 'Court 4']; }
+  function bookingVenues() { return opts().venues; }
+  function bookingVenue() {   // the venue being looked at; '' when no venues are set up
+    var list = bookingVenues(), b = state.booking;
+    if (!list.length) return '';
+    if (list.indexOf(b.venue) < 0) b.venue = list[0];
+    return b.venue;
+  }
   function courtKey(x) { return String(x || '').toLowerCase().replace(/^courts?\s*/, '').trim(); }
-  function slotKey(date, court, hour) { return date + '|' + court + '|' + hour; }
-  function slotId(date, court, hour) { return date + '_' + String(court).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '_' + pad(hour); }
+  function slugOf(x) { return String(x).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function slotKey(date, venue, court, hour) { return date + '|' + venue + '|' + court + '|' + hour; }
+  function slotId(date, venue, court, hour) { return date + '_' + (venue ? slugOf(venue) + '_' : '') + slugOf(court) + '_' + pad(hour); }
   function parsePick(k) { var i = k.lastIndexOf('|'); return { court: k.slice(0, i), hour: parseInt(k.slice(i + 1), 10) }; }
 
-  // available / booked (by someone else) / mine / unavailable (the hour has started, or a session is using that court)
-  function slotInfo(date, court, hour) {
-    var b = state.bookingMap[slotKey(date, court, hour)];
+  // available / booked (by someone else) / mine / unavailable (the hour has started, no rate is set, or a session is using that court)
+  function slotInfo(date, venue, court, hour) {
+    var map = state.bookingMap;
+    var b = map[slotKey(date, venue, court, hour)];
+    if (!b && venue === (bookingVenues()[0] || '')) b = map[slotKey(date, '', court, hour)];   // bookings made before venues existed belong to the first venue
     if (b) return { s: b.by === state.me ? 'mine' : 'booked' };
+    if (slotPrice(hour) === null) return { s: 'unavailable', why: 'No rate is set for this hour.' };
     if (parse(date, pad(hour) + ':00').getTime() <= Date.now()) return { s: 'unavailable', why: 'This hour has already started or passed.' };
     var lo = hour * 60, hi = lo + 60, ck = courtKey(court);
     var use = ck && ck !== '-' ? state.sessions.filter(function (s) {
       if (s.date !== date || courtKey(s.court) !== ck) return false;
+      if (venue && s.venue && s.venue !== '-' && String(s.venue).toLowerCase() !== venue.toLowerCase()) return false;
       var a = toMin(s.start), z = a + (Number(s.duration) || 90);
       return a < hi && z > lo;
     })[0] : null;
@@ -1353,7 +1405,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     return runs;
   }
   function runBreakdown(r) {   // "1 hr x P200 + 2 hrs x P300"
-    return RATES.map(function (rt) {
+    return bcfg().rates.map(function (rt) {
       var n = r.slots.filter(function (p) { return p.hour >= rt.from && p.hour < rt.to; }).length;
       return n ? plural(n, 'hr') + ' × ' + peso(rt.price) : null;
     }).filter(Boolean).join(' + ');
@@ -1377,9 +1429,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     setBookDate(dkey(new Date(p.getFullYear(), p.getMonth(), p.getDate() + delta)));
   }
 
-  // Claim one slot. The slot's document id is unique to date, court and hour, and a short lease stops two people claiming it at the same moment.
+  // Claim one slot. The slot's document id is unique to date, venue, court and hour, and a short lease stops two people claiming it at the same moment.
   async function claimSlot(data, holder) {
-    var ref = state.db.doc('bookings/' + slotId(data.date, data.court, data.hour));
+    var ref = state.db.doc('bookings/' + slotId(data.date, data.venue, data.court, data.hour));
     if (typeof ref.acquire === 'function') {
       var lease = await ref.acquire({ holder: holder, ttlMs: 10000 });
       if (!lease.acquired) return null;
@@ -1393,10 +1445,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   function confirmBooking() {
     var b = state.booking;
     if (b.busy) return;
-    var courts = bookingCourts(), picks = selectedSlots(courts), date = b.date;
+    var courts = bookingCourts(), picks = selectedSlots(courts), date = b.date, venue = bookingVenue();
     if (!picks.length) return;
     if (!state.db || !state.me || !state.canWrite || !can('book')) { b.error = 'Your account cannot book courts.'; render(); return; }
-    var gone = picks.filter(function (p) { return slotInfo(date, p.court, p.hour).s !== 'available'; });
+    var gone = picks.filter(function (p) { return slotInfo(date, venue, p.court, p.hour).s !== 'available'; });
     if (gone.length) {
       gone.forEach(function (p) { delete b.sel[p.court + '|' + p.hour]; });
       b.error = 'No longer available, so nothing was booked: ' + gone.map(function (p) { return p.court + ' ' + hourText(p.hour); }).join(', ') + '.';
@@ -1408,12 +1460,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       try {
         for (var i = 0; i < picks.length; i++) {
           var p = picks[i];
-          var ref = await claimSlot({ date: date, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
+          var ref = await claimSlot({ date: date, venue: venue, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
           if (!ref) throw { taken: p };
           claimed.push(ref);
         }
         var runs = runsOf(picks, function (p) { return slotPrice(p.hour); });
-        b.done = { ref: code, date: date, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
+        b.done = { ref: code, date: date, venue: venue, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
         b.sel = {};
         flash('Booking confirmed. Reference ' + code + '.', 'ok');
       } catch (e) {
@@ -1436,13 +1488,25 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     var di = $('#bk-date'); di.min = today; di.max = max;
     if (di.value !== b.date) di.value = b.date;
     $('#bk-prev').disabled = b.date <= today; $('#bk-next').disabled = b.date >= max;
-    var courts = bookingCourts();
+    $('#bk-config').hidden = !can('bookconfig');
+    var courts = bookingCourts(), venue = bookingVenue(), venues = bookingVenues(), cfg = bcfg();
+
+    // the venue picker only appears when there is more than one venue
+    var vw = $('#bk-venue-wrap'), vs = $('#bk-venue');
+    vw.hidden = venues.length < 2;
+    if (venues.length >= 2) {
+      if (vs.options.length !== venues.length || venues.some(function (v, i) { return vs.options[i].value !== v; })) {
+        vs.replaceChildren();
+        venues.forEach(function (v) { vs.append(h('option', { value: v }, v)); });
+      }
+      vs.value = venue;
+    }
 
     // anything picked that stopped being available (someone booked it, or the hour began) comes off the list
     var lost = [];
     Object.keys(b.sel).forEach(function (k) {
       var p = parsePick(k);
-      if (courts.indexOf(p.court) < 0 || slotInfo(b.date, p.court, p.hour).s !== 'available') { delete b.sel[k]; lost.push(p.court + ' ' + hourText(p.hour)); }
+      if (courts.indexOf(p.court) < 0 || cfg.hours.indexOf(p.hour) < 0 || slotInfo(b.date, venue, p.court, p.hour).s !== 'available') { delete b.sel[k]; lost.push(p.court + ' ' + hourText(p.hour)); }
     });
     if (lost.length) b.error = 'No longer available, so taken off your picks: ' + lost.join(', ') + '.';
 
@@ -1450,27 +1514,29 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     var grid = h('div', { class: 'slot-grid', style: '--n: ' + courts.length + ';' });
     grid.append(h('div', { class: 'slot-corner' }));
     courts.forEach(function (c) { grid.append(h('div', { class: 'slot-head' }, c)); });
-    for (var hr = BOOK_FIRST; hr <= BOOK_LAST; hr++) {
+    cfg.hours.forEach(function (hr) {
       grid.append(h('div', { class: 'slot-label' }, hourText(hr), h('small', null, 'to ' + hourText(hr + 1))));
       courts.forEach(function (court, ci) {
-        var hour = hr, key = court + '|' + hour, info = slotInfo(b.date, court, hour), sel = !!b.sel[key], price = slotPrice(hour);
+        var hour = hr, key = court + '|' + hour, info = slotInfo(b.date, venue, court, hour), sel = !!b.sel[key], price = slotPrice(hour);
         var kind = sel ? 'sel' : info.s === 'available' ? 'av' : info.s === 'mine' ? 'mine' : info.s === 'booked' ? 'bk' : 'un';
         var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'bk' ? 'Booked' : '–';
         var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'bk' ? 'booked' : 'unavailable';
-        var cell = h('button', {
+        grid.append(h('button', {
           id: 'bk-' + ci + '-' + hour, type: 'button', class: 'slot ' + kind, disabled: info.s !== 'available',
           'aria-pressed': info.s === 'available' ? String(sel) : null, title: info.why || null,
           'aria-label': court + ', ' + hourText(hour) + ' to ' + hourText(hour + 1) + ', ' + words + (info.why ? '. ' + info.why : ''),
           onclick: function () {
-            if (slotInfo(b.date, court, hour).s !== 'available') return;   // never select a slot that is not open
+            if (slotInfo(b.date, bookingVenue(), court, hour).s !== 'available') return;   // never select a slot that is not open
             if (b.sel[key]) delete b.sel[key]; else b.sel[key] = true;
             b.error = ''; b.done = null; render();
           }
-        }, text);
-        grid.append(cell);
+        }, text));
       });
-    }
+    });
     $('#bk-grid').replaceChildren(grid);
+
+    // the rates, as set in the configuration
+    $('#bk-rates').textContent = 'Price is per court, per hour: ' + cfg.rates.map(function (r) { return peso(r.price) + ' from ' + hourText(r.from) + ' to ' + hourText(r.to); }).join(', and ') + '.';
 
     // the summary
     var picks = selectedSlots(courts), box = $('#bk-summary');
@@ -1481,7 +1547,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       box.append(
         h('h3', null, 'Booking confirmed ✓'),
         h('p', { class: 'ref' }, 'Reference ', h('strong', null, d.ref)),
-        h('p', { class: 'note' }, fullFmt.format(parse(d.date, '00:00'))),
+        h('p', { class: 'note' }, (d.venue ? d.venue + ' · ' : '') + fullFmt.format(parse(d.date, '00:00'))),
         h('ul', { class: 'sum-list' }, d.runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
         h('div', { class: 'sum-total' }, h('span', null, 'Total due'), h('span', null, peso(d.total))),
         h('p', { class: 'note' }, 'Keep this reference. No payment is taken on this site.'),
@@ -1493,7 +1559,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       } else {
         var runs = runsOf(picks, function (p) { return slotPrice(p.hour); }), total = runs.reduce(function (n, r) { return n + r.price; }, 0);
         box.append(
-          h('p', { class: 'note' }, fullFmt.format(parse(b.date, '00:00'))),
+          h('p', { class: 'note' }, (venue ? venue + ' · ' : '') + fullFmt.format(parse(b.date, '00:00'))),
           h('ul', { class: 'sum-list' }, runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
           h('div', { class: 'sum-total' }, h('span', null, 'Total (' + plural(picks.length, 'court hour') + ')'), h('span', null, peso(total))));
       }
@@ -1523,10 +1589,139 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         var runs = runsOf(slots, function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour); });
         var total = runs.reduce(function (n, r) { return n + r.price; }, 0);
         return h('div', { class: 'row' },
-          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref)),
+          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, (slots[0].venue ? slots[0].venue + ' · ' : '') + runs.map(runLine).join(' · ')), h('span', null, ref)),
           h('strong', null, peso(total)));
       })));
     }
+  }
+
+  /* ---------- booking configuration (Super Admins and Admins): hours, rates, courts, venues ---------- */
+  var bookCfgRev = -1;
+  function openBookCfg() {
+    if (!can('bookconfig')) return;
+    var c = bcfg(), hours = {};
+    c.hours.forEach(function (x) { hours[x] = true; });
+    state.bookCfg = { hours: hours, rates: c.rates.map(function (r) { return Object.assign({}, r); }), courts: bookingCourts().slice(), venues: bookingVenues().slice(), draftCourt: '', draftVenue: '', error: '', rev: 0 };
+    bookCfgRev = -1;
+    renderBookCfg();
+    var first = $('#bookcfg .hr-chip'); if (first) first.focus();
+  }
+  function closeBookCfg() {
+    state.bookCfg = null;
+    renderBookCfg();
+    var b = $('#bk-config'); if (b) b.focus();
+  }
+  function bumpBookCfg() { state.bookCfg.rev++; renderBookCfg(); }
+  function checkBookCfg(c) {
+    var hours = Object.keys(c.hours).filter(function (k) { return c.hours[k]; }).map(Number).sort(function (a, b) { return a - b; });
+    if (!hours.length) return { error: 'Open at least one hour for booking.' };
+    if (!c.courts.length) return { error: 'Add at least one court.' };
+    var rates = [];
+    for (var i = 0; i < c.rates.length; i++) {
+      var r = c.rates[i], f = parseInt(r.from, 10), t = parseInt(r.to, 10), p = Number(r.price);
+      if (!(t > f)) return { error: 'Each rate needs an end hour later than its start hour.' };
+      if (!(p >= 1 && p <= 100000 && Math.floor(p) === p)) return { error: 'Give every rate a price in whole pesos, from 1 to 100,000.' };
+      rates.push({ from: f, to: t, price: p });
+    }
+    rates.sort(function (a, b) { return a.from - b.from; });
+    for (var j = 1; j < rates.length; j++) if (rates[j].from < rates[j - 1].to) return { error: 'Rates cannot overlap: ' + hourText(rates[j - 1].from) + ' to ' + hourText(rates[j - 1].to) + ' and ' + hourText(rates[j].from) + ' to ' + hourText(rates[j].to) + '.' };
+    var bare = hours.filter(function (hr) { return !rates.some(function (r) { return hr >= r.from && hr < r.to; }); });
+    if (bare.length) return { error: 'These open hours have no rate: ' + bare.map(hourShort).join(', ') + '. Add a rate for them or close them.' };
+    return { hours: hours, rates: rates };
+  }
+  function saveBookCfg() {
+    var c = state.bookCfg;
+    if (!c) return;
+    if (!state.db || !state.canWrite || !can('bookconfig')) { c.error = 'Your role cannot change the booking configuration.'; bumpBookCfg(); return; }
+    var res = checkBookCfg(c);
+    if (res.error) { c.error = res.error; bumpBookCfg(); return; }
+    var booking = { hours: res.hours, rates: res.rates };
+    var options = Object.assign({}, state.options, { courts: c.courts.slice(), venues: c.venues.slice() });
+    c.saving = true; c.error = ''; bumpBookCfg();
+    state.db.doc('config/booking').set(booking).then(function () { return state.db.doc('config/options').set(options); }).then(function () {
+      state.bookingCfg = booking; state.options = options;
+      state.booking.sel = {};
+      state.bookCfg = null; renderBookCfg(); render();
+      flash('Booking settings saved.', 'ok');
+      var b = $('#bk-config'); if (b) b.focus();
+    }).catch(function (e) {
+      if (state.bookCfg) { state.bookCfg.saving = false; state.bookCfg.error = 'Could not save: ' + (e && e.message ? e.message : 'try again.'); bumpBookCfg(); }
+    });
+  }
+  function addCfgItem(list, draftKey, max, label) {
+    var c = state.bookCfg, v = String(c[draftKey] || '').trim();
+    if (!v) { c.error = 'Type the ' + label + ' to add first.'; bumpBookCfg(); return; }
+    if (v.length > max) { c.error = 'That is too long. Use ' + max + ' characters or fewer.'; bumpBookCfg(); return; }
+    if (c[list].some(function (x) { return x.toLowerCase() === v.toLowerCase(); })) { c.error = 'That ' + label + ' is already in the list.'; bumpBookCfg(); return; }
+    c[list].push(v); c[draftKey] = ''; c.error = ''; bumpBookCfg();
+    var inp = document.getElementById('cfg-in-' + list); if (inp) inp.focus();
+  }
+  function renderBookCfg() {
+    var box = $('#bookcfg'), c = state.bookCfg;
+    if (!c || !can('bookconfig') || gateState() !== 'ok') {
+      state.bookCfg = null; bookCfgRev = -1;
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    if (c.rev === bookCfgRev && !box.hidden) return;   // built already; live updates must not disturb typing
+    bookCfgRev = c.rev;
+    var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '';
+    var hourBtns = [];
+    for (var hr = 0; hr < 24; hr++) (function (hr) {
+      var on = !!c.hours[hr];
+      hourBtns.push(h('button', { id: 'cfg-h-' + hr, type: 'button', class: 'hr-chip' + (on ? ' on' : ''), 'aria-pressed': String(on),
+        onclick: function () { if (c.hours[hr]) delete c.hours[hr]; else c.hours[hr] = true; c.error = ''; bumpBookCfg(); } }, hourShort(hr)));
+    })(hr);
+    var hourOpts = function (from, to, sel) {
+      var s = h('select', null);
+      for (var i = from; i <= to; i++) s.append(h('option', { value: String(i) }, i === 24 ? '12:00 AM (end of day)' : hourText(i)));
+      s.value = String(sel); return s;
+    };
+    var rateRows = c.rates.map(function (r, i) {
+      var f = hourOpts(0, 23, r.from), t = hourOpts(1, 24, r.to);
+      f.id = 'cfg-rf-' + i; f.setAttribute('aria-label', 'Rate ' + (i + 1) + ' starts'); f.onchange = function (e) { r.from = parseInt(e.target.value, 10); c.error = ''; };
+      t.id = 'cfg-rt-' + i; t.setAttribute('aria-label', 'Rate ' + (i + 1) + ' ends'); t.onchange = function (e) { r.to = parseInt(e.target.value, 10); c.error = ''; };
+      return h('div', { class: 'rate-row' }, f, h('span', null, 'to'), t,
+        h('label', { class: 'price-in' }, '₱', h('input', { id: 'cfg-rp-' + i, type: 'number', min: '1', max: '100000', step: '1', value: String(r.price), 'aria-label': 'Rate ' + (i + 1) + ' price per court per hour',
+          oninput: function (e) { r.price = e.target.value; } })),
+        h('button', { class: 'link', type: 'button', 'aria-label': 'Remove rate ' + (i + 1), onclick: function () { c.rates.splice(i, 1); c.error = ''; bumpBookCfg(); } }, 'Remove'));
+    });
+    function listBlock(list, draftKey, title, hint, label, max, keepOne) {
+      var chips = c[list].map(function (v) {
+        return h('span', { class: 'opt-chip' }, v, h('button', { type: 'button', disabled: keepOne && c[list].length <= 1, 'aria-label': 'Remove ' + v, title: 'Remove ' + v,
+          onclick: function () { c[list] = c[list].filter(function (x) { return x !== v; }); c.error = ''; bumpBookCfg(); } }, '×'));
+      });
+      return h('section', { class: 'cfg-block' }, h('h3', null, title), h('p', { class: 'note' }, hint),
+        h('div', { class: 'opt-chips' }, chips.length ? chips : h('span', { class: 'note' }, 'None yet')),
+        h('form', { class: 'opt-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addCfgItem(list, draftKey, max, label); } },
+          h('input', { id: 'cfg-in-' + list, type: 'text', maxlength: String(max), placeholder: label === 'court' ? 'Court 5' : 'Riverside', 'aria-label': 'Add ' + label, value: c[draftKey] || '',
+            oninput: function (e) { c[draftKey] = e.target.value; } }),
+          h('button', { class: 'btn small', type: 'submit' }, 'Add')));
+    }
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel cfg-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'cfg-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null, h('h2', { id: 'cfg-title' }, 'Booking configuration'), h('p', { class: 'note' }, 'Applies to the Book a Court page as soon as you save.')),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close without saving', onclick: closeBookCfg }, '×')),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Time slots'), h('p', { class: 'note' }, 'Tap an hour to open or close it. Each slot is one hour starting at the time shown.'), h('div', { class: 'hr-grid' }, hourBtns)),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Hourly rates'), h('p', { class: 'note' }, 'Price per court, per hour. Every open hour needs a rate, and rates cannot overlap.'),
+          h('div', { class: 'rate-list' }, rateRows.length ? rateRows : h('p', { class: 'note' }, 'No rates yet.')),
+          h('button', { class: 'btn small', type: 'button', onclick: function () {
+            var last = c.rates[c.rates.length - 1], open = Object.keys(c.hours).map(Number).sort(function (a, b) { return a - b; });
+            var from = last ? Math.min(23, parseInt(last.to, 10)) : (open[0] || 7);
+            c.rates.push({ from: from, to: Math.min(24, from + 1), price: last ? last.price : 200 }); c.error = ''; bumpBookCfg();
+          } }, '+ Add rate')),
+        listBlock('courts', 'draftCourt', 'Court numbers', 'The columns of the booking grid. These are the same courts offered when adding a session.', 'court', 30, true),
+        listBlock('venues', 'draftVenue', 'Venues', 'With two or more venues, people choose a venue first. Shared with the session forms. Leave empty if you only have one place.', 'venue', 60, false),
+        c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn', type: 'button', onclick: closeBookCfg }, 'Cancel'),
+          h('button', { id: 'cfg-save', class: 'btn primary', type: 'button', disabled: !!c.saving, onclick: saveBookCfg }, c.saving ? 'Saving…' : 'Save settings'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) { var el = document.getElementById(focusKey); if (el) el.focus(); }
   }
 
   /* ---------- session options: the lists behind the add / edit / filter forms ---------- */
@@ -1586,7 +1781,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     { key: 'venues', title: 'Venue', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Riverside', max: 60 }
   ];
   function setOption(key, list, message) {
-    if (!state.db || !can('options')) { flash('Your role cannot change session options.', 'err'); return; }
+    if (!state.db || !can('options')) { flash('Your role cannot change session configurations.', 'err'); return; }
     var next = Object.assign({}, state.options); next[key] = list;
     state.options = next;
     render();
@@ -1603,8 +1798,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   function renderOptions() {
     var box = $('#view-options');
     box.replaceChildren();
-    if (!can('options')) { box.append(h('p', { class: 'note' }, 'Your role cannot manage session options.')); return; }
-    box.append(h('h2', null, 'Session options'));
+    if (!can('options')) { box.append(h('p', { class: 'note' }, 'Your role cannot manage session configurations.')); return; }
+    box.append(h('h2', null, 'Session Configurations'));
     box.append(h('p', { class: 'note' }, 'The choices people see when they add or edit a session. Changing a list does not change sessions that already exist.'));
     var o = opts(), grid = h('div', { class: 'opt-grid' });
     OPTION_KINDS.forEach(function (kind) {
@@ -1833,7 +2028,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
-    if (can('options')) views.push(['options', 'Session options']);
+    if (can('options')) views.push(['options', 'Session Configurations']);
     if (can('people')) views.push(['people', 'Users']);
     if (isSuper()) views.push(['roles', 'Role access']);
     if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
@@ -1908,6 +2103,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     renderModal();
     renderConfirm();
     renderEditDialog();
+    renderBookCfg();
     if (focusId) {
       var el = document.getElementById(focusId);
       if (el && el !== document.activeElement) {
@@ -1945,6 +2141,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         }
         return;
       }
+      if (state.bookCfg) {
+        if (e.key === 'Escape') { closeBookCfg(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var bf = [].slice.call(document.querySelectorAll('#bookcfg button:not(:disabled), #bookcfg input, #bookcfg select'));
+          var bi = bf.indexOf(document.activeElement);
+          if (e.shiftKey && bi <= 0) { e.preventDefault(); bf[bf.length - 1].focus(); }
+          else if (!e.shiftKey && (bi === bf.length - 1 || bi < 0)) { e.preventDefault(); bf[0].focus(); }
+        }
+        return;
+      }
       if (state.edit) {
         if (e.key === 'Escape') { closeEdit(); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
@@ -1974,6 +2180,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       state.view = 'book'; state.hostOpen = false; setMenu(false);
       render(); window.scrollTo(0, 0);
     });
+    $('#bk-config').addEventListener('click', openBookCfg);
+    $('#bk-venue').addEventListener('change', function (e) { state.booking.venue = e.target.value; state.booking.sel = {}; state.booking.done = null; state.booking.error = ''; render(); });
     $('#bk-date').addEventListener('change', function (e) { setBookDate(e.target.value); });
     $('#bk-prev').addEventListener('click', function () { shiftBookDate(-1); });
     $('#bk-next').addEventListener('click', function () { shiftBookDate(1); });
@@ -2237,11 +2445,15 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       state.cfg = snap.exists ? (snap.data() || {}) : {};
       state.loaded.cfg = true; render();
     }, onErr);
+    db.doc('config/booking').onSnapshot(function (snap) {
+      state.bookingCfg = snap.exists ? (snap.data() || {}) : {};
+      render();
+    }, function () {});
     db.collection('bookings').onSnapshot(function (snap) {
       var map = {}, list = [];
       snap.docs.forEach(function (d) {
         var x = d.data();
-        if (x && x.by && x.date && x.court && typeof x.hour === 'number') { map[slotKey(x.date, x.court, x.hour)] = x; list.push(Object.assign({ id: d.id }, x)); }
+        if (x && x.by && x.date && x.court && typeof x.hour === 'number') { map[slotKey(x.date, x.venue || '', x.court, x.hour)] = x; list.push(Object.assign({ id: d.id }, x)); }
       });
       state.bookingMap = map; state.bookingList = list;
       purgeEnded(); render();
