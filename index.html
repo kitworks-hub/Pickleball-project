@@ -1,0 +1,1600 @@
+<title>Kitchen Line</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: court-blue masthead with a half-court diagram; below it a sign-up gate, then an account bar with Schedule / People / Role access views. */
+:root {
+  --paper: #eef2f1;
+  --card: #ffffff;
+  --ink: #10222c;
+  --muted: #566d78;
+  --rule: #cfdad8;
+  --accent: #1b6a9c;
+  --on-accent: #ffffff;
+  --ball: #d9e43f;
+  --on-ball: #10222c;
+  --ok: #1d7a4e;
+  --warn: #b04e16;
+  --danger: #c0262d;
+  --band: #123f5e;
+  --band-ink: #f4f8f9;
+  --band-muted: #b9d0dc;
+  --court-fill: #1f6a9a;
+  --kitchen-fill: #2d7f70;
+  --court-line: #ffffff;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-s: 0.8125rem;
+  --fs-m: 1rem;
+  --fs-l: 1.25rem;
+  --fs-xl: 1.75rem;
+  --fs-hero: clamp(3rem, 9vw, 5.5rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0a1820; --card: #11252f; --ink: #e8f0f3; --muted: #93abb6; --rule: #25444f;
+    --accent: #6cb9e4; --on-accent: #0a1820; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b;
+    --band: #0e3049; --court-fill: #1a5d88; --kitchen-fill: #276f62;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0a1820; --card: #11252f; --ink: #e8f0f3; --muted: #93abb6; --rule: #25444f;
+  --accent: #6cb9e4; --on-accent: #0a1820; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b;
+  --band: #0e3049; --court-fill: #1a5d88; --kitchen-fill: #276f62;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--paper); color: var(--ink); font: 400 var(--fs-m)/1.5 var(--body); }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1920px; margin: 0 auto; padding-left: max(clamp(16px, 3vw, 48px), env(safe-area-inset-left, 0px)); padding-right: max(clamp(16px, 3vw, 48px), env(safe-area-inset-right, 0px)); }
+
+/* Masthead */
+.band { background: var(--band); color: var(--band-ink); }
+.masthead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding-block: 32px 28px; }
+.mast-text { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font: 500 var(--fs-s)/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--band-muted); }
+h1 { font: 700 var(--fs-hero)/0.9 var(--display); text-transform: uppercase; letter-spacing: 0.01em; text-wrap: balance; }
+.lead { max-width: 46ch; color: var(--band-muted); }
+.stats { font: 500 var(--fs-s)/1.4 var(--mono); color: var(--ball); }
+.court { flex: 0 0 auto; width: 150px; height: auto; max-width: 100%; }
+.court text { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; fill: var(--band-ink); }
+
+.status { min-height: 1.5em; padding-block: 10px 6px; font-size: var(--fs-s); font-weight: 500; }
+.status.err { color: var(--warn); }
+.status.ok { color: var(--ok); }
+
+/* Shared controls */
+.btn { padding: 10px 16px; border-radius: 6px; border: 1.5px solid var(--ink); background: transparent; font-weight: 600; cursor: pointer; }
+.btn.primary { background: var(--ball); border-color: var(--ball); color: var(--on-ball); }
+.btn.small { padding: 6px 12px; font-size: var(--fs-s); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.link.danger { color: var(--danger); font-weight: 700; }
+.link { padding: 6px 0; border: 0; background: none; font-size: var(--fs-s); color: var(--muted); text-decoration: underline; cursor: pointer; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-s); color: var(--muted); }
+.field.wide { grid-column: 1 / -1; }
+.field input, .field select, select.plain { padding: 10px 12px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); min-width: 0; width: 100%; }
+select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(--card); }
+.chip { padding: 3px 8px; border-radius: 4px; font: 500 0.75rem/1.3 var(--mono); border: 1px solid var(--rule); }
+.chip.fmt { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chip.role { border-color: var(--accent); color: var(--accent); }
+.panel { padding: 20px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; display: flex; flex-direction: column; gap: 14px; }
+.panel h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.panel p { color: var(--muted); max-width: 58ch; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 14px; }
+
+/* Gate */
+.gate { padding-block: 24px 40px; max-width: 560px; }
+
+/* Account bar and nav */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
+.menu-wrap { position: relative; }
+.menu-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; border: 1.5px solid var(--band-muted); background: transparent; color: var(--band-ink); font-weight: 600; cursor: pointer; }
+.menu-btn svg { width: 20px; height: 20px; }
+.menu-btn[aria-expanded="true"] { background: var(--band-ink); color: var(--band); border-color: var(--band-ink); }
+.menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 230px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; padding: 6px; background: var(--card); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+.menu button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 0; border-radius: 6px; background: none; text-align: left; font-weight: 600; cursor: pointer; }
+.menu button:hover { background: var(--paper); }
+.menu button[aria-current="page"] { background: var(--paper); color: var(--accent); }
+.menu hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--rule); }
+.who { display: flex; align-items: center; gap: 8px 12px; min-width: 0; color: var(--band-ink); }
+.who .who-text { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; line-height: 1.2; }
+.who strong { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who .who-role { font: 500 0.75rem/1.2 var(--mono); color: var(--band-muted); }
+.btn.on-band { border-color: var(--band-muted); color: var(--band-ink); }
+@media (max-width: 420px) { .who .who-role { display: none; } .who strong { max-width: 12ch; } .menu-btn .menu-label { display: none; } }
+
+/* Day strip and filters */
+.cal-wrap { position: relative; margin-bottom: 8px; }
+.cal-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cal-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 44px; height: 44px; border: 1.5px solid var(--rule); border-radius: 8px; background: var(--card); color: var(--ink); cursor: pointer; }
+.cal-icon svg { width: 22px; height: 22px; }
+.cal-icon[aria-expanded="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.cal-status { flex: 1 1 200px; font-size: var(--fs-s); font-weight: 600; }
+.cal-pop { position: absolute; z-index: 15; top: calc(100% + 6px); left: 0; width: min(360px, calc(100vw - 32px)); padding: 12px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.cal-head h2 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.cal-nav { width: 40px; height: 40px; border: 1.5px solid var(--rule); border-radius: 8px; background: none; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.cal-nav:disabled { opacity: 0.35; cursor: default; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { padding-block: 4px; text-align: center; font: 500 0.6875rem/1 var(--mono); color: var(--muted); }
+.cal-day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 42px; border: 1.5px solid transparent; border-radius: 8px; background: none; font: 600 var(--fs-m)/1 var(--body); cursor: pointer; }
+.cal-day:hover:not(:disabled) { border-color: var(--rule); }
+.cal-day:disabled { opacity: 0.3; cursor: default; }
+.cal-day.today { border-color: var(--rule); }
+.cal-day .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.cal-day:not(.has) .dot { display: none; }
+.cal-day[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cal-day[aria-pressed="true"] .dot { background: var(--on-accent); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-block: 8px 20px; }
+.filters label { display: flex; align-items: center; gap: 8px; font-size: var(--fs-s); color: var(--muted); }
+.filters input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* Session list */
+.group { display: flex; flex-direction: column; gap: 12px; padding-bottom: 28px; }
+.group-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.group-head h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.group-head span { font: 500 var(--fs-s)/1 var(--mono); color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); gap: 16px; }
+.card { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
+.card.mine { border-color: var(--ok); }
+.card > .players-btn { align-self: flex-start; }
+.card.editing { border-color: var(--accent); }
+.card .form-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; }
+.time { font: 500 var(--fs-s)/1.2 var(--mono); color: var(--muted); }
+.card h3 { font: 700 var(--fs-l)/1.1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; text-wrap: balance; overflow-wrap: anywhere; }
+.venue { font-size: var(--fs-s); color: var(--muted); overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.count { font: 500 var(--fs-s)/1.3 var(--mono); }
+.count.full { color: var(--warn); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: auto; }
+.pill { font: 600 var(--fs-s)/1 var(--mono); color: var(--ok); }
+.pill.wl { color: var(--warn); }
+.empty-state { padding: 32px 20px; border: 1.5px dashed var(--rule); border-radius: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.empty-state h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; }
+.empty-state p { max-width: 52ch; color: var(--muted); }
+
+/* Players pop-up */
+.modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(5, 12, 16, 0.6); }
+.modal-panel { position: relative; display: flex; flex-direction: column; gap: 10px; width: min(440px, 100%); max-height: min(80vh, 640px); overflow: auto; padding: 20px; background: var(--card); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 12px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.modal-head h2 { font: 700 var(--fs-xl)/1.05 var(--display); text-transform: uppercase; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.modal-close { flex: 0 0 auto; width: 36px; height: 36px; border: 1.5px solid var(--rule); border-radius: 8px; background: none; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.modal-sub { margin-top: 4px; font: 600 var(--fs-s)/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.plist { margin: 0; padding-left: 1.7em; }
+.plist li { padding: 3px 0; overflow-wrap: anywhere; }
+.plist .me { font-weight: 600; }
+.modal-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+
+/* Host form */
+.host { margin-block: 16px 20px; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--card); }
+.host h2 { padding: 16px 16px 8px; font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.form-error { grid-column: 1 / -1; color: var(--warn); font-size: var(--fs-s); font-weight: 600; }
+.field input[aria-invalid="true"] { border-color: var(--warn); }
+.host .submit-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.host form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 14px; padding: 4px 16px 18px; }
+.host .submit-row { grid-column: 1 / -1; }
+
+/* People and roles */
+.view-stack { display: flex; flex-direction: column; gap: 24px; padding-block: 12px 40px; }
+.panel h3 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.profile { max-width: 560px; }
+.pw-form { display: flex; flex-direction: column; gap: 14px; }
+.view-stack h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 8px; }
+.row .meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row .meta strong { overflow-wrap: anywhere; }
+.row .meta span { font-size: var(--fs-s); color: var(--muted); }
+.row .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.note { font-size: var(--fs-s); color: var(--muted); max-width: 70ch; }
+.matrix-wrap { overflow-x: auto; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
+table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
+.matrix th, .matrix td { padding: 12px 14px; text-align: center; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+.matrix th:first-child, .matrix td:first-child { text-align: left; }
+.matrix th { font: 600 var(--fs-s)/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.matrix td small { display: block; color: var(--muted); font-size: var(--fs-s); }
+.matrix input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+.add-role { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.add-role .field { flex: 1 1 220px; }
+.eyebrow-dark { font: 500 var(--fs-s)/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+
+/* Admin dashboard */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
+.tile { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
+.tile strong { font: 700 var(--fs-xl)/1 var(--display); font-variant-numeric: tabular-nums; }
+.tile span { font-size: var(--fs-s); color: var(--muted); }
+.dash-search { max-width: 360px; }
+.row .meta .email { color: var(--ink); overflow-wrap: anywhere; }
+footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .btn, .cal-day { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<header class="band">
+  <div class="wrap topbar" id="topbar" hidden>
+    <div class="menu-wrap">
+      <button id="menu-btn" class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-haspopup="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+        <span class="menu-label">Menu</span>
+      </button>
+      <nav id="menu" class="menu" aria-label="Main menu" hidden></nav>
+    </div>
+    <div class="who" id="who"></div>
+  </div>
+  <div class="wrap masthead">
+    <div class="mast-text">
+      <p class="eyebrow">Open play · Ladders · Clinics</p>
+      <h1>Kitchen Line</h1>
+      <p class="lead">Pick a session, put your name down and see who else is on court. Full sessions keep a waitlist, and a spot opens up when someone leaves.</p>
+      <p class="stats" id="stats" aria-live="polite">Loading the schedule…</p>
+    </div>
+    <svg class="court" viewBox="0 0 200 236" role="img" aria-label="Half of a pickleball court, 20 feet wide and 22 feet from the net to the baseline, with the 7 foot non-volley zone marked">
+      <rect x="10" y="20" width="180" height="198" fill="var(--court-fill)" stroke="var(--court-line)" stroke-width="2.5"/>
+      <rect x="10" y="20" width="180" height="63" fill="var(--kitchen-fill)" stroke="var(--court-line)" stroke-width="2.5"/>
+      <line x1="100" y1="83" x2="100" y2="218" stroke="var(--court-line)" stroke-width="2.5"/>
+      <line x1="4" y1="20" x2="196" y2="20" stroke="var(--court-line)" stroke-width="5"/>
+      <text x="100" y="12" text-anchor="middle">NET</text>
+      <text x="100" y="56" text-anchor="middle">KITCHEN · 7 FT</text>
+      <text x="55" y="156" text-anchor="middle">LEFT</text>
+      <text x="145" y="156" text-anchor="middle">RIGHT</text>
+      <text x="100" y="232" text-anchor="middle">20 × 22 FT HALF COURT</text>
+    </svg>
+  </div>
+</header>
+
+<main class="wrap">
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <!-- Gate: sign-up form and holding messages -->
+  <section id="gate" class="gate" hidden>
+    <div id="gate-msg" class="panel" hidden>
+      <h2 id="gate-title"></h2>
+      <p id="gate-text"></p>
+      <div><button id="gate-logout" class="btn" type="button" hidden>Log out</button></div>
+    </div>
+    <form id="signup-form" class="panel" hidden novalidate>
+      <p class="eyebrow-dark">New player</p>
+      <h2>Set up your account</h2>
+      <p>Add your details to see the schedule and join sessions. Everyone starts as a player, and an admin can give you more access later.</p>
+      <label class="field" for="s-name">Full name
+        <input id="s-name" type="text" maxlength="40" required autocomplete="name" placeholder="Maria Santos">
+      </label>
+      <label class="field" for="s-email">Email
+        <input id="s-email" type="email" maxlength="80" required autocomplete="email" inputmode="email" placeholder="maria@example.com">
+      </label>
+      <label class="field" for="s-pass">Password (at least 8 characters)
+        <input id="s-pass" type="password" maxlength="100" required autocomplete="new-password">
+      </label>
+      <label class="field" for="s-pass2">Confirm password
+        <input id="s-pass2" type="password" maxlength="100" required autocomplete="new-password">
+      </label>
+      <div><button class="btn primary" type="submit" id="s-submit">Create account</button></div>
+      <p class="note">You will need this email and password to log in again. We do not store your email or your password in readable form: they are scrambled and used only to find and check your account.</p>
+      <p class="note">Already have an account? <button class="link" type="button" id="to-login">Log in</button></p>
+    </form>
+    <form id="login-form" class="panel" hidden novalidate>
+      <p class="eyebrow-dark">Welcome back</p>
+      <h2>Log in</h2>
+      <p>Enter your email and password to get back in.</p>
+      <label class="field" for="l-email">Email
+        <input id="l-email" type="email" maxlength="80" required autocomplete="email" inputmode="email">
+      </label>
+      <label class="field" for="l-pass">Password
+        <input id="l-pass" type="password" maxlength="100" required autocomplete="current-password">
+      </label>
+      <div><button class="btn primary" type="submit" id="l-submit">Log in</button></div>
+      <p class="note">Forgot your password? Ask an admin to reset it from the Users page, then enter your email above and choose a new one.</p>
+      <p class="note">Don't have an account? <button class="link" type="button" id="to-signup">Sign up</button></p>
+      <div id="owner-reset" hidden>
+        <p class="note">You are the site owner, so you can start a reset yourself for the email above.</p>
+        <button class="btn small" type="button" id="l-reset">Reset password for this email</button>
+      </div>
+    </form>
+    <form id="pw-form" class="panel" hidden novalidate>
+      <p class="eyebrow-dark">Password reset</p>
+      <h2>Choose a new password</h2>
+      <p>An admin reset the password for this account. Choose a new one to continue. You will use it, with your email, the next time you log in.</p>
+      <label class="field" for="p-email">Email
+        <input id="p-email" type="email" readonly>
+      </label>
+      <label class="field" for="p-pass">New password (at least 8 characters)
+        <input id="p-pass" type="password" maxlength="100" required autocomplete="new-password">
+      </label>
+      <label class="field" for="p-pass2">Confirm new password
+        <input id="p-pass2" type="password" maxlength="100" required autocomplete="new-password">
+      </label>
+      <div class="submit-row"><button class="btn primary" type="submit" id="p-submit">Save password</button> <button class="btn" type="button" id="p-cancel">Back to log in</button></div>
+    </form>
+  </section>
+
+  <!-- App: shown once the viewer has an account and a role that can see the schedule -->
+  <div id="app" hidden>
+    <section id="view-schedule" aria-label="Schedule">
+      <section id="host" class="host" aria-labelledby="host-title" hidden>
+        <h2 id="host-title">Add a new session</h2>
+        <form id="host-form" novalidate>
+          <label class="field wide" for="h-title">Session name
+            <input id="h-title" type="text" maxlength="60" placeholder="Saturday Social Doubles">
+          </label>
+          <label class="field" for="h-date">Day
+            <input id="h-date" type="date" required>
+          </label>
+          <label class="field" for="h-start">Start time
+            <input id="h-start" type="time" value="18:00" required>
+          </label>
+          <label class="field" for="h-dur">Length
+            <select id="h-dur">
+              <option value="60">1 hour</option>
+              <option value="90" selected>1 hour 30 min</option>
+              <option value="120">2 hours</option>
+              <option value="150">2 hours 30 min</option>
+              <option value="180">3 hours</option>
+            </select>
+          </label>
+          <label class="field" for="h-court">Court number
+            <input id="h-court" type="text" maxlength="30" placeholder="Court 3 or Courts 1–4">
+          </label>
+          <label class="field" for="h-venue">Venue
+            <input id="h-venue" type="text" maxlength="60" placeholder="Riverside">
+          </label>
+          <label class="field" for="h-level">Level
+            <select id="h-level"></select>
+          </label>
+          <label class="field" for="h-format">Format
+            <select id="h-format"></select>
+          </label>
+          <label class="field" for="h-cap">Player spots
+            <input id="h-cap" type="number" min="2" max="32" step="1" value="12" required>
+          </label>
+          <p id="h-error" class="form-error" role="alert" hidden></p>
+          <div class="submit-row">
+            <button class="btn primary" type="submit" id="h-submit">Add to schedule</button>
+            <button class="btn" type="button" id="h-cancel">Cancel</button>
+          </div>
+        </form>
+      </section>
+      <div id="days" class="cal-wrap"></div>
+      <div class="filters">
+        <label for="f-level">Level
+          <select id="f-level" class="plain"><option value="all">Any level</option></select>
+        </label>
+        <label for="f-format">Format
+          <select id="f-format" class="plain"><option value="all">Any format</option></select>
+        </label>
+        <label for="f-mine"><input id="f-mine" type="checkbox"> Only my sessions</label>
+      </div>
+      <div id="list"></div>
+
+    </section>
+
+    <section id="view-profile" class="view-stack" aria-label="Profile" hidden>
+      <h2>Profile</h2>
+      <div class="panel profile">
+        <label class="field" for="pf-name">Full name
+          <input id="pf-name" type="text" readonly>
+        </label>
+        <label class="field" for="pf-email">Email
+          <input id="pf-email" type="email" readonly placeholder="Log out and log in again to show your email">
+        </label>
+        <label class="field" for="pf-rating">Level rating (optional)
+          <select id="pf-rating"></select>
+        </label>
+        <p class="note">Your own estimate of how you play, from 2.0 (beginner) to 5.0+ (advanced). Admins can see it on the Users page. Change or clear it any time.</p>
+      </div>
+      <div class="panel profile">
+        <h3>Password</h3>
+        <p class="note">Change the password you use to log in. You will need your current one.</p>
+        <div><button id="pf-reset" class="btn" type="button">Reset password</button></div>
+        <form id="pf-pw-form" class="pw-form" hidden novalidate>
+          <label class="field" for="pf-cur">Current password
+            <input id="pf-cur" type="password" maxlength="100" autocomplete="current-password">
+          </label>
+          <label class="field" for="pf-new">New password (at least 8 characters)
+            <input id="pf-new" type="password" maxlength="100" autocomplete="new-password">
+          </label>
+          <label class="field" for="pf-new2">Confirm new password
+            <input id="pf-new2" type="password" maxlength="100" autocomplete="new-password">
+          </label>
+          <div class="submit-row"><button id="pf-save" class="btn primary" type="submit">Save new password</button> <button id="pf-cancel" class="btn" type="button">Cancel</button></div>
+        </form>
+      </div>
+    </section>
+    <section id="view-people" class="view-stack" aria-label="People" hidden></section>
+    <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
+  </div>
+
+  <footer>Times show in your local time zone. A pickleball court is 20 × 44 ft, and the kitchen reaches 7 ft back from the net on each side.</footer>
+</main>
+
+<div id="modal" class="modal" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var LEVELS = ['Open play', 'Beginner 2.0–2.5', 'Intermediate 3.0–3.5', 'Advanced 4.0+'];
+  function lvl(v) { return !v || v === 'All levels' ? LEVELS[0] : v; }
+  var FORMATS = ['Open play', 'Ladder', 'Clinic', 'Round robin'];
+  var FEATURES = [
+    { key: 'view', label: 'See the schedule', hint: 'Sessions, days and filters' },
+    { key: 'join', label: 'Join and leave sessions', hint: 'Sign up, waitlist, leave' },
+    { key: 'roster', label: 'See player names', hint: 'Who is on each roster' },
+    { key: 'host', label: 'Add sessions', hint: 'Host a new session' },
+    { key: 'edit', label: 'Edit any session', hint: 'Name, day, time, court and more' },
+    { key: 'remove', label: 'Remove sessions', hint: 'Delete a session for everyone' },
+    { key: 'people', label: 'Manage users', hint: 'Users page: roles, password resets, pause or remove access' }
+  ];
+  var DEFAULTS = {
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false } }
+  };
+  var state = {
+    sessions: [], players: {}, accounts: {}, roles: {}, cfg: {},
+    me: null, email: '', isOwner: false, canWrite: true, db: null,
+    phase: 'loading', slow: false, err: '',
+    loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, authMode: 'login', resetId: null, resetEmail: ''
+  };
+  // state.me is the id of the logged-in Kitchen Line account: a hash of its email, not the Claude sign-in.
+  var filters = { day: 'all', level: 'all', format: 'all', mine: false };
+  var savedName = '';
+  try { savedName = localStorage.getItem('kl-name') || ''; } catch (e) {}
+  try { state.me = localStorage.getItem('kl-acct') || null; state.email = localStorage.getItem('kl-email') || ''; } catch (e) {}
+  var pendingRemove = null;
+  var flashTimer = null;
+  var chain = Promise.resolve();
+  var ownerSyncing = false;
+  var dashQuery = '';
+  var pendingRemoveUser = null;
+
+  function $(s) { return document.querySelector(s); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parse(dateStr, timeStr) {
+    var p = String(dateStr).split('-').map(Number);
+    var t = String(timeStr || '00:00').split(':').map(Number);
+    return new Date(p[0], p[1] - 1, p[2], t[0] || 0, t[1] || 0);
+  }
+  var tfmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+  var dfmt = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
+  var mfmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+  var wfmt = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+
+  function h(tag, props) {
+    var el = document.createElement(tag);
+    if (props) {
+      Object.keys(props).forEach(function (k) {
+        var v = props[k];
+        if (v == null || v === false) return;
+        if (k === 'class') el.className = v;
+        else if (k === 'value') el.value = v;
+        else if (k === 'checked') el.checked = !!v;
+        else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      });
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      for (var j = 0; j < kids.length; j++) {
+        var kid = kids[j];
+        if (kid == null || kid === false) continue;
+        el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+      }
+    }
+    return el;
+  }
+
+  function flash(msg, kind) {
+    var el = $('#status');
+    el.textContent = msg;
+    el.className = 'status ' + (kind || '');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { el.textContent = ''; el.className = 'status'; }, 6000);
+  }
+  function fail(prefix) {
+    return function (e) { flash(prefix + (e && e.message ? ' ' + e.message : ''), 'err'); };
+  }
+
+  /* ---------- roles and permissions ---------- */
+  function roleDefs() {
+    var out = {};
+    Object.keys(DEFAULTS).forEach(function (k) { out[k] = { label: DEFAULTS[k].label, perms: Object.assign({}, DEFAULTS[k].perms) }; });
+    var sd = (state.cfg && state.cfg.defs) || {};
+    Object.keys(sd).forEach(function (k) {
+      if (k === 'super_admin') return;
+      var e = sd[k] || {};
+      var base = out[k] || { label: k, perms: { view: true, join: true, roster: true } };
+      out[k] = { label: e.label || base.label, perms: Object.assign({}, base.perms, e.perms || {}) };
+    });
+    return out;
+  }
+  function roleOrder(defs) {
+    var order = ['super_admin'];
+    ['admin', 'staff', 'player'].forEach(function (k) { if (defs[k]) order.push(k); });
+    Object.keys(defs).forEach(function (k) { if (order.indexOf(k) < 0) order.push(k); });
+    return order;
+  }
+  function roleLabel(k) {
+    if (k === 'super_admin') return 'Super admin';
+    var d = roleDefs()[k];
+    return d ? d.label : 'Player';
+  }
+  function roleOf(uid) {
+    var r = state.roles[uid];
+    if (!r || !r.role) return 'player';
+    if (r.role === 'super_admin') return 'super_admin';
+    return roleDefs()[r.role] ? r.role : 'player';
+  }
+  function myRole() { return roleOf(state.me); }
+  function isSuper() { return myRole() === 'super_admin'; }
+  function can(key) {
+    var r = myRole();
+    if (r === 'super_admin') return true;
+    var d = roleDefs()[r];
+    return !!(d && d.perms[key] === true);
+  }
+  function myAccount() { return state.accounts[state.me] || null; }
+  function myName() { var a = myAccount(); return a && a.name ? a.name : savedName; }
+  function personName(uid) { var a = state.accounts[uid]; return (a && a.name) || (state.players[uid] && state.players[uid].name) || 'Player'; }
+  function isOwnerAccount(uid) { return !!(state.roles[uid] && state.roles[uid].owner); }
+  function superExists() {
+    return Object.keys(state.roles).some(function (u) { return state.roles[u].role === 'super_admin' && state.accounts[u]; });
+  }
+  function assignable(uid) {
+    if (uid === state.me || isOwnerAccount(uid)) return [];
+    var keys = roleOrder(roleDefs());
+    if (isSuper()) return keys;
+    if (!can('people')) return [];
+    var tr = roleOf(uid);
+    if (tr === 'super_admin' || tr === 'admin') return [];
+    return keys.filter(function (k) { return k !== 'super_admin' && k !== 'admin'; });
+  }
+
+  /* ---------- sessions ---------- */
+  // A session cannot start in the past. Uses the same local clock as the schedule and the auto-delete.
+  var PAST_MSG = 'That date and time have already passed. Pick a start time in the future.';
+  function isPast(dateStr, timeStr) { return parse(dateStr, timeStr).getTime() < Date.now(); }
+  function times(s) {
+    var start = parse(s.date, s.start);
+    var end = new Date(start.getTime() + (Number(s.duration) || 90) * 60000);
+    return { start: start, end: end };
+  }
+  function roster(sid) {
+    var out = [];
+    Object.keys(state.players).forEach(function (uid) {
+      var p = state.players[uid];
+      var ts = p && p.joined && p.joined[sid];
+      if (ts) out.push({ uid: uid, name: personName(uid), ts: Number(ts) });
+    });
+    out.sort(function (a, b) { return a.ts - b.ts || (a.uid < b.uid ? -1 : 1); });
+    return out;
+  }
+  function isMine(sid) {
+    var p = state.me && state.players[state.me];
+    return !!(p && p.joined && p.joined[sid]);
+  }
+  function upcoming() {
+    var now = Date.now();
+    return state.sessions.filter(function (s) {
+      return s && s.date && s.start && times(s).end.getTime() > now;
+    }).sort(function (a, b) { return times(a).start - times(b).start; });
+  }
+  function passes(s, ignoreDay) {
+    if (filters.level !== 'all' && lvl(s.level) !== filters.level) return false;
+    if (filters.format !== 'all' && s.format !== filters.format) return false;
+    if (filters.mine && !isMine(s.id)) return false;
+    if (!ignoreDay && filters.day !== 'all' && s.date !== filters.day) return false;
+    return true;
+  }
+  function canEditSession(s) { return can('edit') || (s.hostId === state.me && can('host')); }
+  function canRemoveSession(s) { return can('remove') || (s.hostId === state.me && can('host')); }
+
+  /* ---------- writes (one at a time) ---------- */
+  function queue(fn, errPrefix) {
+    chain = chain.then(fn).catch(fail(errPrefix));
+    return chain;
+  }
+  function saveMine(mutator) {
+    if (!state.db || !state.me) return Promise.resolve();
+    return queue(function () {
+      var existing = state.players[state.me];
+      var cur = existing ? JSON.parse(JSON.stringify(existing)) : { joined: {} };
+      if (!cur.joined) cur.joined = {};
+      mutator(cur);
+      cur.name = myName();
+      return state.db.doc('signups/' + state.me).set(cur);
+    }, 'That did not save.');
+  }
+  function setRole(uid, role, extra) {
+    return queue(function () {
+      var prev = state.roles[uid] || {};
+      var next = { role: role, by: state.me, at: Date.now() };
+      if (prev.suspended) next.suspended = true;
+      if (prev.owner) next.owner = true;
+      if (prev.pwReset) next.pwReset = prev.pwReset;
+      if (extra) Object.assign(next, extra);
+      return state.db.doc('roles/' + uid).set(next);
+    }, 'Could not change that role.');
+  }
+  function saveCfg(mutator) {
+    return queue(function () {
+      var defs = roleDefs();
+      mutator(defs);
+      return state.db.doc('config/roles').set({ defs: defs });
+    }, 'Could not save role access.');
+  }
+
+  function join(s) {
+    saveMine(function (cur) { cur.joined[s.id] = Date.now(); }).then(function () { flash('You are signed up for ' + s.title + '.', 'ok'); });
+  }
+  function leave(s) {
+    saveMine(function (cur) { delete cur.joined[s.id]; }).then(function () { flash('You left ' + s.title + '.', 'ok'); });
+  }
+  function removeSession(s) {
+    if (pendingRemove !== s.id) {
+      pendingRemove = s.id;
+      render();
+      setTimeout(function () { if (pendingRemove === s.id) { pendingRemove = null; render(); } }, 4000);
+      return;
+    }
+    pendingRemove = null;
+    state.db.doc('sessions/' + s.id).delete().then(function () { flash('Session removed.', 'ok'); }).catch(fail('Could not remove that session.'));
+  }
+
+  /* ---------- session edit ---------- */
+  function startEdit(s) {
+    state.edit = {
+      id: s.id,
+      draft: {
+        title: s.title || '', date: s.date || '', start: s.start || '18:00', duration: String(s.duration || 90),
+        court: s.court || '', venue: s.venue || '', level: lvl(s.level), format: s.format || FORMATS[0], capacity: String(s.capacity || 12)
+      }
+    };
+    render();
+  }
+  function saveEdit() {
+    var d = state.edit.draft;
+    var cap = Math.min(32, Math.max(2, parseInt(d.capacity, 10) || 12));
+    if (!d.date || !d.start) { flash('Pick the day and start time.', 'err'); return; }
+    var id = state.edit.id;
+    var orig = state.sessions.filter(function (x) { return x.id === id; })[0];
+    if ((!orig || orig.date !== d.date || orig.start !== d.start) && isPast(d.date, d.start)) {
+      state.edit.error = PAST_MSG;
+      render();
+      var f = $(d.date < dkey(new Date()) ? '#e-date' : '#e-start'); if (f) f.focus();
+      return;
+    }
+    var patch = {
+      title: d.title.trim() || '-', date: d.date, start: d.start, duration: parseInt(d.duration, 10) || 90,
+      court: d.court.trim() || '-', venue: d.venue.trim() || '-', level: d.level, format: d.format, capacity: cap
+    };
+    queue(function () { return state.db.doc('sessions/' + id).update(patch); }, 'Could not save the changes.').then(function () {
+      if (state.edit && state.edit.id === id) { state.edit = null; flash('Session updated.', 'ok'); render(); }
+    });
+  }
+  function editCard(s) {
+    var d = state.edit.draft;
+    function inp(key, label, type, attrs) {
+      var timing = key === 'date' || key === 'start';
+      var props = Object.assign({ id: 'e-' + key, type: type, value: d[key], oninput: function (e) {
+        d[key] = e.target.value;
+        if (timing && state.edit.error) { state.edit.error = ''; render(); }
+      } }, attrs || {});
+      if (timing && state.edit.error) props['aria-invalid'] = 'true';
+      return h('label', { class: 'field', for: 'e-' + key }, label, h('input', props));
+    }
+    function sel(key, label, options) {
+      var el = h('select', { id: 'e-' + key, onchange: function (e) { d[key] = e.target.value; } },
+        options.map(function (o) { return h('option', { value: o[0] }, o[1]); }));
+      el.value = d[key];
+      return h('label', { class: 'field', for: 'e-' + key }, label, el);
+    }
+    var durs = [['60', '1 hour'], ['90', '1 hr 30 min'], ['120', '2 hours'], ['150', '2 hr 30 min'], ['180', '3 hours']];
+    if (!durs.some(function (o) { return o[0] === d.duration; })) durs.push([d.duration, d.duration + ' min']);
+    var lvls = LEVELS.slice(); if (lvls.indexOf(d.level) < 0) lvls.push(d.level);
+    var fmts = FORMATS.slice(); if (fmts.indexOf(d.format) < 0) fmts.push(d.format);
+    return h('article', { class: 'card editing' },
+      h('p', { class: 'time' }, 'Editing session'),
+      h('div', { class: 'form-grid' },
+        (function () { var t = inp('title', 'Session name', 'text', { maxlength: '60' }); t.classList.add('wide'); return t; })(),
+        inp('date', 'Day', 'date'),
+        inp('start', 'Start time', 'time'),
+        sel('duration', 'Length', durs),
+        inp('court', 'Court number', 'text', { maxlength: '30' }),
+        inp('venue', 'Venue', 'text', { maxlength: '60' }),
+        sel('level', 'Level', lvls.map(function (x) { return [x, x]; })),
+        sel('format', 'Format', fmts.map(function (x) { return [x, x]; })),
+        inp('capacity', 'Player spots', 'number', { min: '2', max: '32', step: '1' })),
+      state.edit.error ? h('p', { class: 'form-error', role: 'alert' }, state.edit.error) : null,
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: saveEdit }, 'Save changes'),
+        h('button', { class: 'btn', type: 'button', onclick: function () { state.edit = null; render(); } }, 'Cancel')));
+  }
+
+  /* ---------- schedule rendering ---------- */
+  function spotsLine(cap, goingN, waitN) {
+    var left = cap - goingN;
+    return goingN >= cap ? 'Full' + (waitN ? ' · ' + waitN + ' waitlisted' : '') : left + ' spot' + (left === 1 ? '' : 's') + ' left';
+  }
+
+  /* ---------- players pop-up ---------- */
+  var modalSig = '';
+  function openPlayers(sid) {
+    state.playersFor = sid;
+    renderModal();
+    var c = $('#modal .modal-close'); if (c) c.focus();
+  }
+  function closePlayers() {
+    var sid = state.playersFor;
+    state.playersFor = null;
+    renderModal();
+    var b = sid && document.getElementById('players-' + sid); if (b) b.focus();
+  }
+  function renderModal() {
+    var box = $('#modal'), sid = state.playersFor;
+    var s = sid ? state.sessions.filter(function (x) { return x.id === sid; })[0] : null;
+    if (!s || !can('roster') || gateState() !== 'ok') {
+      state.playersFor = null; modalSig = '';
+      box.hidden = true; box.replaceChildren();
+      document.body.style.overflow = '';
+      return;
+    }
+    var list = roster(sid), cap = Math.max(2, Number(s.capacity) || 12);
+    var going = list.slice(0, cap), wait = list.slice(cap);
+    var sig = [sid, s.title, s.start, s.date, cap, going.map(function (r) { return r.uid + ':' + r.name; }).join(','), wait.map(function (r) { return r.uid + ':' + r.name; }).join(','), state.me].join('|');
+    if (sig === modalSig && !box.hidden) return;
+    modalSig = sig;
+    var hadFocus = box.contains(document.activeElement);
+    var t = times(s);
+    function li(r) { return h('li', { class: r.uid === state.me ? 'me' : '' }, r.uid === state.me ? 'You' : r.name); }
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop', onclick: closePlayers }),
+      h('div', { class: 'modal-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'modal-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null,
+            h('h2', { id: 'modal-title' }, s.title || '-'),
+            h('p', { class: 'time' }, fullFmt.format(parse(s.date, '00:00')) + ' · ' + tfmt.format(t.start) + ' – ' + tfmt.format(t.end))),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closePlayers }, '×')),
+        h('p', { class: 'count' + (going.length >= cap ? ' full' : '') }, spotsLine(cap, going.length, wait.length)),
+        h('h3', { class: 'modal-sub' }, 'Players (' + going.length + ')'),
+        going.length ? h('ol', { class: 'plist' }, going.map(li)) : h('p', { class: 'note' }, 'Nobody has joined yet.'),
+        wait.length ? [h('h3', { class: 'modal-sub' }, 'Waitlist (' + wait.length + ')'), h('ol', { class: 'plist' }, wait.map(li))] : null,
+        h('div', { class: 'modal-actions' }, h('button', { class: 'btn', type: 'button', onclick: closePlayers }, 'Close'))));
+    box.hidden = false;
+    document.body.style.overflow = 'hidden';
+    if (hadFocus) { var c = $('#modal .modal-close'); if (c) c.focus(); }
+  }
+
+  function card(s) {
+    if (state.edit && state.edit.id === s.id) return editCard(s);
+    var list = roster(s.id);
+    var cap = Math.max(2, Number(s.capacity) || 12);
+    var going = list.slice(0, cap);
+    var wait = list.slice(cap);
+    var myIdx = state.me ? list.findIndex(function (r) { return r.uid === state.me; }) : -1;
+    var full = going.length >= cap;
+    var t = times(s);
+    var showNames = can('roster');
+    var canJoin = can('join') && state.canWrite;
+
+    var countText = spotsLine(cap, going.length, wait.length);
+
+    // Player names live in a pop-up that "View players" opens.
+    var moreBtn = showNames ? h('button', { id: 'players-' + s.id, class: 'btn small players-btn', type: 'button', 'aria-haspopup': 'dialog',
+      onclick: function () { openPlayers(s.id); } }, 'View players') : null;
+
+    var actions = [];
+    if (myIdx >= 0) {
+      actions.push(h('button', { class: 'btn', type: 'button', disabled: !canJoin, onclick: function () { leave(s); } }, 'Leave session'));
+      actions.push(myIdx < cap ? h('span', { class: 'pill' }, "✓ You're in") : h('span', { class: 'pill wl' }, 'Waitlist #' + (myIdx - cap + 1)));
+    } else if (can('join')) {
+      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join session'));
+    }
+    if (canEditSession(s)) actions.push(h('button', { class: 'link', type: 'button', onclick: function () { startEdit(s); } }, 'Edit'));
+    if (canRemoveSession(s)) actions.push(h('button', { class: 'link' + (pendingRemove === s.id ? ' danger' : ''), type: 'button', onclick: function () { removeSession(s); } }, pendingRemove === s.id ? 'Tap again to remove' : 'Remove'));
+
+    return h('article', { class: 'card' + (myIdx >= 0 && myIdx < cap ? ' mine' : '') },
+      moreBtn,
+      h('p', { class: 'time' }, tfmt.format(t.start) + ' – ' + tfmt.format(t.end)),
+      h('h3', null, s.title || '-'),
+      h('p', { class: 'venue' }, (s.court || '-') + ' · ' + (s.venue || '-')),
+      h('div', { class: 'chips' },
+        h('span', { class: 'chip fmt' }, s.format || 'Open play'),
+        h('span', { class: 'chip' }, lvl(s.level))),
+      h('p', { class: 'count' + (full ? ' full' : '') }, countText),
+      h('div', { class: 'actions' }, actions));
+  }
+
+  /* ---------- calendar: an icon opens a date picker ---------- */
+  var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+  var fullFmt = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  var dowFmt = new Intl.DateTimeFormat(undefined, { weekday: 'narrow' });
+  var CAL_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+  function closeCal(focusToggle) {
+    state.calOpen = false;
+    render();
+    if (focusToggle) { var t = $('#cal-toggle'); if (t) t.focus(); }
+  }
+
+  function renderCalendar(all) {
+    var box = $('#days');
+    box.replaceChildren();
+    var now = new Date();
+    var today = dkey(now);
+    var counts = {};
+    all.forEach(function (s) { if (passes(s, true)) counts[s.date] = (counts[s.date] || 0) + 1; });
+    var total = Object.keys(counts).reduce(function (n, k) { return n + counts[k]; }, 0);
+
+    var status;
+    if (filters.day === 'all') status = total ? plural(total, 'upcoming session') + '. Pick a date to see its sessions.' : 'No upcoming sessions yet.';
+    else {
+      var pick = parse(filters.day, '00:00'), c = counts[filters.day] || 0;
+      status = c ? fullFmt.format(pick) + ': ' + plural(c, 'session') + ' scheduled.' : 'No sessions scheduled for ' + fullFmt.format(pick) + '.';
+    }
+
+    var toggle = h('button', { id: 'cal-toggle', class: 'cal-icon', type: 'button', 'aria-label': 'Pick a date', title: 'Pick a date',
+      'aria-expanded': String(state.calOpen), 'aria-haspopup': 'dialog',
+      onclick: function () {
+        state.calOpen = !state.calOpen;
+        render();
+        if (state.calOpen) {
+          var target = document.getElementById('cal-' + filters.day) || document.getElementById('cal-' + today) || $('#days .cal-day:not(:disabled)');
+          if (target) target.focus();
+        }
+      } });
+    toggle.innerHTML = CAL_ICON;
+    var bar = h('div', { class: 'cal-bar' }, toggle, h('p', { class: 'cal-status' }, status));
+    if (filters.day !== 'all') bar.append(h('button', { id: 'cal-all', class: 'btn small', type: 'button', onclick: function () { filters.day = 'all'; render(); } }, 'Show all upcoming'));
+    box.append(bar);
+    if (!state.calOpen) return;
+
+    var curIdx = now.getFullYear() * 12 + now.getMonth();
+    if (!state.cal || state.cal.idx < curIdx) state.cal = { idx: curIdx };
+    var idx = state.cal.idx;
+    var first = new Date(Math.floor(idx / 12), idx % 12, 1);
+    function go(delta) { state.cal.idx = idx + delta; render(); }
+
+    var head = h('div', { class: 'cal-head' },
+      h('button', { id: 'cal-prev', class: 'cal-nav', type: 'button', 'aria-label': 'Previous month', disabled: idx <= curIdx, onclick: function () { go(-1); } }, '‹'),
+      h('h2', { 'aria-live': 'polite' }, monthFmt.format(first)),
+      h('button', { id: 'cal-next', class: 'cal-nav', type: 'button', 'aria-label': 'Next month', disabled: idx >= curIdx + 11, onclick: function () { go(1); } }, '›'));
+
+    var grid = h('div', { class: 'cal-grid', role: 'group', 'aria-label': monthFmt.format(first) });
+    for (var w = 0; w < 7; w++) grid.append(h('span', { class: 'cal-dow', 'aria-hidden': 'true' }, dowFmt.format(new Date(2026, 0, 4 + w))));
+    for (var b = 0; b < first.getDay(); b++) grid.append(h('span'));
+    var days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    function dayBtn(dt) {
+      var key = dkey(dt), cnt = counts[key] || 0, sel = filters.day === key;
+      return h('button', {
+        id: 'cal-' + key, type: 'button', disabled: key < today,
+        class: 'cal-day' + (key === today ? ' today' : '') + (cnt ? ' has' : ''),
+        'aria-pressed': String(sel),
+        'aria-label': fullFmt.format(dt) + ', ' + (cnt ? plural(cnt, 'session') : 'no sessions'),
+        onclick: function () { filters.day = sel ? 'all' : key; closeCal(true); }
+      }, h('span', null, String(dt.getDate())), cnt ? h('i', { class: 'dot', 'aria-hidden': 'true' }) : null);
+    }
+    for (var d = 1; d <= days; d++) grid.append(dayBtn(new Date(first.getFullYear(), first.getMonth(), d)));
+
+    box.append(h('div', { class: 'cal-pop', role: 'dialog', 'aria-label': 'Choose a date' }, head, grid));
+  }
+
+  function renderList(all) {
+    var box = $('#list');
+    box.replaceChildren();
+    var shown = all.filter(function (s) { return passes(s, false); });
+    var dayEmpty = filters.day !== 'all' && all.length > 0 && !all.some(function (s) { return s.date === filters.day; });
+    if (!shown.length && dayEmpty) {
+      var pick = parse(filters.day, '00:00');
+      var dayKids = [h('h2', null, 'No sessions on this day'), h('p', null, 'Nothing is scheduled for ' + fullFmt.format(pick) + '.')];
+      dayKids.push(h('button', { class: 'btn', type: 'button', onclick: function () { filters.day = 'all'; render(); } }, 'Show all upcoming'));
+      if (can('host')) dayKids.push(h('button', { class: 'btn primary', type: 'button', onclick: function () { $('#h-date').value = filters.day; openHost(); } }, 'Add a session for this day'));
+      box.append(h('div', { class: 'empty-state' }, dayKids));
+      return;
+    }
+    if (!shown.length) {
+      var none = all.length === 0;
+      var kids = [h('h2', null, none ? 'No sessions yet' : 'Nothing matches')];
+      kids.push(h('p', null, none
+        ? (can('host') ? 'Host the first session and it will show up here for everyone.' : 'Check back soon. Staff will post sessions here.')
+        : 'Try another day or clear a filter to see more games.'));
+      if (none && can('host')) kids.push(h('button', { class: 'btn primary', type: 'button', onclick: openHost }, 'Add new session'));
+      if (!none) kids.push(h('button', { class: 'btn', type: 'button', onclick: function () { filters = { day: 'all', level: 'all', format: 'all', mine: false }; syncFilters(); render(); } }, 'Clear filters'));
+      box.append(h('div', { class: 'empty-state' }, kids));
+      return;
+    }
+    var groups = [];
+    shown.forEach(function (s) {
+      var g = groups[groups.length - 1];
+      if (!g || g.date !== s.date) { g = { date: s.date, items: [] }; groups.push(g); }
+      g.items.push(s);
+    });
+    groups.forEach(function (g) {
+      var d = parse(g.date, '00:00');
+      box.append(h('div', { class: 'group' },
+        h('div', { class: 'group-head' }, h('h2', null, dfmt.format(d)), h('span', null, mfmt.format(d))),
+        h('div', { class: 'grid' }, g.items.map(card))));
+    });
+  }
+
+  /* ---------- admin dashboard ---------- */
+  function removeUser(u) {
+    if (pendingRemoveUser !== u) {
+      pendingRemoveUser = u;
+      render();
+      setTimeout(function () { if (pendingRemoveUser === u) { pendingRemoveUser = null; render(); } }, 4000);
+      return;
+    }
+    pendingRemoveUser = null;
+    var name = personName(u);
+    queue(function () {
+      return Promise.all(['members', 'roles', 'signups', 'logins'].map(function (c) {
+        return state.db.doc(c + '/' + u).delete().catch(function () {});
+      }));
+    }, 'Could not remove that member.').then(function () { flash(name + ' was removed. They can set up a new account if they come back.', 'ok'); });
+  }
+
+  function resetPassword(u) {
+    var name = personName(u);
+    queue(function () {
+      var nr = Object.assign({}, state.roles[u] || { role: roleOf(u) });
+      nr.pwReset = Date.now(); nr.by = state.me; nr.at = Date.now();
+      return state.db.doc('roles/' + u).set(nr);
+    }, 'Could not reset the password.').then(function () { flash(name + ' will be asked to choose a new password the next time they open the site.', 'ok'); });
+  }
+
+  function renderUsers() {
+    var box = $('#view-people');
+    box.replaceChildren();
+    if (!can('people')) { box.append(h('p', { class: 'note' }, 'Your role does not include managing users.')); return; }
+    var defs = roleDefs();
+    var order = roleOrder(defs);
+    var uids = Object.keys(state.accounts);
+    var all = upcoming();
+    var upIds = {};
+    all.forEach(function (s) { upIds[s.id] = 1; });
+    function upcomingFor(u) {
+      var j = (state.players[u] && state.players[u].joined) || {};
+      return Object.keys(j).filter(function (sid) { return upIds[sid]; }).length;
+    }
+
+    // Overview
+    var weekAgo = Date.now() - 7 * 86400000;
+    var byRole = {};
+    uids.forEach(function (u) { var r = roleOf(u); byRole[r] = (byRole[r] || 0) + 1; });
+    var fresh = uids.filter(function (u) { return Number(state.accounts[u].createdAt) > weekAgo; }).length;
+    var paused = uids.filter(function (u) { return state.roles[u] && state.roles[u].suspended; }).length;
+    var spots = 0, taken = 0;
+    all.forEach(function (s) { var cap = Math.max(2, Number(s.capacity) || 12); spots += cap; taken += Math.min(cap, roster(s.id).length); });
+    function tile(num, label) { return h('div', { class: 'tile' }, h('strong', null, String(num)), h('span', null, label)); }
+    box.append(h('h2', null, 'Users'));
+    box.append(h('div', { class: 'tiles' },
+      tile(uids.length, uids.length === 1 ? 'member' : 'members'),
+      tile(fresh, 'joined this week'),
+      tile(all.length, all.length === 1 ? 'upcoming session' : 'upcoming sessions'),
+      tile(spots ? Math.round(taken / spots * 100) + '%' : '–', 'of spots filled'),
+      tile(paused, 'paused')));
+    box.append(h('p', { class: 'note' }, order.filter(function (k) { return byRole[k]; }).map(function (k) { return roleLabel(k) + ' ' + byRole[k]; }).join(' · ')));
+
+    // Members
+    box.append(h('h2', null, 'Members'));
+    box.append(h('p', { class: 'note' }, 'New members start as players. ' + (isSuper()
+      ? 'As super admin you can give anyone any role, pause their access or remove them.'
+      : 'You can change staff and player roles and pause access. Admin and super admin roles are set by a super admin.')
+      + ' Emails are not stored, so members are listed by name.'));
+    box.append(h('label', { class: 'field dash-search', for: 'dash-q' }, 'Find a member',
+      h('input', { id: 'dash-q', type: 'search', placeholder: 'Name', value: dashQuery, oninput: function (e) { dashQuery = e.target.value; render(); } })));
+
+    var q = dashQuery.trim().toLowerCase();
+    var shown = uids.filter(function (u) { return !q || personName(u).toLowerCase().indexOf(q) >= 0; });
+    shown.sort(function (a, b) {
+      var d = order.indexOf(roleOf(a)) - order.indexOf(roleOf(b));
+      return d || personName(a).localeCompare(personName(b));
+    });
+    if (!shown.length) { box.append(h('p', { class: 'note' }, q ? 'No members match “' + dashQuery.trim() + '”.' : 'No members yet.')); return; }
+    var rows = shown.map(function (u) {
+      var r = state.roles[u] || {};
+      var opts = assignable(u);
+      var cur = roleOf(u);
+      var ctl = [];
+      if (opts.length) {
+        var sel = h('select', { class: 'plain', 'aria-label': 'Role for ' + personName(u),
+          onchange: function (e) { var v = e.target.value; setRole(u, v).then(function () { flash(personName(u) + ' is now ' + roleLabel(v) + '.', 'ok'); }); } },
+          order.filter(function (k) { return opts.indexOf(k) >= 0 || k === cur; }).map(function (k) { return h('option', { value: k }, roleLabel(k)); }));
+        sel.value = cur;
+        ctl.push(sel);
+        ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () {
+          queue(function () { var nr = Object.assign({}, state.roles[u] || { role: cur }); nr.suspended = !r.suspended; nr.by = state.me; nr.at = Date.now(); return state.db.doc('roles/' + u).set(nr); }, 'Could not change access.')
+            .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
+        } }, r.suspended ? 'Restore access' : 'Pause access'));
+        ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () { resetPassword(u); } }, 'Reset password'));
+        if (isSuper()) ctl.push(h('button', { class: 'link' + (pendingRemoveUser === u ? ' danger' : ''), type: 'button', onclick: function () { removeUser(u); } }, pendingRemoveUser === u ? 'Tap again to remove' : 'Remove'));
+      } else {
+        ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
+      }
+      var created = Number(state.accounts[u].createdAt);
+      var n = upcomingFor(u);
+      var facts = [(isOwnerAccount(u) ? 'Owner · ' : '') + roleLabel(cur)];
+      if (created) facts.push('joined ' + mfmt.format(new Date(created)));
+      if (state.accounts[u].rating) facts.push('rating ' + Number(state.accounts[u].rating).toFixed(1));
+      facts.push(n + (n === 1 ? ' upcoming session' : ' upcoming sessions'));
+      var acct = state.accounts[u];
+      if (Number(r.pwReset) > Number(acct.pwSetAt || 0)) facts.push('password reset pending');
+      if (r.suspended) facts.push('access paused');
+      return h('div', { class: 'row' },
+        h('div', { class: 'meta' },
+          h('strong', null, personName(u) + (u === state.me ? ' (you)' : '')),
+          h('span', null, facts.join(' · '))),
+        h('div', { class: 'ctl' }, ctl));
+    });
+    box.append(h('div', { class: 'rows' }, rows));
+  }
+
+  /* ---------- profile: name and email (read-only), level rating, change password ---------- */
+  var RATINGS = [['2.0', '2.0 · Beginner'], ['2.5', '2.5 · Beginner'], ['3.0', '3.0 · Intermediate'], ['3.5', '3.5 · Intermediate'], ['4.0', '4.0 · Advanced'], ['4.5', '4.5 · Advanced'], ['5.0', '5.0+ · Advanced']];
+  function renderProfile() {
+    var a = myAccount() || {};
+    $('#pf-name').value = myName();
+    $('#pf-email').value = state.email;
+    var sel = $('#pf-rating');
+    if (document.activeElement !== sel) sel.value = a.rating ? Number(a.rating).toFixed(1) : '';
+  }
+
+  /* ---------- role access view (super admin) ---------- */
+  function renderRoles() {
+    var box = $('#view-roles');
+    box.replaceChildren();
+    if (!isSuper()) { box.append(h('p', { class: 'note' }, 'Only a super admin can change role access.')); return; }
+    var defs = roleDefs();
+    var order = roleOrder(defs);
+    box.append(h('h2', null, 'Role access'));
+    box.append(h('p', { class: 'note' }, 'Choose what each role can see and do. Changes apply the next time that person’s page updates. Super admin always has every feature and can’t be turned down.'));
+
+    var head = h('tr', null, h('th', { scope: 'col' }, 'Feature'));
+    order.forEach(function (k) {
+      var th = h('th', { scope: 'col' }, roleLabel(k));
+      if (k !== 'super_admin' && !DEFAULTS[k]) {
+        th.append(h('br'), h('button', { class: 'link', type: 'button', onclick: function () { deleteRole(k); } }, 'Delete role'));
+      }
+      head.append(th);
+    });
+    var body = FEATURES.map(function (f) {
+      var tr = h('tr', null, h('td', null, f.label, h('small', null, f.hint)));
+      order.forEach(function (k) {
+        if (k === 'super_admin') { tr.append(h('td', null, h('input', { type: 'checkbox', checked: true, disabled: true, 'aria-label': f.label + ' for Super admin' }))); return; }
+        tr.append(h('td', null, h('input', { type: 'checkbox', checked: defs[k].perms[f.key] === true, 'aria-label': f.label + ' for ' + roleLabel(k),
+          onchange: function (e) {
+            var val = e.target.checked;
+            saveCfg(function (dd) { dd[k].perms[f.key] = val; });
+          } })));
+      });
+      return tr;
+    });
+    box.append(h('div', { class: 'matrix-wrap' }, h('table', { class: 'matrix' }, h('thead', null, head), h('tbody', null, body))));
+
+    var nameInput = h('input', { id: 'new-role', type: 'text', maxlength: '24', placeholder: 'Coach' });
+    box.append(h('form', { class: 'add-role', onsubmit: function (e) {
+      e.preventDefault();
+      var label = nameInput.value.trim();
+      var key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (!label || !key) { flash('Give the new role a name.', 'err'); return; }
+      if (key === 'super-admin' || key === 'super_admin' || roleDefs()[key]) { flash('A role with that name already exists.', 'err'); return; }
+      saveCfg(function (dd) { dd[key] = { label: label, perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false } }; })
+        .then(function () { flash(label + ' role added. Set its access in the table above.', 'ok'); });
+      nameInput.value = '';
+    } },
+      h('label', { class: 'field', for: 'new-role' }, 'Add another role', nameInput),
+      h('button', { class: 'btn', type: 'submit' }, 'Add role')));
+    box.append(h('p', { class: 'note' }, 'New roles start with view, join and roster access. People pick or are given a role from the People menu.'));
+  }
+  function deleteRole(k) {
+    var affected = Object.keys(state.roles).filter(function (u) { return state.roles[u].role === k; });
+    saveCfg(function (dd) { delete dd[k]; }).then(function () {
+      return Promise.all(affected.map(function (u) { return setRole(u, 'player'); }));
+    }).then(function () { flash('Role removed. Anyone who had it is now a player.', 'ok'); });
+  }
+
+  /* ---------- gate, bar, nav ---------- */
+  // An admin reset marks roles/{id}.pwReset; it stays in force until a newer password is saved (members/{id}.pwSetAt).
+  function needsReset(id) {
+    var r = state.roles[id], a = state.accounts[id];
+    var at = r ? Number(r.pwReset) : 0;
+    return !!at && at > Number((a && a.pwSetAt) || 0);
+  }
+  function endSession() {
+    state.me = null;
+    state.menuOpen = false; state.hostOpen = false; state.edit = null; state.view = 'schedule';
+    state.email = '';
+    try { localStorage.removeItem('kl-acct'); localStorage.removeItem('kl-email'); } catch (e) {}
+  }
+  function gateState() {
+    if (state.phase === 'nodb') return 'nodb';
+    if (state.phase === 'error') return 'error';
+    var l = state.loaded;
+    if (!(l.sessions && l.players && l.accounts && l.roles && l.cfg)) return 'loading';
+    // Drop the saved login if that account was removed, or an admin reset its password.
+    if (state.me && (!state.accounts[state.me] || needsReset(state.me) || !state.email)) endSession();
+    if (!state.me) return state.resetId ? 'setpw' : (state.authMode === 'signup' ? 'signup' : 'login');
+    var r = state.roles[state.me];
+    if (r && r.suspended) return 'suspended';
+    if (!can('view')) return 'noview';
+    return 'ok';
+  }
+  var MESSAGES = {
+    loading: ['Loading', 'Checking your account and the latest schedule.'],
+    nodb: ['Sign in to continue', 'Accounts and sign-ups are shared live, so this page needs you to be signed in to Claude. Open it from your Claude account and the log in page will appear here.'],
+    error: ['Something went wrong', 'The schedule could not be loaded. Reload the page to try again.'],
+    suspended: ['Your access is paused', 'An admin has paused your account. Ask them to restore it and this page will open for you.'],
+    noview: ['The schedule is hidden for your role', 'Your role does not include viewing sessions. Ask an admin or super admin to change your access.']
+  };
+
+  function renderGate(g) {
+    var gate = $('#gate');
+    gate.hidden = (g === 'ok');
+    $('#signup-form').hidden = (g !== 'signup');
+    var msg = MESSAGES[g];
+    $('#gate-msg').hidden = !msg;
+    if (msg) { $('#gate-title').textContent = msg[0]; $('#gate-text').textContent = msg[1]; }
+    $('#login-form').hidden = (g !== 'login');
+    $('#pw-form').hidden = (g !== 'setpw');
+    $('#owner-reset').hidden = !state.isOwner;
+    $('#gate-logout').hidden = !(state.me && (g === 'suspended' || g === 'noview'));
+    if (g === 'setpw') $('#p-email').value = state.resetEmail;
+  }
+
+  /* ---------- accounts and passwords ----------
+     An account id is a hash of its email, so the same email is the same account on any Claude sign-in.
+     The password is stored only as a salted hash in logins/{id}. The site has no server, so this is a
+     lock screen: anyone with access to the page's data could tamper with it. */
+  var PW_ITER = 200000;
+  var loginFails = 0, lockUntil = 0;
+  function toB64(buf) { var s = ''; new Uint8Array(buf).forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s); }
+  function fromB64(str) { var s = atob(str), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+  function hashPw(pw, salt, iter) {
+    var subtle = window.crypto && window.crypto.subtle;
+    if (!subtle) return Promise.reject(new Error('This browser cannot protect passwords.'));
+    return subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits'])
+      .then(function (key) { return subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt, iterations: iter }, key, 256); })
+      .then(toB64);
+  }
+  function normEmail(v) { return String(v || '').trim().toLowerCase(); }
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  function emailId(email) {
+    var subtle = window.crypto && window.crypto.subtle;
+    if (!subtle) return Promise.reject(new Error('This browser cannot protect passwords.'));
+    return subtle.digest('SHA-256', new TextEncoder().encode('kitchen-line:' + email)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf).slice(0, 16), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+    });
+  }
+  function checkPw(cred, email, pw) {
+    return hashPw(email + '\n' + pw, fromB64(cred.salt), cred.iter || PW_ITER).then(function (hash) { return hash === cred.hash; });
+  }
+  function saveCred(id, email, pw) {
+    var salt = window.crypto.getRandomValues(new Uint8Array(16));
+    return hashPw(email + '\n' + pw, salt, PW_ITER).then(function (hash) {
+      return state.db.doc('logins/' + id).set({ salt: toB64(salt), hash: hash, iter: PW_ITER, setAt: Date.now() });
+    });
+  }
+  function checkNewPw(p1, p2, focusId) {
+    if (p1.length < 8) { flash('Use at least 8 characters for your password.', 'err'); $(focusId).focus(); return false; }
+    if (p1 !== p2) { flash('The two passwords do not match.', 'err'); $(focusId).focus(); return false; }
+    return true;
+  }
+
+  /* ---------- top bar: menu, signed-in user, log out ---------- */
+  function setMenu(open, focusFirst) {
+    state.menuOpen = open;
+    $('#menu').hidden = !open;
+    $('#menu-btn').setAttribute('aria-expanded', String(open));
+    if (open && focusFirst) { var first = $('#menu button'); if (first) first.focus(); }
+  }
+  function openHost() {
+    state.view = 'schedule';
+    state.hostOpen = true;
+    setMenu(false);
+    render();
+    $('#host').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('#h-title').focus({ preventScroll: true });
+  }
+  function clearHostError() {
+    $('#h-error').hidden = true; $('#h-error').textContent = '';
+    $('#h-date').removeAttribute('aria-invalid'); $('#h-start').removeAttribute('aria-invalid');
+  }
+  function closeHost() { state.hostOpen = false; render(); }
+  function logOut() {
+    endSession();
+    state.authMode = 'login'; state.resetId = null;
+    $('#l-email').value = ''; $('#l-pass').value = '';
+    render();
+    flash('You are logged out.', 'ok');
+    $('#l-email').focus();
+  }
+  function logIn(id, email) {
+    state.me = id; state.email = email || ''; state.resetId = null; state.resetEmail = '';
+    try { localStorage.setItem('kl-acct', id); localStorage.setItem('kl-email', state.email); } catch (e) {}
+    render();
+    if (gateState() === 'ok') flash('Welcome, ' + myName() + '.', 'ok');
+  }
+
+  function renderBar() {
+    $('#who').replaceChildren(
+      h('div', { class: 'who-text' },
+        h('strong', { title: myName() }, myName()),
+        h('span', { class: 'who-role' }, roleLabel(myRole()))),
+      h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
+
+    var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
+    if (can('people')) views.push(['people', 'Users']);
+    if (isSuper()) views.push(['roles', 'Role access']);
+    if (!views.some(function (i) { return i[0] === state.view; })) state.view = 'schedule';
+    var menu = $('#menu');
+    menu.replaceChildren();
+    views.forEach(function (i) {
+      menu.append(h('button', { id: 'm-' + i[0], type: 'button', 'aria-current': state.view === i[0] && !state.hostOpen ? 'page' : null,
+        onclick: function () { state.view = i[0]; state.hostOpen = false; setMenu(false); render(); window.scrollTo(0, 0); } }, i[1]));
+    });
+    if (can('host')) {
+      menu.append(h('hr'));
+      menu.append(h('button', { id: 'm-host', type: 'button', 'aria-current': state.hostOpen ? 'page' : null, onclick: openHost }, 'Add new session', h('span', { 'aria-hidden': 'true' }, '+')));
+    }
+    setMenu(state.menuOpen);
+  }
+
+  function renderStats(g, all) {
+    var el = $('#stats');
+    if (g === 'ok') {
+      var ids = {};
+      all.forEach(function (s) { roster(s.id).forEach(function (r) { ids[r.uid] = 1; }); });
+      var n = all.length, p = Object.keys(ids).length;
+      el.textContent = n + (n === 1 ? ' session' : ' sessions') + ' coming up · ' + p + (p === 1 ? ' player' : ' players') + ' signed up';
+    } else if (g === 'signup') el.textContent = 'Set up your account to see the schedule.';
+    else if (g === 'nodb') el.textContent = 'Sign in to see live sign-ups.';
+    else if (g === 'login') el.textContent = 'Log in to see the schedule.';
+    else if (g === 'setpw') el.textContent = 'Choose a new password to continue.';
+    else el.textContent = 'Loading the schedule…';
+  }
+
+  function syncFilters() {
+    $('#f-level').value = filters.level;
+    $('#f-format').value = filters.format;
+    $('#f-mine').checked = filters.mine;
+  }
+
+  function render() {
+    var ae = document.activeElement;
+    var focusId = ae && ae.id && ae.closest && ae.closest('#app, #topbar') ? ae.id : '';
+    var selA = null, selB = null;
+    if (focusId) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
+
+    var g = gateState();
+    var all = upcoming();
+    clockKey = clockSig(all);
+    renderStats(g, all);
+    renderGate(g);
+    $('#app').hidden = (g !== 'ok');
+    $('#topbar').hidden = (g !== 'ok');
+    if (g !== 'ok') setMenu(false);
+    if (g === 'ok') {
+      renderBar();
+      $('#view-schedule').hidden = state.view !== 'schedule';
+      $('#view-profile').hidden = state.view !== 'profile';
+      $('#view-people').hidden = state.view !== 'people';
+      $('#view-roles').hidden = state.view !== 'roles';
+      if (!can('host')) state.hostOpen = false;
+      $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
+      if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
+      else if (state.view === 'profile') renderProfile();
+      else if (state.view === 'people') renderUsers();
+      else renderRoles();
+    }
+    renderModal();
+    if (focusId) {
+      var el = document.getElementById(focusId);
+      if (el && el !== document.activeElement) {
+        el.focus();
+        if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} }
+      }
+    }
+  }
+
+  /* ---------- setup ---------- */
+  function setup() {
+    LEVELS.forEach(function (l) {
+      $('#f-level').append(h('option', { value: l }, l));
+      $('#h-level').append(h('option', { value: l }, l));
+    });
+    FORMATS.forEach(function (f) {
+      $('#f-format').append(h('option', { value: f }, f));
+      $('#h-format').append(h('option', { value: f }, f));
+    });
+    var today = dkey(new Date());
+    $('#h-date').min = today;
+    $('#h-date').value = today;
+    $('#f-level').addEventListener('change', function (e) { filters.level = e.target.value; render(); });
+    $('#f-format').addEventListener('change', function (e) { filters.format = e.target.value; render(); });
+    $('#f-mine').addEventListener('change', function (e) { filters.mine = e.target.checked; render(); });
+
+    $('#menu-btn').addEventListener('click', function (e) { setMenu(!state.menuOpen, e.detail === 0); });
+    document.addEventListener('click', function (e) {
+      if (state.menuOpen && !e.target.closest('.menu-wrap')) setMenu(false);
+      // composedPath is read at click time, so it still works after the calendar re-renders under the click
+      if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (state.playersFor) {
+        if (e.key === 'Escape') { closePlayers(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the pop-up
+          var f = [].slice.call(document.querySelectorAll('#modal button'));
+          if (!f.length) return;
+          var i = f.indexOf(document.activeElement);
+          if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+          else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+          else if (i < 0) { e.preventDefault(); f[0].focus(); }
+        }
+        return;
+      }
+      if (e.key === 'Escape' && state.calOpen) { closeCal(true); return; }
+      if (e.key === 'Escape' && state.menuOpen) { setMenu(false); $('#menu-btn').focus(); }
+    });
+    $('#h-cancel').addEventListener('click', function () { clearHostError(); closeHost(); });
+    ['#h-date', '#h-start'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
+
+    var rs = $('#pf-rating');
+    rs.append(h('option', { value: '' }, 'Not set'));
+    RATINGS.forEach(function (r) { rs.append(h('option', { value: r[0] }, r[1])); });
+    rs.addEventListener('change', function (e) {
+      var me = state.me, v = e.target.value;
+      if (!state.db || !me) return;
+      var next = Object.assign({}, state.accounts[me]);
+      if (v) next.rating = parseFloat(v); else delete next.rating;
+      state.accounts[me] = next;
+      queue(function () { return state.db.doc('members/' + me).set(next); }, 'Could not save your rating.')
+        .then(function () { flash(v ? 'Rating saved: ' + v + '.' : 'Rating cleared.', 'ok'); });
+    });
+    function closePwForm() { $('#pf-pw-form').hidden = true; ['#pf-cur', '#pf-new', '#pf-new2'].forEach(function (s) { $(s).value = ''; }); }
+    $('#pf-reset').addEventListener('click', function () {
+      var f = $('#pf-pw-form');
+      if (f.hidden) { f.hidden = false; $('#pf-cur').focus(); } else closePwForm();
+    });
+    $('#pf-cancel').addEventListener('click', closePwForm);
+    $('#pf-pw-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var me = state.me, email = state.email;
+      if (!state.db || !me || !email) { flash('Log out and log in again, then change your password.', 'err'); return; }
+      var wait = lockUntil - Date.now();
+      if (wait > 0) { flash('Too many tries. Wait ' + Math.ceil(wait / 1000) + ' seconds.', 'err'); return; }
+      var cur = $('#pf-cur').value;
+      if (!cur) { flash('Enter your current password.', 'err'); $('#pf-cur').focus(); return; }
+      if (!checkNewPw($('#pf-new').value, $('#pf-new2').value, '#pf-new')) return;
+      var pw = $('#pf-new').value;
+      $('#pf-save').disabled = true;
+      emailId(email).then(function (id) {
+        if (id !== me) throw new Error('Log out and log in again first.');
+        return state.db.doc('logins/' + me).get();
+      }).then(function (snap) {
+        if (!snap.exists) throw new Error('No password was found for this account.');
+        return checkPw(snap.data(), email, cur);
+      }).then(function (ok) {
+        if (!ok) {
+          loginFails++;
+          if (loginFails >= 5) { loginFails = 0; lockUntil = Date.now() + 30000; flash('Too many tries. Wait 30 seconds.', 'err'); }
+          else flash('Your current password is not right.', 'err');
+          return;
+        }
+        loginFails = 0;
+        return saveCred(me, email, pw).then(function () {
+          var member = Object.assign({}, state.accounts[me], { pwSetAt: Date.now() });
+          return state.db.doc('members/' + me).set(member).then(function () { state.accounts[me] = member; });
+        }).then(function () { closePwForm(); flash('Password changed. Use the new one next time you log in.', 'ok'); });
+      }).catch(fail('Could not change your password.')).then(function () { $('#pf-save').disabled = false; });
+    });
+
+    $('#to-signup').addEventListener('click', function () { state.authMode = 'signup'; render(); $('#s-name').focus(); });
+    $('#to-login').addEventListener('click', function () { state.authMode = 'login'; render(); $('#l-email').focus(); });
+    $('#gate-logout').addEventListener('click', logOut);
+    $('#p-cancel').addEventListener('click', function () {
+      state.resetId = null; state.resetEmail = '';
+      $('#p-pass').value = ''; $('#p-pass2').value = '';
+      render();
+    });
+
+    $('#login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!state.db) { flash('Sign in to Claude first.', 'err'); return; }
+      var wait = lockUntil - Date.now();
+      if (wait > 0) { flash('Too many tries. Wait ' + Math.ceil(wait / 1000) + ' seconds.', 'err'); return; }
+      var email = normEmail($('#l-email').value), pw = $('#l-pass').value;
+      if (!validEmail(email) || !pw) { flash('Enter your email and password.', 'err'); return; }
+      $('#l-submit').disabled = true;
+      var id;
+      emailId(email).then(function (i) {
+        id = i;
+        if (!state.accounts[id]) return 'nomatch';
+        if (needsReset(id)) { state.resetId = id; state.resetEmail = email; return 'reset'; }
+        return state.db.doc('logins/' + id).get().then(function (snap) {
+          if (!snap.exists) return 'nomatch';
+          return checkPw(snap.data(), email, pw).then(function (ok) { return ok ? 'ok' : 'nomatch'; });
+        });
+      }).then(function (res) {
+        $('#l-pass').value = '';
+        if (res === 'ok') { loginFails = 0; logIn(id, email); }
+        else if (res === 'reset') { render(); $('#p-pass').focus(); flash('An admin reset this password. Choose a new one.', 'ok'); }
+        else {
+          loginFails++;
+          if (loginFails >= 5) { loginFails = 0; lockUntil = Date.now() + 30000; flash('Too many tries. Wait 30 seconds, or ask an admin to reset your password.', 'err'); }
+          else flash('That email and password do not match.', 'err');
+        }
+      }).catch(fail('Could not log in.')).then(function () { $('#l-submit').disabled = false; });
+    });
+
+    // Site owner only: start a password reset for any email (recovery if the owner is locked out).
+    $('#l-reset').addEventListener('click', function () {
+      var email = normEmail($('#l-email').value);
+      if (!state.isOwner || !state.db) return;
+      if (!validEmail(email)) { flash('Type the account email in the Email box first.', 'err'); $('#l-email').focus(); return; }
+      emailId(email).then(function (id) {
+        if (!state.accounts[id]) { flash('There is no account with that email.', 'err'); return; }
+        var nr = Object.assign({ role: 'player' }, state.roles[id], { pwReset: Date.now(), at: Date.now() });
+        return queue(function () { return state.db.doc('roles/' + id).set(nr); }, 'Could not start the reset.')
+          .then(function () { flash('Reset started. Now press Log in with that email to choose a new password.', 'ok'); });
+      }).catch(fail('Could not start the reset.'));
+    });
+
+    // Choosing a new password after an admin reset.
+    $('#pw-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var id = state.resetId, email = state.resetEmail;
+      if (!state.db || !id) return;
+      if (!checkNewPw($('#p-pass').value, $('#p-pass2').value, '#p-pass')) return;
+      var pw = $('#p-pass').value;
+      $('#p-submit').disabled = true;
+      saveCred(id, email, pw)
+        .then(function () {
+          var member = Object.assign({}, state.accounts[id], { pwSetAt: Date.now() });
+          return state.db.doc('members/' + id).set(member).then(function () { state.accounts[id] = member; });
+        })
+        .then(function () { $('#p-pass').value = ''; $('#p-pass2').value = ''; logIn(id, email); })
+        .catch(fail('Could not save your password.'))
+        .then(function () { $('#p-submit').disabled = false; });
+    });
+
+    $('#signup-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!state.db) { flash('Sign in to Claude first.', 'err'); return; }
+      var name = $('#s-name').value.trim();
+      var email = normEmail($('#s-email').value);
+      if (!name) { flash('Enter your full name.', 'err'); $('#s-name').focus(); return; }
+      if (!validEmail(email)) { flash('Enter a valid email address.', 'err'); $('#s-email').focus(); return; }
+      if (!checkNewPw($('#s-pass').value, $('#s-pass2').value, '#s-pass')) return;
+      var pw = $('#s-pass').value;
+      $('#s-submit').disabled = true;
+      var id;
+      emailId(email).then(function (i) {
+        id = i;
+        return state.db.doc('members/' + id).get();
+      }).then(function (snap) {
+        if (snap.exists) { flash('An account with that email already exists. Log in instead.', 'err'); return; }
+        var member = { name: name, createdAt: Date.now(), pwSetAt: Date.now() };
+        return saveCred(id, email, pw)
+          .then(function () { return state.db.doc('members/' + id).set(member); })
+          .then(function () {
+            state.accounts[id] = member;   // keep it locally until the live data catches up, so the page doesn't log it out
+            // The first account the site owner creates becomes the super admin. Everyone else starts as a player.
+            if (state.isOwner && !superExists()) {
+              var role = { role: 'super_admin', owner: true, by: id, at: Date.now() };
+              return state.db.doc('roles/' + id).set(role).then(function () { state.roles[id] = role; });
+            }
+          })
+          .then(function () {
+            $('#s-pass').value = ''; $('#s-pass2').value = '';
+            ['#s-name', '#s-email'].forEach(function (s) { $(s).value = ''; });
+            logIn(id, email);
+          });
+      }).catch(fail('Could not create your account.')).then(function () { $('#s-submit').disabled = false; });
+    });
+
+    $('#host-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!state.db || !state.me || !can('host')) { flash('Your role cannot add sessions.', 'err'); return; }
+      if (!state.canWrite) { flash('You have view-only access to this schedule.', 'err'); return; }
+      var cap = Math.min(32, Math.max(2, parseInt($('#h-cap').value, 10) || 12));
+      var data = {
+        title: $('#h-title').value.trim() || '-', date: $('#h-date').value, start: $('#h-start').value,
+        duration: parseInt($('#h-dur').value, 10), court: $('#h-court').value.trim() || '-', venue: $('#h-venue').value.trim() || '-',
+        level: $('#h-level').value, format: $('#h-format').value, capacity: cap,
+        hostId: state.me, hostName: myName(), createdAt: Date.now()
+      };
+      if (!data.date || !data.start) { flash('Pick the day and start time.', 'err'); return; }
+      if (isPast(data.date, data.start)) {
+        $('#h-error').textContent = PAST_MSG; $('#h-error').hidden = false;
+        $('#h-date').setAttribute('aria-invalid', 'true'); $('#h-start').setAttribute('aria-invalid', 'true');
+        (data.date < dkey(new Date()) ? $('#h-date') : $('#h-start')).focus();
+        return;
+      }
+      $('#h-submit').disabled = true;
+      state.db.collection('sessions').add(data).then(function () {
+        flash('Added ' + data.title + ' to the schedule.', 'ok');
+        clearHostError();
+        $('#h-title').value = '';
+        filters.day = 'all';
+        state.hostOpen = false;
+        render();
+      }).catch(fail('Could not add the session.')).then(function () { $('#h-submit').disabled = false; });
+    });
+  }
+
+  /* ---------- clock: sessions are deleted the moment they end ---------- */
+  var clockKey = '';
+  function clockSig(all) {
+    return dkey(new Date()) + '|' + all.map(function (s) { return s.id; }).join(',');
+  }
+  var purged = {};
+  function purgeEnded() {
+    if (!state.db || !state.canWrite || !state.loaded.sessions) return;
+    var now = Date.now();
+    state.sessions.forEach(function (s) {
+      if (!s || !s.date || !s.start || purged[s.id] || times(s).end.getTime() > now) return;
+      purged[s.id] = true;
+      state.db.doc('sessions/' + s.id).delete().catch(function () {});
+    });
+  }
+  function clockTick() {
+    purgeEnded();
+    var sig = clockSig(upcoming());
+    if (sig === clockKey) return;
+    var today = dkey(new Date());
+    $('#h-date').min = today;
+    if ($('#h-date').value < today) $('#h-date').value = today;
+    if (filters.day !== 'all' && filters.day < today) filters.day = 'all';
+    render();
+  }
+
+  async function init() {
+    setup();
+    render();
+    setInterval(clockTick, 15000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) clockTick(); });
+    setTimeout(function () { if (gateState() === 'loading') { state.slow = true; $('#gate-text').textContent = 'This is taking longer than usual. The page will open as soon as the connection answers.'; } }, 10000);
+    var c = window.claude;
+    if (!c || typeof c.use !== 'function') { state.phase = 'nodb'; render(); return; }
+    var db = null, user = null;
+    try {
+      var r = await Promise.all([c.use('db'), c.use('user')]);
+      db = r[0]; user = r[1];
+    } catch (e) {}
+    if (!db) { state.phase = 'nodb'; render(); return; }
+    state.db = db;
+    if (user) {
+      try { state.isOwner = await user.isOwner(); } catch (e) {}
+      try { if ((await user.can('data.write')) === false) state.canWrite = false; } catch (e) {}
+    }
+    function onErr(e) { state.phase = 'error'; render(); }
+    db.collection('sessions').onSnapshot(function (snap) {
+      state.sessions = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
+      state.loaded.sessions = true; purgeEnded(); render();
+    }, onErr);
+    db.collection('signups').onSnapshot(function (snap) {
+      var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
+      state.players = next; state.loaded.players = true; render();
+    }, onErr);
+    db.collection('members').onSnapshot(function (snap) {
+      var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
+      state.accounts = next; state.loaded.accounts = true; render();
+    }, onErr);
+    db.collection('roles').onSnapshot(function (snap) {
+      var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
+      state.roles = next; state.loaded.roles = true; render();
+    }, onErr);
+    db.doc('config/roles').onSnapshot(function (snap) {
+      state.cfg = snap.exists ? (snap.data() || {}) : {};
+      state.loaded.cfg = true; render();
+    }, onErr);
+  }
+  init();
+})();
+</script>
