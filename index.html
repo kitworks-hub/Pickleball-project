@@ -218,6 +218,14 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .rate-list { display: flex; flex-direction: column; gap: 8px; }
 .rate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .rate-row select, .price-in input, .court-row select, .court-add select, .move-form input, .move-form select { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.bkl-panel { width: min(680px, 100%); max-height: min(92vh, 840px); }
+.bkl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.bkl-controls input { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); min-width: 0; }
+.bkl-controls input[type="search"] { flex: 1 1 200px; }
+.bkl-main { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+#bkl-items .p-row { flex-wrap: nowrap; align-items: flex-start; }
+#bkl-items .p-row .btn { flex: none; }
+.bkl-line strong { font-weight: 700; }
 .mb-panel { width: min(620px, 100%); max-height: min(92vh, 840px); }
 .mb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .mb-list > li { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
@@ -417,7 +425,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             <span>Add new session</span>
           </button>
-          <button id="dash-config" class="btn small" type="button" hidden aria-haspopup="true">
+          <button id="dash-config" class="btn small" type="button" hidden aria-haspopup="dialog">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
             <span>Session Configurations</span>
           </button>
@@ -514,10 +522,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     <section id="view-book" class="view-stack" aria-label="Book a court" hidden>
       <div class="book-head">
         <h2>Book a court</h2>
+        <div class="dash-actions">
+        <button id="bk-manage" class="btn small" type="button" hidden aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span>Manage Bookings</span>
+        </button>
         <button id="bk-config" class="btn small" type="button" hidden aria-haspopup="dialog">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
           <span>Configure</span>
         </button>
+        </div>
       </div>
       <p class="note">Pick a date, then tap the hours you want. <span id="bk-rates"></span></p>
       <div class="book-bar">
@@ -542,7 +556,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       </div>
       <div id="bk-mine"></div>
     </section>
-    <section id="view-options" class="view-stack" aria-label="Session Configurations" hidden></section>
     <section id="view-people" class="view-stack" aria-label="People" hidden></section>
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
   </div>
@@ -554,7 +567,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 <div id="confirm" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
+<div id="bklist" class="modal" hidden></div>
 <div id="mbdlg" class="modal" hidden></div>
+<div id="sesscfg" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -606,7 +621,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -812,7 +827,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg || state.mb) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1536,6 +1551,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (di.value !== b.date) di.value = b.date;
     $('#bk-prev').disabled = b.date <= today; $('#bk-next').disabled = b.date >= max;
     $('#bk-config').hidden = !can('bookconfig');
+    $('#bk-manage').hidden = !can('managebookings');
     var cols = bookingColumns(), cfg = bcfg();
     var canManage = can('managebookings') && state.canWrite, canNames = can('viewbookers');
 
@@ -1966,57 +1982,181 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     build('#f-format', 'Any format', formats, 'format');
   }
 
-  var OPTION_KINDS = [
-    { key: 'levels', title: 'Level', hint: 'Used in the add form, the edit form and the Level filter.', placeholder: 'Intermediate 3.0–3.5', max: 40 },
-    { key: 'formats', title: 'Format', hint: 'Used in the add form, the edit form and the Format filter.', placeholder: 'Round robin', max: 30 },
-    { key: 'courts', title: 'Court number', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Court 3', max: 30 },
-    { key: 'venues', title: 'Venue', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Riverside', max: 60 }
+  /* ---------- Session Configurations: a dialog for the lists behind the add / edit / filter forms ---------- */
+  // Built like the court booking configuration: edit a draft, then Save settings (or Cancel to throw the changes away).
+  var SESS_KINDS = [
+    { key: 'levels', title: 'Level', label: 'level', hint: 'Used in the add form, the edit form and the Level filter.', placeholder: 'Intermediate 3.0–3.5', max: 40, keepOne: true },
+    { key: 'formats', title: 'Format', label: 'format', hint: 'Used in the add form, the edit form and the Format filter.', placeholder: 'Round robin', max: 30, keepOne: true },
+    { key: 'courts', title: 'Court number', label: 'court', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Court 3', max: 30 },
+    { key: 'venues', title: 'Venue', label: 'venue', hint: 'Shown as a list in the session forms. These are also the venues used for court booking.', placeholder: 'Riverside', max: 60 }
   ];
-  function setOption(key, list, message) {
-    if (!state.db || !can('options')) { flash('Your role cannot change session configurations.', 'err'); return; }
-    var next = Object.assign({}, state.options); next[key] = list;
-    state.options = next;
-    render();
-    state.db.doc('config/options').set(next).then(function () { flash(message, 'ok'); }).catch(fail('Could not save the options.'));
+  var sessCfgRev = -1;
+  function openSessCfg() {
+    if (!can('options')) return;
+    var o = opts();
+    state.sessCfg = { levels: o.levels.slice(), formats: o.formats.slice(), courts: o.courts.slice(), venues: o.venues.slice(), draft: {}, error: '', saving: false, rev: 0 };
+    sessCfgRev = -1;
+    renderSessCfg();
+    var first = $('#sesscfg .opt-add input'); if (first) first.focus();
   }
-  function addOption(kind) {
-    var raw = String(state.optDraft[kind.key] || '').trim(), list = opts()[kind.key];
-    if (!raw) { flash('Type the ' + kind.title.toLowerCase() + ' to add first.', 'err'); return; }
-    if (raw.length > kind.max) { flash('That is too long. Use ' + kind.max + ' characters or fewer.', 'err'); return; }
-    if (list.some(function (x) { return String(x).toLowerCase() === raw.toLowerCase(); })) { flash('That is already in the list.', 'err'); return; }
-    state.optDraft[kind.key] = '';
-    setOption(kind.key, list.concat([raw]), 'Added ' + raw + '.');
+  function closeSessCfg() {
+    state.sessCfg = null;
+    renderSessCfg();
+    var b = $('#dash-config'); if (b) b.focus();
   }
-  function renderOptions() {
-    var box = $('#view-options');
-    box.replaceChildren();
-    if (!can('options')) { box.append(h('p', { class: 'note' }, 'Your role cannot manage session configurations.')); return; }
-    box.append(h('h2', null, 'Session Configurations'));
-    box.append(h('p', { class: 'note' }, 'The choices people see when they add or edit a session. Changing a list does not change sessions that already exist.'));
-    var o = opts(), grid = h('div', { class: 'opt-grid' });
-    OPTION_KINDS.forEach(function (kind) {
-      var list = o[kind.key], keepOne = kind.key !== 'courts' && kind.key !== 'venues';
-      var chips = list.map(function (v) {
-        var label = v;
-        return h('span', { class: 'opt-chip' }, label,
-          h('button', { type: 'button', disabled: keepOne && list.length <= 1, 'aria-label': 'Remove ' + label, title: 'Remove ' + label,
-            onclick: function () { setOption(kind.key, list.filter(function (x) { return x !== v; }), 'Removed ' + label + '.'); } }, '×'));
-      });
-      var input = h('input', { id: 'opt-in-' + kind.key, type: 'text', placeholder: kind.placeholder, 'aria-label': 'Add ' + kind.title.toLowerCase(),
-        value: state.optDraft[kind.key] || '', oninput: function (e) { state.optDraft[kind.key] = e.target.value; } });
-      input.maxLength = kind.max;
-      var isClear = !DEFAULT_OPTIONS[kind.key].length;
-      grid.append(h('section', { class: 'panel' },
-        h('div', { class: 'opt-head' },
-          h('h3', null, kind.title),
-          h('button', { class: 'link', type: 'button', title: isClear ? 'Remove every ' + kind.title.toLowerCase() : 'Put back the original ' + kind.title.toLowerCase() + ' list',
-            onclick: function () { setOption(kind.key, DEFAULT_OPTIONS[kind.key].slice(), kind.title + ' list ' + (isClear ? 'cleared.' : 'reset to the defaults.')); } }, isClear ? 'Clear' : 'Reset')),
-        h('div', { class: 'opt-chips' }, chips.length ? chips : h('span', { class: 'note' }, 'None yet')),
-        h('form', { class: 'opt-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addOption(kind); } },
-          input, h('button', { class: 'btn small', type: 'submit' }, 'Add')),
-        h('p', { class: 'note' }, kind.hint)));
+  function bumpSessCfg() { state.sessCfg.rev++; renderSessCfg(); }
+  function addSessItem(kind) {
+    var c = state.sessCfg, v = String(c.draft[kind.key] || '').trim();
+    if (!v) { c.error = 'Type the ' + kind.label + ' to add first.'; bumpSessCfg(); return; }
+    if (v.length > kind.max) { c.error = 'That is too long. Use ' + kind.max + ' characters or fewer.'; bumpSessCfg(); return; }
+    if (c[kind.key].some(function (x) { return String(x).toLowerCase() === v.toLowerCase(); })) { c.error = 'That ' + kind.label + ' is already in the list.'; bumpSessCfg(); return; }
+    c[kind.key].push(v); c.draft[kind.key] = ''; c.error = ''; bumpSessCfg();
+    var inp = document.getElementById('sc-in-' + kind.key); if (inp) inp.focus();
+  }
+  function saveSessCfg() {
+    var c = state.sessCfg;
+    if (!c) return;
+    if (!state.db || !state.canWrite || !can('options')) { c.error = 'Your role cannot change session configurations.'; bumpSessCfg(); return; }
+    if (!c.levels.length || !c.formats.length) { c.error = 'Keep at least one level and one format.'; bumpSessCfg(); return; }
+    var options = Object.assign({}, state.options, { levels: c.levels.slice(), formats: c.formats.slice(), courts: c.courts.slice(), venues: c.venues.slice() });
+    c.saving = true; c.error = ''; bumpSessCfg();
+    state.db.doc('config/options').set(options).then(function () {
+      state.options = options;
+      state.sessCfg = null; renderSessCfg(); render();
+      flash('Session configurations saved.', 'ok');
+      var b = $('#dash-config'); if (b) b.focus();
+    }).catch(function (e) {
+      if (state.sessCfg) { state.sessCfg.saving = false; state.sessCfg.error = 'Could not save: ' + (e && e.message ? e.message : 'try again.'); bumpSessCfg(); }
     });
-    box.append(grid);
+  }
+  function renderSessCfg() {
+    var box = $('#sesscfg'), c = state.sessCfg;
+    if (!c || !can('options') || gateState() !== 'ok') {
+      state.sessCfg = null; sessCfgRev = -1;
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    if (c.rev === sessCfgRev && !box.hidden) return;   // built already; live updates must not disturb typing
+    sessCfgRev = c.rev;
+    var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '', selA = null, selB = null;
+    if (hadFocus) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
+    var blocks = SESS_KINDS.map(function (kind) {
+      var list = c[kind.key], canEmpty = !kind.keepOne, isClear = !DEFAULT_OPTIONS[kind.key].length;
+      var chips = list.map(function (v) {
+        return h('span', { class: 'opt-chip' }, v, h('button', { type: 'button', disabled: kind.keepOne && list.length <= 1, 'aria-label': 'Remove ' + v, title: 'Remove ' + v,
+          onclick: function () { c[kind.key] = c[kind.key].filter(function (x) { return x !== v; }); c.error = ''; bumpSessCfg(); } }, '×'));
+      });
+      return h('section', { class: 'cfg-block' },
+        h('div', { class: 'opt-head' }, h('h3', null, kind.title),
+          h('button', { class: 'link', type: 'button', title: isClear ? 'Remove every ' + kind.label : 'Put back the original ' + kind.label + ' list',
+            onclick: function () { c[kind.key] = DEFAULT_OPTIONS[kind.key].slice(); c.error = ''; bumpSessCfg(); } }, isClear ? 'Clear' : 'Reset')),
+        h('p', { class: 'note' }, kind.hint),
+        h('div', { class: 'opt-chips' }, chips.length ? chips : h('span', { class: 'note' }, 'None yet')),
+        h('form', { class: 'opt-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addSessItem(kind); } },
+          h('input', { id: 'sc-in-' + kind.key, type: 'text', maxlength: String(kind.max), placeholder: kind.placeholder, 'aria-label': 'Add ' + kind.label, value: c.draft[kind.key] || '',
+            oninput: function (e) { c.draft[kind.key] = e.target.value; } }),
+          h('button', { class: 'btn small', type: 'submit' }, 'Add')));
+    });
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel cfg-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'sc-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null, h('h2', { id: 'sc-title' }, 'Session Configurations'), h('p', { class: 'note' }, 'The choices people see when they add or edit a session. Applies as soon as you save, and does not change sessions that already exist.')),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close without saving', onclick: closeSessCfg }, '×')),
+        blocks,
+        c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn', type: 'button', onclick: closeSessCfg }, 'Cancel'),
+          h('button', { id: 'sc-save', class: 'btn primary', type: 'button', disabled: !!c.saving, onclick: saveSessCfg }, c.saving ? 'Saving…' : 'Save settings'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) {
+      var el = document.getElementById(focusKey);
+      if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } }
+    }
+  }
+
+  /* ---------- Manage Bookings button: every upcoming booking in one searchable list ---------- */
+  var bklSig = '';
+  function openBkList() {
+    if (!can('managebookings')) return;
+    state.bkList = { q: '', date: '' };
+    bklSig = '';
+    renderBkList();
+    var q = $('#bkl-q'); if (q) q.focus();
+  }
+  function closeBkList() {
+    state.bkList = null;
+    renderBkList();
+    var b = $('#bk-manage'); if (b) b.focus();
+  }
+  function bkRows() {
+    var l = state.bkList, nowMs = Date.now(), names = can('viewbookers'), q = String(l.q || '').trim().toLowerCase(), groups = {};
+    state.bookingList.forEach(function (x) {
+      if (parse(x.date, pad(x.hour + 1) + ':00').getTime() <= nowMs) return;   // already over
+      (groups[x.ref || x.id] = groups[x.ref || x.id] || []).push(x);
+    });
+    var rows = Object.keys(groups).map(function (ref) {
+      var slots = groups[ref].slice().sort(function (a, c) {
+        var ka = a.date + '|' + (a.venue || '') + '|' + a.court + '|' + pad(a.hour), kc = c.date + '|' + (c.venue || '') + '|' + c.court + '|' + pad(c.hour);
+        return ka < kc ? -1 : ka > kc ? 1 : 0;
+      });
+      var text = [ref, names ? slots[0].byName : ''].concat(slots.map(function (x) { return x.court + ' ' + (x.venue || '') + ' ' + x.date + ' ' + fullFmt.format(parse(x.date, '00:00')); })).join(' ').toLowerCase();
+      return { ref: ref, slots: slots, text: text };
+    }).filter(function (r) { return (!l.date || r.slots.some(function (x) { return x.date === l.date; })) && (!q || r.text.indexOf(q) >= 0); });
+    rows.sort(function (a, c) { var ka = a.slots[0].date + pad(a.slots[0].hour), kc = c.slots[0].date + pad(c.slots[0].hour); return ka < kc ? -1 : ka > kc ? 1 : 0; });
+    return rows;
+  }
+  function renderBkList() {
+    var box = $('#bklist'), l = state.bkList;
+    if (!l || !can('managebookings') || gateState() !== 'ok') {
+      state.bkList = null; bklSig = '';
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    var names = can('viewbookers');
+    if (box.hidden || !box.firstChild) {   // the frame (with the search box) is built once, so typing is never interrupted
+      box.replaceChildren(
+        h('div', { class: 'modal-backdrop' }),
+        h('div', { class: 'modal-panel bkl-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'bkl-title' },
+          h('div', { class: 'modal-head' },
+            h('div', null, h('h2', { id: 'bkl-title' }, 'Manage Bookings'), h('p', { class: 'note' }, 'Every upcoming booking. Choose Manage to edit or cancel one.')),
+            h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeBkList }, '×')),
+          h('div', { class: 'bkl-controls' },
+            h('input', { id: 'bkl-q', type: 'search', placeholder: names ? 'Search reference, court or name' : 'Search reference or court', 'aria-label': 'Search bookings', value: l.q || '',
+              oninput: function (e) { l.q = e.target.value; renderBkList(); } }),
+            h('input', { id: 'bkl-date', type: 'date', 'aria-label': 'Only this date', value: l.date || '', onchange: function (e) { l.date = e.target.value || ''; renderBkList(); } }),
+            h('button', { id: 'bkl-clear', class: 'link', type: 'button', onclick: function () { l.date = ''; $('#bkl-date').value = ''; renderBkList(); } }, 'All dates')),
+          h('p', { id: 'bkl-count', class: 'note' }),
+          h('ul', { id: 'bkl-items', class: 'mb-list' }),
+          h('div', { class: 'confirm-actions' }, h('button', { class: 'btn', type: 'button', onclick: closeBkList }, 'Close'))));
+      box.hidden = false;
+      lockScroll();
+      bklSig = '';
+    }
+    var rows = bkRows();
+    var sig = JSON.stringify([rows.map(function (r) { return r.ref + ':' + r.slots.map(function (x) { return x.id; }).join(','); }), names, l.date]);
+    if (sig === bklSig) return;
+    bklSig = sig;
+    $('#bkl-clear').hidden = !l.date;
+    $('#bkl-count').textContent = rows.length ? plural(rows.length, 'booking') + (l.date || l.q ? ' match' + (rows.length === 1 ? 'es' : '') : ' coming up') + '.' : 'No upcoming bookings' + (l.date || l.q ? ' match.' : '.');
+    var list = $('#bkl-items');
+    list.replaceChildren();
+    rows.forEach(function (r) {
+      var days = {};
+      r.slots.forEach(function (x) { (days[x.date] = days[x.date] || []).push(x); });
+      var lines = Object.keys(days).sort().map(function (d) {
+        var runs = runsOf(days[d], function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour) || 0; });
+        return h('span', { class: 'bkl-line' }, h('strong', null, fullFmt.format(parse(d, '00:00'))), ' · ' + runs.map(runLine).join(' · '));
+      });
+      var total = r.slots.reduce(function (n, x) { return n + (typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0); }, 0);
+      var id = 'bkl-m-' + r.ref;
+      list.append(h('li', null, h('div', { class: 'p-row' },
+        h('span', { class: 'bkl-main' }, lines, h('small', { class: 'sub-note' }, r.ref + (names && r.slots[0].byName ? ' · ' + r.slots[0].byName : '') + ' · ' + peso(total))),
+        h('button', { id: id, class: 'btn small', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { openManage(r.ref, id); } }, 'Manage'))));
+    });
   }
 
   /* ---------- profile: name and email (read-only), level rating, change password ---------- */
@@ -2223,7 +2363,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (can('people')) views.push(['people', 'Users']);
     if (isSuper()) views.push(['roles', 'Role access']);
     // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
-    if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book')) && !(state.view === 'options' && can('options'))) state.view = 'schedule';
+    if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
     $('#book-btn').hidden = !can('book');
     $('#book-btn').setAttribute('aria-current', state.view === 'book' ? 'page' : 'false');
     var menu = $('#menu');
@@ -2280,7 +2420,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       $('#view-schedule').hidden = state.view !== 'schedule';
       $('#view-profile').hidden = state.view !== 'profile';
       $('#view-book').hidden = state.view !== 'book';
-      $('#view-options').hidden = state.view !== 'options';
       $('#view-people').hidden = state.view !== 'people';
       $('#view-roles').hidden = state.view !== 'roles';
       if (!can('host')) state.hostOpen = false;
@@ -2288,7 +2427,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
       else if (state.view === 'profile') renderProfile();
       else if (state.view === 'book') renderBooking();
-      else if (state.view === 'options') renderOptions();
       else if (state.view === 'people') renderUsers();
       else renderRoles();
     }
@@ -2296,6 +2434,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     renderConfirm();
     renderEditDialog();
     renderBookCfg();
+    renderSessCfg();
+    renderBkList();
     renderManage();
     if (focusId) {
       var el = document.getElementById(focusId);
@@ -2344,6 +2484,26 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         }
         return;
       }
+      if (state.sessCfg) {
+        if (e.key === 'Escape') { closeSessCfg(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var sf = [].slice.call(document.querySelectorAll('#sesscfg button:not(:disabled), #sesscfg input'));
+          var si = sf.indexOf(document.activeElement);
+          if (e.shiftKey && si <= 0) { e.preventDefault(); sf[sf.length - 1].focus(); }
+          else if (!e.shiftKey && (si === sf.length - 1 || si < 0)) { e.preventDefault(); sf[0].focus(); }
+        }
+        return;
+      }
+      if (state.bkList) {
+        if (e.key === 'Escape') { closeBkList(); return; }
+        if (e.key === 'Tab') {
+          var lf = [].slice.call(document.querySelectorAll('#bklist button:not(:disabled):not([hidden]), #bklist input'));
+          var li2 = lf.indexOf(document.activeElement);
+          if (e.shiftKey && li2 <= 0) { e.preventDefault(); lf[lf.length - 1].focus(); }
+          else if (!e.shiftKey && (li2 === lf.length - 1 || li2 < 0)) { e.preventDefault(); lf[0].focus(); }
+        }
+        return;
+      }
       if (state.bookCfg) {
         if (e.key === 'Escape') { closeBookCfg(); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
@@ -2384,15 +2544,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       render(); window.scrollTo(0, 0);
     });
     $('#bk-config').addEventListener('click', openBookCfg);
+    $('#bk-manage').addEventListener('click', openBkList);
     $('#bk-date').addEventListener('change', function (e) { setBookDate(e.target.value); });
     $('#bk-prev').addEventListener('click', function () { shiftBookDate(-1); });
     $('#bk-next').addEventListener('click', function () { shiftBookDate(1); });
     $('#bk-today').addEventListener('click', function () { setBookDate(dkey(new Date())); });
     $('#dash-add').addEventListener('click', openHost);
-    $('#dash-config').addEventListener('click', function () {
-      state.view = 'options'; state.hostOpen = false; setMenu(false);
-      render(); window.scrollTo(0, 0);
-    });
+    $('#dash-config').addEventListener('click', openSessCfg);
     $('#h-cancel').addEventListener('click', function () { clearHostError(); closeHost(); });
     ['#h-date', '#h-start', '#h-end'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
     // When the start moves past the end, push the end to 90 minutes after it (the common session length).
