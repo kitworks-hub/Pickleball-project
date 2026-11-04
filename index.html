@@ -203,7 +203,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .confirm-panel { width: min(420px, 100%); }
 .edit-panel { width: min(560px, 100%); max-height: min(90vh, 780px); }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
-.book-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.book-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.dash-head { margin-bottom: 10px; }
+.dash-head h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.dash-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
 .book-head .btn { display: inline-flex; align-items: center; gap: 6px; }
 .book-head svg { width: 16px; height: 16px; }
 .cfg-panel { width: min(640px, 100%); max-height: min(92vh, 860px); }
@@ -407,6 +410,19 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   <!-- App: shown once the viewer has an account and a role that can see the schedule -->
   <div id="app" hidden>
     <section id="view-schedule" aria-label="Schedule">
+      <div class="book-head dash-head">
+        <h2>Dashboard</h2>
+        <div class="dash-actions">
+          <button id="dash-add" class="btn small" type="button" hidden aria-expanded="false" aria-controls="host">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add new session</span>
+          </button>
+          <button id="dash-config" class="btn small" type="button" hidden aria-haspopup="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+            <span>Session Configurations</span>
+          </button>
+        </div>
+      </div>
       <section id="host" class="host" aria-labelledby="host-title" hidden>
         <h2 id="host-title">Add a new session</h2>
         <form id="host-form" novalidate>
@@ -2204,10 +2220,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
-    if (can('options')) views.push(['options', 'Session Configurations']);
     if (can('people')) views.push(['people', 'Users']);
     if (isSuper()) views.push(['roles', 'Role access']);
-    if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
+    // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
+    if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book')) && !(state.view === 'options' && can('options'))) state.view = 'schedule';
     $('#book-btn').hidden = !can('book');
     $('#book-btn').setAttribute('aria-current', state.view === 'book' ? 'page' : 'false');
     var menu = $('#menu');
@@ -2216,10 +2232,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       menu.append(h('button', { id: 'm-' + i[0], type: 'button', 'aria-current': state.view === i[0] && !state.hostOpen ? 'page' : null,
         onclick: function () { state.view = i[0]; state.hostOpen = false; setMenu(false); render(); window.scrollTo(0, 0); } }, i[1]));
     });
-    if (can('host')) {
-      menu.append(h('hr'));
-      menu.append(h('button', { id: 'm-host', type: 'button', 'aria-current': state.hostOpen ? 'page' : null, onclick: openHost }, 'Add new session', h('span', { 'aria-hidden': 'true' }, '+')));
-    }
+    // the two Dashboard buttons only appear for roles that may use them
+    $('#dash-add').hidden = !can('host');
+    $('#dash-add').setAttribute('aria-expanded', String(!!state.hostOpen));
+    $('#dash-config').hidden = !can('options');
     setMenu(state.menuOpen);
   }
 
@@ -2372,6 +2388,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     $('#bk-prev').addEventListener('click', function () { shiftBookDate(-1); });
     $('#bk-next').addEventListener('click', function () { shiftBookDate(1); });
     $('#bk-today').addEventListener('click', function () { setBookDate(dkey(new Date())); });
+    $('#dash-add').addEventListener('click', openHost);
+    $('#dash-config').addEventListener('click', function () {
+      state.view = 'options'; state.hostOpen = false; setMenu(false);
+      render(); window.scrollTo(0, 0);
+    });
     $('#h-cancel').addEventListener('click', function () { clearHostError(); closeHost(); });
     ['#h-date', '#h-start', '#h-end'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
     // When the start moves past the end, push the end to 90 minutes after it (the common session length).
