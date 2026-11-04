@@ -17,6 +17,9 @@
   --warn: #b04e16;
   --danger: #c0262d;
   --on-danger: #ffffff;
+  --slot-av-bg: #e6f6ee; --slot-av-bd: #2a8a5c; --slot-av-ink: #14603f;
+  --slot-bk-bg: #fde8e9; --slot-bk-bd: #d9747a; --slot-bk-ink: #8f1d24;
+  --slot-un-bg: #e8ebf2; --slot-un-ink: #6c7893;
   --band: #0a2a6e;
   --band-ink: #f5f9ff;
   --band-muted: #b9cdf0;
@@ -34,6 +37,7 @@
   :root:not([data-theme="light"]) {
     --paper: #071230; --card: #0f1f4a; --ink: #e8f0ff; --muted: #94a9d6; --rule: #243a70;
     --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b; --on-danger: #2a0a0a;
+    --slot-av-bg: #0e3a2c; --slot-av-bd: #3fae7c; --slot-av-ink: #9ee6c3; --slot-bk-bg: #4a1b25; --slot-bk-bd: #b4505a; --slot-bk-ink: #ffc4c4; --slot-un-bg: #14244d; --slot-un-ink: #7384ad;
     --band: #0a2260;
     color-scheme: dark;
   }
@@ -41,6 +45,7 @@
 :root[data-theme="dark"] {
   --paper: #071230; --card: #0f1f4a; --ink: #e8f0ff; --muted: #94a9d6; --rule: #243a70;
   --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b; --on-danger: #2a0a0a;
+    --slot-av-bg: #0e3a2c; --slot-av-bd: #3fae7c; --slot-av-ink: #9ee6c3; --slot-bk-bg: #4a1b25; --slot-bk-bd: #b4505a; --slot-bk-ink: #ffc4c4; --slot-un-bg: #14244d; --slot-un-ink: #7384ad;
   --band: #0a2260;
   color-scheme: dark;
 }
@@ -94,6 +99,10 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 .menu-wrap { position: relative; }
 .menu-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; border: 1.5px solid var(--band-muted); background: transparent; color: var(--band-ink); font-weight: 600; cursor: pointer; }
 .menu-btn svg { width: 20px; height: 20px; }
+.top-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.book-btn { background: var(--ball); border-color: var(--ball); color: var(--on-ball); }
+.book-btn[aria-current="page"] { box-shadow: 0 0 0 3px rgba(247, 217, 51, 0.5); }
+@media (max-width: 440px) { .book-btn .long { display: none; } }
 .menu-btn[aria-expanded="true"] { background: var(--band-ink); color: var(--band); border-color: var(--band-ink); }
 .menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 230px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; padding: 6px; background: var(--card); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
 .menu button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 0; border-radius: 6px; background: none; text-align: left; font-weight: 600; cursor: pointer; }
@@ -104,8 +113,8 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 .who .who-text { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; line-height: 1.2; }
 .who strong { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who .who-role { font: 500 0.75rem/1.2 var(--mono); color: var(--band-muted); }
-.btn.on-band { border-color: var(--band-muted); color: var(--band-ink); }
-@media (max-width: 420px) { .who .who-role { display: none; } .who strong { max-width: 12ch; } .menu-btn .menu-label { display: none; } }
+.btn.on-band { border-color: var(--band-muted); color: var(--band-ink); white-space: nowrap; }
+@media (max-width: 420px) { .who .who-role { display: none; } .who strong { max-width: 8ch; } .menu-btn .menu-label { display: none; } }
 
 /* Day strip and filters */
 .cal-wrap { position: relative; margin-bottom: 8px; }
@@ -194,6 +203,37 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .confirm-panel { width: min(420px, 100%); }
 .edit-panel { width: min(560px, 100%); max-height: min(90vh, 780px); }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.book-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
+.book-bar .field { width: 180px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: var(--fs-s); }
+.legend li { display: inline-flex; align-items: center; gap: 7px; }
+.sw { display: inline-block; flex: 0 0 auto; width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--rule); }
+.book-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .book-layout { grid-template-columns: minmax(0, 1fr); } }
+.slot-scroll { overflow-x: auto; padding-bottom: 4px; }
+.slot-grid { display: grid; gap: 4px; grid-template-columns: 84px repeat(var(--n, 4), minmax(76px, 1fr)); }
+@media (max-width: 480px) { .slot-grid { gap: 3px; grid-template-columns: 62px repeat(var(--n, 4), minmax(54px, 1fr)); } .slot { padding: 2px; font-size: 0.75rem; } .slot-label { font-size: 0.7rem; } }
+.slot-head { padding: 8px 4px; text-align: center; font: 700 var(--fs-s)/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.slot-label { position: sticky; left: 0; z-index: 1; display: flex; flex-direction: column; justify-content: center; padding-right: 6px; background: var(--paper); font: 500 var(--fs-s)/1.2 var(--mono); color: var(--ink); }
+.slot-label small { font-size: 0.7rem; color: var(--muted); }
+.slot { min-height: 48px; padding: 4px; border-radius: 8px; border: 1.5px solid var(--rule); background: var(--card); font: 600 var(--fs-s)/1.1 var(--body); cursor: pointer; }
+.slot.av, .sw.av { background: var(--slot-av-bg); border-color: var(--slot-av-bd); color: var(--slot-av-ink); }
+.slot.av:hover { filter: brightness(0.95); }
+.slot.sel, .sw.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.slot.bk, .sw.bk { background: var(--slot-bk-bg); border-color: var(--slot-bk-bd); color: var(--slot-bk-ink); }
+.slot.mine, .sw.mine { background: var(--card); border: 2px solid var(--accent); color: var(--accent); }
+.slot.un, .sw.un { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(120, 135, 170, 0.28) 5px 7px), var(--slot-un-bg); color: var(--slot-un-ink); }
+.slot:disabled { cursor: not-allowed; }
+.slot.mine:disabled { cursor: default; }
+.book-summary { position: sticky; top: 12px; gap: 10px; }
+.book-summary.book-done { border-color: var(--ok); }
+.sum-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sum-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.sum-list small { display: block; color: var(--muted); font-size: 0.75rem; }
+.sum-total { display: flex; justify-content: space-between; gap: 10px; font: 800 1.1rem/1.2 var(--display); }
+.book-summary .ref { color: var(--ink); max-width: none; }
+.sub-h { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.mine-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; max-width: 640px; }
 .opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; align-items: start; }
 .opt-grid .panel { gap: 10px; padding: 14px 16px; }
 .opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -241,12 +281,18 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 
 <header class="band">
   <div class="wrap topbar" id="topbar" hidden>
+    <div class="top-left">
     <div class="menu-wrap">
       <button id="menu-btn" class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-haspopup="true">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
         <span class="menu-label">Menu</span>
       </button>
       <nav id="menu" class="menu" aria-label="Main menu" hidden></nav>
+    </div>
+    <button id="book-btn" class="menu-btn book-btn" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>
+      <span>Book<span class="long"> a Court</span></span>
+    </button>
     </div>
     <div class="who" id="who"></div>
   </div>
@@ -417,6 +463,30 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         </form>
       </div>
     </section>
+    <section id="view-book" class="view-stack" aria-label="Book a court" hidden>
+      <h2>Book a court</h2>
+      <p class="note">Pick a date, then tap the hours you want. Price is per court, per hour: ₱200 from 7:00 AM to 5:00 PM, and ₱300 from 5:00 PM to 10:00 PM.</p>
+      <div class="book-bar">
+        <button id="bk-prev" class="cal-nav" type="button" aria-label="Previous day">‹</button>
+        <label class="field" for="bk-date">Date
+          <input id="bk-date" type="date">
+        </label>
+        <button id="bk-next" class="cal-nav" type="button" aria-label="Next day">›</button>
+        <button id="bk-today" class="btn small" type="button">Today</button>
+      </div>
+      <ul class="legend" aria-label="Legend">
+        <li><span class="sw av"></span>Available</li>
+        <li><span class="sw sel"></span>Selected</li>
+        <li><span class="sw bk"></span>Booked</li>
+        <li><span class="sw mine"></span>Your booking</li>
+        <li><span class="sw un"></span>Unavailable (time passed, or a session is using the court)</li>
+      </ul>
+      <div class="book-layout">
+        <div class="slot-scroll"><div id="bk-grid"></div></div>
+        <aside id="bk-summary" class="panel book-summary" aria-live="polite"></aside>
+      </div>
+      <div id="bk-mine"></div>
+    </section>
     <section id="view-options" class="view-stack" aria-label="Session options" hidden></section>
     <section id="view-people" class="view-stack" aria-label="People" hidden></section>
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
@@ -463,19 +533,20 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     { key: 'remove', label: 'Remove sessions', hint: 'Delete a session for everyone' },
     { key: 'people', label: 'Manage users', hint: 'Users page: roles, password resets, pause or remove access' },
     { key: 'options', label: 'Manage session options', hint: 'Levels, formats, courts, venues and lengths' },
-    { key: 'moveplayers', label: 'Remove or move players', hint: 'Take a player out of a session, or move them to another session' }
+    { key: 'moveplayers', label: 'Remove or move players', hint: 'Take a player out of a session, or move them to another session' },
+    { key: 'book', label: 'Book courts', hint: 'Use the Book a Court page to reserve hours' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true } }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, bookingMap: {}, bookingList: [], authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -544,7 +615,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     Object.keys(sd).forEach(function (k) {
       if (k === 'super_admin') return;
       var e = sd[k] || {};
-      var base = out[k] || { label: k, perms: { view: true, join: true, roster: true } };
+      var base = out[k] || { label: k, perms: { view: true, join: true, roster: true, book: true } };
       out[k] = { label: e.label || base.label, perms: Object.assign({}, base.perms, e.perms || {}) };
     });
     return out;
@@ -1234,6 +1305,230 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     box.append(h('div', { class: 'rows' }, rows));
   }
 
+  /* ---------- court booking ---------- */
+  // Hourly slots from 7:00 AM (the first) to the one ending at 10:00 PM. Price is per court, per hour.
+  var BOOK_FIRST = 7, BOOK_LAST = 21;
+  var RATES = [{ from: 7, to: 17, price: 200 }, { from: 17, to: 22, price: 300 }];   // 7:00 AM to 5:00 PM = 200; 5:00 PM to 10:00 PM = 300
+  function slotPrice(hour) {
+    for (var i = 0; i < RATES.length; i++) if (hour >= RATES[i].from && hour < RATES[i].to) return RATES[i].price;
+    return null;
+  }
+  function peso(n) { return '₱' + Number(n).toLocaleString('en-PH'); }
+  function hourText(hr) { return (hr % 12 || 12) + ':00 ' + (hr % 24 < 12 ? 'AM' : 'PM'); }
+  function bookingCourts() { var c = opts().courts; return c.length ? c : ['Court 1', 'Court 2', 'Court 3', 'Court 4']; }
+  function courtKey(x) { return String(x || '').toLowerCase().replace(/^courts?\s*/, '').trim(); }
+  function slotKey(date, court, hour) { return date + '|' + court + '|' + hour; }
+  function slotId(date, court, hour) { return date + '_' + String(court).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '_' + pad(hour); }
+  function parsePick(k) { var i = k.lastIndexOf('|'); return { court: k.slice(0, i), hour: parseInt(k.slice(i + 1), 10) }; }
+
+  // available / booked (by someone else) / mine / unavailable (the hour has started, or a session is using that court)
+  function slotInfo(date, court, hour) {
+    var b = state.bookingMap[slotKey(date, court, hour)];
+    if (b) return { s: b.by === state.me ? 'mine' : 'booked' };
+    if (parse(date, pad(hour) + ':00').getTime() <= Date.now()) return { s: 'unavailable', why: 'This hour has already started or passed.' };
+    var lo = hour * 60, hi = lo + 60, ck = courtKey(court);
+    var use = ck && ck !== '-' ? state.sessions.filter(function (s) {
+      if (s.date !== date || courtKey(s.court) !== ck) return false;
+      var a = toMin(s.start), z = a + (Number(s.duration) || 90);
+      return a < hi && z > lo;
+    })[0] : null;
+    if (use) return { s: 'unavailable', why: 'In use by ' + (use.title || 'a session') + '.' };
+    return { s: 'available' };
+  }
+  function selectedSlots(courts) {
+    var out = [];
+    Object.keys(state.booking.sel).forEach(function (k) { var p = parsePick(k); if (courts.indexOf(p.court) >= 0) out.push(p); });
+    out.sort(function (a, c) { return courts.indexOf(a.court) - courts.indexOf(c.court) || a.hour - c.hour; });
+    return out;
+  }
+  // Consecutive hours on one court are shown as one line, e.g. "Court 2, 4:00 PM to 6:00 PM".
+  function runsOf(picks, priceOf) {
+    var runs = [];
+    picks.forEach(function (p) {
+      var last = runs[runs.length - 1];
+      if (last && last.court === p.court && last.to === p.hour) { last.to = p.hour + 1; last.slots.push(p); }
+      else runs.push({ court: p.court, from: p.hour, to: p.hour + 1, slots: [p] });
+    });
+    runs.forEach(function (r) { r.price = r.slots.reduce(function (n, p) { return n + priceOf(p); }, 0); });
+    return runs;
+  }
+  function runBreakdown(r) {   // "1 hr x P200 + 2 hrs x P300"
+    return RATES.map(function (rt) {
+      var n = r.slots.filter(function (p) { return p.hour >= rt.from && p.hour < rt.to; }).length;
+      return n ? plural(n, 'hr') + ' × ' + peso(rt.price) : null;
+    }).filter(Boolean).join(' + ');
+  }
+  function runLine(r) { return r.court + ' · ' + hourText(r.from) + ' – ' + hourText(r.to); }
+  function codeOf() {
+    var chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', a = new Uint8Array(6);
+    window.crypto.getRandomValues(a);
+    return 'MPC-' + [].map.call(a, function (v) { return chars[v % chars.length]; }).join('');
+  }
+  function setBookDate(v) {
+    var b = state.booking, now = new Date(), today = dkey(now);
+    var max = dkey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 90));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < today) v = today;
+    if (v > max) v = max;
+    if (v !== b.date) { b.date = v; b.sel = {}; b.done = null; b.error = ''; }
+    render();
+  }
+  function shiftBookDate(delta) {
+    var p = parse(state.booking.date || dkey(new Date()), '00:00');
+    setBookDate(dkey(new Date(p.getFullYear(), p.getMonth(), p.getDate() + delta)));
+  }
+
+  // Claim one slot. The slot's document id is unique to date, court and hour, and a short lease stops two people claiming it at the same moment.
+  async function claimSlot(data, holder) {
+    var ref = state.db.doc('bookings/' + slotId(data.date, data.court, data.hour));
+    if (typeof ref.acquire === 'function') {
+      var lease = await ref.acquire({ holder: holder, ttlMs: 10000 });
+      if (!lease.acquired) return null;
+    }
+    var snap = await ref.get();
+    var cur = snap.exists ? snap.data() : null;
+    if (cur && cur.by) return null;
+    await ref.set(data);
+    return ref;
+  }
+  function confirmBooking() {
+    var b = state.booking;
+    if (b.busy) return;
+    var courts = bookingCourts(), picks = selectedSlots(courts), date = b.date;
+    if (!picks.length) return;
+    if (!state.db || !state.me || !state.canWrite || !can('book')) { b.error = 'Your account cannot book courts.'; render(); return; }
+    var gone = picks.filter(function (p) { return slotInfo(date, p.court, p.hour).s !== 'available'; });
+    if (gone.length) {
+      gone.forEach(function (p) { delete b.sel[p.court + '|' + p.hour]; });
+      b.error = 'No longer available, so nothing was booked: ' + gone.map(function (p) { return p.court + ' ' + hourText(p.hour); }).join(', ') + '.';
+      render(); return;
+    }
+    b.busy = true; b.error = ''; render();
+    var code = codeOf(), holder = state.me + ':' + code, claimed = [];
+    (async function () {
+      try {
+        for (var i = 0; i < picks.length; i++) {
+          var p = picks[i];
+          var ref = await claimSlot({ date: date, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
+          if (!ref) throw { taken: p };
+          claimed.push(ref);
+        }
+        var runs = runsOf(picks, function (p) { return slotPrice(p.hour); });
+        b.done = { ref: code, date: date, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
+        b.sel = {};
+        flash('Booking confirmed. Reference ' + code + '.', 'ok');
+      } catch (e) {
+        // all or nothing: give back anything claimed in this attempt
+        await Promise.all(claimed.map(function (r) { return r.delete().catch(function () {}); }));
+        if (e && e.taken) {
+          delete b.sel[e.taken.court + '|' + e.taken.hour];
+          b.error = 'Someone just booked ' + e.taken.court + ' at ' + hourText(e.taken.hour) + '. Nothing was booked. Pick another hour and try again.';
+        } else b.error = 'The booking could not be completed, and nothing was booked. ' + (e && e.message ? e.message : '');
+      }
+      b.busy = false;
+      render();
+    })();
+  }
+
+  function renderBooking() {
+    var b = state.booking, now = new Date(), today = dkey(now);
+    var max = dkey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 90));
+    if (!b.date || b.date < today) { b.date = today; b.sel = {}; b.done = null; }
+    var di = $('#bk-date'); di.min = today; di.max = max;
+    if (di.value !== b.date) di.value = b.date;
+    $('#bk-prev').disabled = b.date <= today; $('#bk-next').disabled = b.date >= max;
+    var courts = bookingCourts();
+
+    // anything picked that stopped being available (someone booked it, or the hour began) comes off the list
+    var lost = [];
+    Object.keys(b.sel).forEach(function (k) {
+      var p = parsePick(k);
+      if (courts.indexOf(p.court) < 0 || slotInfo(b.date, p.court, p.hour).s !== 'available') { delete b.sel[k]; lost.push(p.court + ' ' + hourText(p.hour)); }
+    });
+    if (lost.length) b.error = 'No longer available, so taken off your picks: ' + lost.join(', ') + '.';
+
+    // the grid: hours down the side, courts across the top
+    var grid = h('div', { class: 'slot-grid', style: '--n: ' + courts.length + ';' });
+    grid.append(h('div', { class: 'slot-corner' }));
+    courts.forEach(function (c) { grid.append(h('div', { class: 'slot-head' }, c)); });
+    for (var hr = BOOK_FIRST; hr <= BOOK_LAST; hr++) {
+      grid.append(h('div', { class: 'slot-label' }, hourText(hr), h('small', null, 'to ' + hourText(hr + 1))));
+      courts.forEach(function (court, ci) {
+        var hour = hr, key = court + '|' + hour, info = slotInfo(b.date, court, hour), sel = !!b.sel[key], price = slotPrice(hour);
+        var kind = sel ? 'sel' : info.s === 'available' ? 'av' : info.s === 'mine' ? 'mine' : info.s === 'booked' ? 'bk' : 'un';
+        var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'bk' ? 'Booked' : '–';
+        var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'bk' ? 'booked' : 'unavailable';
+        var cell = h('button', {
+          id: 'bk-' + ci + '-' + hour, type: 'button', class: 'slot ' + kind, disabled: info.s !== 'available',
+          'aria-pressed': info.s === 'available' ? String(sel) : null, title: info.why || null,
+          'aria-label': court + ', ' + hourText(hour) + ' to ' + hourText(hour + 1) + ', ' + words + (info.why ? '. ' + info.why : ''),
+          onclick: function () {
+            if (slotInfo(b.date, court, hour).s !== 'available') return;   // never select a slot that is not open
+            if (b.sel[key]) delete b.sel[key]; else b.sel[key] = true;
+            b.error = ''; b.done = null; render();
+          }
+        }, text);
+        grid.append(cell);
+      });
+    }
+    $('#bk-grid').replaceChildren(grid);
+
+    // the summary
+    var picks = selectedSlots(courts), box = $('#bk-summary');
+    box.replaceChildren();
+    box.className = 'panel book-summary' + (b.done ? ' book-done' : '');
+    if (b.done) {
+      var d = b.done;
+      box.append(
+        h('h3', null, 'Booking confirmed ✓'),
+        h('p', { class: 'ref' }, 'Reference ', h('strong', null, d.ref)),
+        h('p', { class: 'note' }, fullFmt.format(parse(d.date, '00:00'))),
+        h('ul', { class: 'sum-list' }, d.runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
+        h('div', { class: 'sum-total' }, h('span', null, 'Total due'), h('span', null, peso(d.total))),
+        h('p', { class: 'note' }, 'Keep this reference. No payment is taken on this site.'),
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn', type: 'button', onclick: function () { b.done = null; render(); } }, 'Book more')));
+    } else {
+      box.append(h('h3', null, 'Your booking'));
+      if (!picks.length) {
+        box.append(h('p', { class: 'note' }, 'Tap the green hours you want. You can pick more than one hour or court.'));
+      } else {
+        var runs = runsOf(picks, function (p) { return slotPrice(p.hour); }), total = runs.reduce(function (n, r) { return n + r.price; }, 0);
+        box.append(
+          h('p', { class: 'note' }, fullFmt.format(parse(b.date, '00:00'))),
+          h('ul', { class: 'sum-list' }, runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
+          h('div', { class: 'sum-total' }, h('span', null, 'Total (' + plural(picks.length, 'court hour') + ')'), h('span', null, peso(total))));
+      }
+      if (b.error) box.append(h('p', { class: 'form-error', role: 'alert' }, b.error));
+      var total2 = picks.reduce(function (n, p) { return n + slotPrice(p.hour); }, 0);
+      box.append(h('div', { class: 'confirm-actions' },
+        h('button', { class: 'btn', type: 'button', disabled: !picks.length || b.busy, onclick: function () { b.sel = {}; b.error = ''; render(); } }, 'Clear'),
+        h('button', { id: 'bk-confirm', class: 'btn primary', type: 'button', disabled: !picks.length || b.busy, onclick: confirmBooking },
+          b.busy ? 'Booking…' : picks.length ? 'Confirm booking · ' + peso(total2) : 'Confirm booking')));
+      box.append(h('p', { class: 'note' }, 'This reserves the hours. The total is the amount due; no payment is taken on this site.'));
+    }
+
+    // this person's upcoming bookings
+    var mineBox = $('#bk-mine'), nowMs = Date.now();
+    mineBox.replaceChildren();
+    var mine = state.bookingList.filter(function (x) { return x.by === state.me && parse(x.date, pad(x.hour + 1) + ':00').getTime() > nowMs; });
+    if (mine.length) {
+      var groups = {};
+      mine.forEach(function (x) { (groups[x.ref || x.id] = groups[x.ref || x.id] || []).push(x); });
+      var refs = Object.keys(groups).sort(function (a, c) {
+        var x = groups[a][0], y = groups[c][0];
+        return (x.date + pad(x.hour)) < (y.date + pad(y.hour)) ? -1 : 1;
+      });
+      mineBox.append(h('h3', { class: 'sub-h' }, 'Your upcoming bookings'));
+      mineBox.append(h('div', { class: 'mine-list' }, refs.map(function (ref) {
+        var slots = groups[ref].slice().sort(function (a, c) { return a.court < c.court ? -1 : a.court > c.court ? 1 : a.hour - c.hour; });
+        var runs = runsOf(slots, function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour); });
+        var total = runs.reduce(function (n, r) { return n + r.price; }, 0);
+        return h('div', { class: 'row' },
+          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref)),
+          h('strong', null, peso(total)));
+      })));
+    }
+  }
+
   /* ---------- session options: the lists behind the add / edit / filter forms ---------- */
   var hostSig = '', filterSig = '';
   function fillSelect(sel, pairs, fallback) {
@@ -1386,7 +1681,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       var key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       if (!label || !key) { flash('Give the new role a name.', 'err'); return; }
       if (key === 'super-admin' || key === 'super_admin' || roleDefs()[key]) { flash('A role with that name already exists.', 'err'); return; }
-      saveCfg(function (dd) { dd[key] = { label: label, perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false } }; })
+      saveCfg(function (dd) { dd[key] = { label: label, perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, book: true } }; })
         .then(function () { flash(label + ' role added. Set its access in the table above.', 'ok'); });
       nameInput.value = '';
     } },
@@ -1541,7 +1836,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (can('options')) views.push(['options', 'Session options']);
     if (can('people')) views.push(['people', 'Users']);
     if (isSuper()) views.push(['roles', 'Role access']);
-    if (!views.some(function (i) { return i[0] === state.view; })) state.view = 'schedule';
+    if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
+    $('#book-btn').hidden = !can('book');
+    $('#book-btn').setAttribute('aria-current', state.view === 'book' ? 'page' : 'false');
     var menu = $('#menu');
     menu.replaceChildren();
     views.forEach(function (i) {
@@ -1595,6 +1892,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       fillFilters();
       $('#view-schedule').hidden = state.view !== 'schedule';
       $('#view-profile').hidden = state.view !== 'profile';
+      $('#view-book').hidden = state.view !== 'book';
       $('#view-options').hidden = state.view !== 'options';
       $('#view-people').hidden = state.view !== 'people';
       $('#view-roles').hidden = state.view !== 'roles';
@@ -1602,6 +1900,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
       else if (state.view === 'profile') renderProfile();
+      else if (state.view === 'book') renderBooking();
       else if (state.view === 'options') renderOptions();
       else if (state.view === 'people') renderUsers();
       else renderRoles();
@@ -1671,6 +1970,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (e.key === 'Escape' && state.calOpen) { closeCal(true); return; }
       if (e.key === 'Escape' && state.menuOpen) { setMenu(false); $('#menu-btn').focus(); }
     });
+    $('#book-btn').addEventListener('click', function () {
+      state.view = 'book'; state.hostOpen = false; setMenu(false);
+      render(); window.scrollTo(0, 0);
+    });
+    $('#bk-date').addEventListener('change', function (e) { setBookDate(e.target.value); });
+    $('#bk-prev').addEventListener('click', function () { shiftBookDate(-1); });
+    $('#bk-next').addEventListener('click', function () { shiftBookDate(1); });
+    $('#bk-today').addEventListener('click', function () { setBookDate(dkey(new Date())); });
     $('#h-cancel').addEventListener('click', function () { clearHostError(); closeHost(); });
     ['#h-date', '#h-start', '#h-end'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
     // When the start moves past the end, push the end to 90 minutes after it (the common session length).
@@ -1862,7 +2169,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   /* ---------- clock: sessions are deleted the moment they end ---------- */
   var clockKey = '';
   function clockSig(all) {
-    return dkey(new Date()) + '|' + all.map(function (s) { return s.id; }).join(',');
+    return dkey(new Date()) + new Date().getHours() + '|' + all.map(function (s) { return s.id; }).join(',');
   }
   var purged = {};
   function purgeEnded() {
@@ -1872,6 +2179,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (!s || !s.date || !s.start || purged[s.id] || times(s).end.getTime() > now) return;
       purged[s.id] = true;
       state.db.doc('sessions/' + s.id).delete().catch(function () {});
+    });
+    state.bookingList.forEach(function (b) {
+      if (purged['b:' + b.id] || parse(b.date, pad(b.hour + 1) + ':00').getTime() > now) return;
+      purged['b:' + b.id] = true;
+      state.db.doc('bookings/' + b.id).delete().catch(function () {});
     });
   }
   function clockTick() {
@@ -1925,6 +2237,15 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       state.cfg = snap.exists ? (snap.data() || {}) : {};
       state.loaded.cfg = true; render();
     }, onErr);
+    db.collection('bookings').onSnapshot(function (snap) {
+      var map = {}, list = [];
+      snap.docs.forEach(function (d) {
+        var x = d.data();
+        if (x && x.by && x.date && x.court && typeof x.hour === 'number') { map[slotKey(x.date, x.court, x.hour)] = x; list.push(Object.assign({ id: d.id }, x)); }
+      });
+      state.bookingMap = map; state.bookingList = list;
+      purgeEnded(); render();
+    }, function () {});
     db.doc('config/options').onSnapshot(function (snap) {
       state.options = snap.exists ? (snap.data() || {}) : {};
       render();
