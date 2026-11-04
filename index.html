@@ -16,6 +16,7 @@
   --ok: #1d7a4e;
   --warn: #b04e16;
   --danger: #c0262d;
+  --on-danger: #ffffff;
   --band: #0a2a6e;
   --band-ink: #f5f9ff;
   --band-muted: #b9cdf0;
@@ -32,14 +33,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #071230; --card: #0f1f4a; --ink: #e8f0ff; --muted: #94a9d6; --rule: #243a70;
-    --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b;
+    --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b; --on-danger: #2a0a0a;
     --band: #0a2260;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #071230; --card: #0f1f4a; --ink: #e8f0ff; --muted: #94a9d6; --rule: #243a70;
-  --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b;
+  --accent: #6cb4ff; --on-accent: #071230; --ok: #5fcf97; --warn: #f0a06a; --danger: #ff8b8b; --on-danger: #2a0a0a;
   --band: #0a2260;
   color-scheme: dark;
 }
@@ -71,6 +72,7 @@ h1 { font: italic 800 var(--fs-hero)/0.95 var(--display); text-transform: upperc
 .btn.small { padding: 6px 12px; font-size: var(--fs-s); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .link.danger { color: var(--danger); font-weight: 700; }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
 .link { padding: 6px 0; border: 0; background: none; font-size: var(--fs-s); color: var(--muted); text-decoration: underline; cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-s); color: var(--muted); }
 .field.wide { grid-column: 1 / -1; }
@@ -184,6 +186,13 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 
 /* People and roles */
 .view-stack { display: flex; flex-direction: column; gap: 24px; padding-block: 12px 40px; }
+fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
+.timegroup { grid-column: 1 / -1; }
+.timegroup legend { padding: 0; margin-bottom: 4px; font-size: var(--fs-s); color: var(--muted); }
+.time-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 360px; }
+.time-pair .sub { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-s); color: var(--muted); }
+.confirm-panel { width: min(420px, 100%); }
+.confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 .opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; align-items: start; }
 .opt-grid .panel { gap: 10px; padding: 14px 16px; }
 .opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -328,12 +337,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
           <label class="field" for="h-date">Day
             <input id="h-date" type="date" required>
           </label>
-          <label class="field" for="h-start">Start time
-            <input id="h-start" type="time" value="18:00" required>
-          </label>
-          <label class="field" for="h-dur">Length
-            <select id="h-dur"></select>
-          </label>
+          <fieldset class="field timegroup">
+            <legend>Set Time</legend>
+            <div class="time-pair">
+              <label class="sub" for="h-start">Start
+                <input id="h-start" type="time" value="18:00" required>
+              </label>
+              <label class="sub" for="h-end">End
+                <input id="h-end" type="time" value="19:30" required>
+              </label>
+            </div>
+          </fieldset>
           <label class="field" for="h-court">Court number
             <span id="h-court-slot"></span>
           </label>
@@ -411,6 +425,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 </main>
 
 <div id="modal" class="modal" hidden></div>
+<div id="confirm" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -420,8 +435,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     levels: ['Open play', 'Beginner 2.0–2.5', 'Intermediate 3.0–3.5', 'Advanced 4.0+'],
     formats: ['Open play', 'Ladder', 'Clinic', 'Round robin'],
     courts: [],
-    venues: [],
-    durations: [60, 90, 120, 150, 180]
+    venues: []
   };
   function opts() {
     var stored = state.options || {}, out = {};
@@ -433,11 +447,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     return out;
   }
   function lvl(v) { return !v || v === 'All levels' ? 'Open play' : v; }
-  function durLabel(m) {
-    var hrs = Math.floor(m / 60), min = m % 60;
-    if (hrs && !min) return hrs + (hrs === 1 ? ' hour' : ' hours');
-    return hrs ? hrs + ' hr ' + min + ' min' : min + ' min';
-  }
+  // Sessions are stored as a start time plus a length in minutes. People now set the start and the end; the length is the difference.
+  var END_MSG = 'The end time must be later than the start time.';
+  function toMin(t) { var p = String(t || '').split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); }
+  function fromMin(m) { m = Math.max(0, Math.min(1439, m)); return pad(Math.floor(m / 60)) + ':' + pad(m % 60); }
+  function spanMinutes(start, end) { return toMin(end) - toMin(start); }
   var FEATURES = [
     { key: 'view', label: 'See the schedule', hint: 'Sessions, days and filters' },
     { key: 'join', label: 'Join sessions', hint: 'Sign up or join the waitlist, one session at a time. Joining is final until the session ends' },
@@ -459,14 +473,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
   var savedName = '';
   try { savedName = localStorage.getItem('kl-name') || ''; } catch (e) {}
   try { state.me = localStorage.getItem('kl-acct') || null; state.email = localStorage.getItem('kl-email') || ''; } catch (e) {}
-  var pendingRemove = null;
   var flashTimer = null;
   var chain = Promise.resolve();
   var ownerSyncing = false;
@@ -665,15 +678,53 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       c.joined[s.id] = Date.now();
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
-  function removeSession(s) {
-    if (pendingRemove !== s.id) {
-      pendingRemove = s.id;
-      render();
-      setTimeout(function () { if (pendingRemove === s.id) { pendingRemove = null; render(); } }, 4000);
+  // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove) ? 'hidden' : ''; }
+  function askRemoveSession(s) {
+    state.confirmRemove = s.id;
+    renderConfirm();
+    var no = $('#confirm .confirm-no'); if (no) no.focus();   // the safe choice has focus first
+  }
+  function cancelRemoveSession() {
+    var id = state.confirmRemove;
+    state.confirmRemove = null;
+    renderConfirm();
+    var b = id && document.getElementById('rs-' + id); if (b) b.focus();
+  }
+  function doRemoveSession() {
+    var id = state.confirmRemove;
+    if (!id) return;
+    state.confirmRemove = null;
+    renderConfirm();
+    state.db.doc('sessions/' + id).delete().then(function () { flash('Session removed.', 'ok'); }).catch(fail('Could not remove that session.'));
+  }
+  var confirmSig = '';
+  function renderConfirm() {
+    var box = $('#confirm'), id = state.confirmRemove;
+    var s = id ? state.sessions.filter(function (x) { return x.id === id; })[0] : null;
+    if (!s || !canRemoveSession(s) || gateState() !== 'ok') {
+      state.confirmRemove = null; confirmSig = '';
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
       return;
     }
-    pendingRemove = null;
-    state.db.doc('sessions/' + s.id).delete().then(function () { flash('Session removed.', 'ok'); }).catch(fail('Could not remove that session.'));
+    var n = roster(id).length, sig = id + '|' + n + '|' + s.title + '|' + s.date + '|' + s.start;
+    if (sig === confirmSig && !box.hidden) return;
+    confirmSig = sig;
+    var hadFocus = box.contains(document.activeElement), t = times(s);
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop', onclick: cancelRemoveSession }),
+      h('div', { class: 'modal-panel confirm-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'confirm-title', 'aria-describedby': 'confirm-text' },
+        h('h2', { id: 'confirm-title' }, 'Remove this session?'),
+        h('div', { id: 'confirm-text' },
+          h('p', null, (s.title || '-') + ' · ' + fullFmt.format(parse(s.date, '00:00')) + ', ' + tfmt.format(t.start) + ' – ' + tfmt.format(t.end) + '.'),
+          h('p', { class: 'note' }, n ? plural(n, 'player') + ' (including anyone on the waitlist) will be taken out of it. This cannot be undone.' : 'Nobody has joined yet. This cannot be undone.')),
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn confirm-no', type: 'button', onclick: cancelRemoveSession }, 'No, cancel'),
+          h('button', { class: 'btn danger confirm-yes', type: 'button', onclick: doRemoveSession }, 'Yes, remove'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus) { var no = $('#confirm .confirm-no'); if (no) no.focus(); }
   }
 
   /* ---------- session edit ---------- */
@@ -681,26 +732,34 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     state.edit = {
       id: s.id,
       draft: {
-        title: s.title && s.title !== '-' ? s.title : '', date: s.date || '', start: s.start || '18:00', duration: String(s.duration || 90),
+        title: s.title && s.title !== '-' ? s.title : '', date: s.date || '', start: s.start || '18:00', end: fromMin((toMin(s.start || '18:00') + (Number(s.duration) || 90)) % 1440),
         court: s.court && s.court !== '-' ? s.court : '', venue: s.venue && s.venue !== '-' ? s.venue : '', level: lvl(s.level), format: s.format || opts().formats[0], capacity: String(s.capacity || 12)
       }
     };
+    state.edit.orig = { start: state.edit.draft.start, end: state.edit.draft.end };   // to tell whether the times were touched
     render();
+  }
+  function editError(msg, keys, focusSel) {
+    state.edit.error = msg; state.edit.errorKeys = keys;
+    render();
+    var f = $(focusSel); if (f) f.focus();
   }
   function saveEdit() {
     var d = state.edit.draft;
     var cap = Math.min(32, Math.max(2, parseInt(d.capacity, 10) || 12));
-    if (!d.date || !d.start) { flash('Pick the day and start time.', 'err'); return; }
+    if (!d.date || !d.start || !d.end) { flash('Pick the day, start time and end time.', 'err'); return; }
     var id = state.edit.id;
     var orig = state.sessions.filter(function (x) { return x.id === id; })[0];
+    // Untouched times keep the saved length, so an older session that runs past midnight can still be edited.
+    var timeChanged = d.start !== state.edit.orig.start || d.end !== state.edit.orig.end;
+    var duration = timeChanged || !orig ? spanMinutes(d.start, d.end) : (Number(orig.duration) || 90);
+    if (timeChanged && duration <= 0) { editError(END_MSG, ['end'], '#e-end'); return; }
     if ((!orig || orig.date !== d.date || orig.start !== d.start) && isPast(d.date, d.start)) {
-      state.edit.error = PAST_MSG;
-      render();
-      var f = $(d.date < dkey(new Date()) ? '#e-date' : '#e-start'); if (f) f.focus();
+      editError(PAST_MSG, ['date', 'start'], d.date < dkey(new Date()) ? '#e-date' : '#e-start');
       return;
     }
     var patch = {
-      title: d.title.trim() || '-', date: d.date, start: d.start, duration: parseInt(d.duration, 10) || 90,
+      title: d.title.trim() || '-', date: d.date, start: d.start, duration: duration,
       court: d.court.trim() || '-', venue: d.venue.trim() || '-', level: d.level, format: d.format, capacity: cap
     };
     queue(function () { return state.db.doc('sessions/' + id).update(patch); }, 'Could not save the changes.').then(function () {
@@ -709,14 +768,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
   function editCard(s) {
     var d = state.edit.draft;
-    function inp(key, label, type, attrs) {
-      var timing = key === 'date' || key === 'start';
+    function inp(key, label, type, attrs, sub) {
+      var timing = key === 'date' || key === 'start' || key === 'end';
       var props = Object.assign({ id: 'e-' + key, type: type, value: d[key], oninput: function (e) {
         d[key] = e.target.value;
-        if (timing && state.edit.error) { state.edit.error = ''; render(); }
+        if (timing && state.edit.error) { state.edit.error = ''; state.edit.errorKeys = []; render(); }
       } }, attrs || {});
-      if (timing && state.edit.error) props['aria-invalid'] = 'true';
-      return h('label', { class: 'field', for: 'e-' + key }, label, h('input', props));
+      if (timing && state.edit.error && (state.edit.errorKeys || []).indexOf(key) >= 0) props['aria-invalid'] = 'true';
+      return h('label', { class: sub ? 'sub' : 'field', for: 'e-' + key }, label, h('input', props));
     }
     function sel(key, label, options) {
       var el = h('select', { id: 'e-' + key, onchange: function (e) { d[key] = e.target.value; } },
@@ -725,8 +784,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       return h('label', { class: 'field', for: 'e-' + key }, label, el);
     }
     var o = opts();
-    var durs = o.durations.map(function (m) { return [String(m), durLabel(m)]; });
-    if (!durs.some(function (x) { return x[0] === d.duration; })) durs.push([d.duration, durLabel(parseInt(d.duration, 10) || 0)]);
     var lvls = o.levels.slice(); if (lvls.indexOf(d.level) < 0) lvls.push(d.level);
     var fmts = o.formats.slice(); if (fmts.indexOf(d.format) < 0) fmts.push(d.format);
     // Court and venue are lists when staff have set some up, otherwise free text. "-" means not set.
@@ -740,8 +797,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       h('div', { class: 'form-grid' },
         (function () { var t = inp('title', 'Session name', 'text', { maxlength: '60' }); t.classList.add('wide'); return t; })(),
         inp('date', 'Day', 'date'),
-        inp('start', 'Start time', 'time'),
-        sel('duration', 'Length', durs),
+        h('fieldset', { class: 'field timegroup' }, h('legend', null, 'Set Time'),
+          h('div', { class: 'time-pair' }, inp('start', 'Start', 'time', null, true), inp('end', 'End', 'time', null, true))),
         optField('court', 'Court number', o.courts, 30),
         optField('venue', 'Venue', o.venues, 60),
         sel('level', 'Level', lvls.map(function (x) { return [x, x]; })),
@@ -822,7 +879,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (!s || !can('roster') || gateState() !== 'ok') {
       state.playersFor = null; state.moving = null; pendingRemovePlayer = null; modalSig = '';
       box.hidden = true; box.replaceChildren();
-      document.body.style.overflow = '';
+      lockScroll();
       return;
     }
     var list = roster(sid), cap = Math.max(2, Number(s.capacity) || 12);
@@ -860,7 +917,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         wait.length ? [h('h3', { class: 'modal-sub' }, 'Waitlist (' + wait.length + ')'), h('ol', { class: 'plist' }, wait.map(li))] : null,
         h('div', { class: 'modal-actions' }, h('button', { class: 'btn', type: 'button', onclick: closePlayers }, 'Close'))));
     box.hidden = false;
-    document.body.style.overflow = 'hidden';
+    lockScroll();
     if (hadFocus) { var c = (focusKey && document.getElementById(focusKey)) || $('#modal .modal-close'); if (c) c.focus(); }
   }
 
@@ -893,7 +950,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (blocked) ruleNote = 'You are already in ' + (activeSession.title || 'another session') + '. You can join another once it ends.';
     }
     if (canEditSession(s)) actions.push(h('button', { class: 'link', type: 'button', onclick: function () { startEdit(s); } }, 'Edit'));
-    if (canRemoveSession(s)) actions.push(h('button', { class: 'link' + (pendingRemove === s.id ? ' danger' : ''), type: 'button', onclick: function () { removeSession(s); } }, pendingRemove === s.id ? 'Tap again to remove' : 'Remove'));
+    if (canRemoveSession(s)) actions.push(h('button', { id: 'rs-' + s.id, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveSession(s); } }, 'Remove session'));
 
     return h('article', { class: 'card' + (myIdx >= 0 && myIdx < cap ? ' mine' : '') },
       moreBtn,
@@ -1159,7 +1216,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     hostSig = sig;
     fillSelect($('#h-level'), o.levels.map(function (v) { return [v, v]; }), 'Open play');
     fillSelect($('#h-format'), o.formats.map(function (v) { return [v, v]; }), 'Open play');
-    fillSelect($('#h-dur'), o.durations.map(function (m) { return [String(m), durLabel(m)]; }), '90');
     fillSlot('h-court-slot', 'h-court', o.courts, 'Court 3 or Courts 1–4', 30);
     fillSlot('h-venue-slot', 'h-venue', o.venues, 'Riverside', 60);
   }
@@ -1189,8 +1245,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     { key: 'levels', title: 'Level', hint: 'Used in the add form, the edit form and the Level filter.', placeholder: 'Intermediate 3.0–3.5', max: 40 },
     { key: 'formats', title: 'Format', hint: 'Used in the add form, the edit form and the Format filter.', placeholder: 'Round robin', max: 30 },
     { key: 'courts', title: 'Court number', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Court 3', max: 30 },
-    { key: 'venues', title: 'Venue', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Riverside', max: 60 },
-    { key: 'durations', title: 'Length', hint: 'In minutes, from 15 to 600.', placeholder: '90', max: 4, number: true }
+    { key: 'venues', title: 'Venue', hint: 'Shown as a list in the session forms once you add some; until then people type it.', placeholder: 'Riverside', max: 60 }
   ];
   function setOption(key, list, message) {
     if (!state.db || !can('options')) { flash('Your role cannot change session options.', 'err'); return; }
@@ -1200,20 +1255,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     state.db.doc('config/options').set(next).then(function () { flash(message, 'ok'); }).catch(fail('Could not save the options.'));
   }
   function addOption(kind) {
-    var raw = String(state.optDraft[kind.key] || '').trim(), list = opts()[kind.key], value;
-    if (kind.number) {
-      value = parseInt(raw, 10);
-      if (!(value >= 15 && value <= 600)) { flash('Enter a length between 15 and 600 minutes.', 'err'); return; }
-    } else {
-      if (!raw) { flash('Type the ' + kind.title.toLowerCase() + ' to add first.', 'err'); return; }
-      if (raw.length > kind.max) { flash('That is too long. Use ' + kind.max + ' characters or fewer.', 'err'); return; }
-      value = raw;
-    }
-    if (list.some(function (x) { return String(x).toLowerCase() === String(value).toLowerCase(); })) { flash('That is already in the list.', 'err'); return; }
-    var next = list.concat([value]);
-    if (kind.number) next.sort(function (a, b) { return a - b; });
+    var raw = String(state.optDraft[kind.key] || '').trim(), list = opts()[kind.key];
+    if (!raw) { flash('Type the ' + kind.title.toLowerCase() + ' to add first.', 'err'); return; }
+    if (raw.length > kind.max) { flash('That is too long. Use ' + kind.max + ' characters or fewer.', 'err'); return; }
+    if (list.some(function (x) { return String(x).toLowerCase() === raw.toLowerCase(); })) { flash('That is already in the list.', 'err'); return; }
     state.optDraft[kind.key] = '';
-    setOption(kind.key, next, 'Added ' + (kind.number ? durLabel(value) : value) + '.');
+    setOption(kind.key, list.concat([raw]), 'Added ' + raw + '.');
   }
   function renderOptions() {
     var box = $('#view-options');
@@ -1225,14 +1272,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     OPTION_KINDS.forEach(function (kind) {
       var list = o[kind.key], keepOne = kind.key !== 'courts' && kind.key !== 'venues';
       var chips = list.map(function (v) {
-        var label = kind.number ? durLabel(v) : v;
+        var label = v;
         return h('span', { class: 'opt-chip' }, label,
           h('button', { type: 'button', disabled: keepOne && list.length <= 1, 'aria-label': 'Remove ' + label, title: 'Remove ' + label,
             onclick: function () { setOption(kind.key, list.filter(function (x) { return x !== v; }), 'Removed ' + label + '.'); } }, '×'));
       });
-      var input = h('input', { id: 'opt-in-' + kind.key, type: kind.number ? 'number' : 'text', placeholder: kind.placeholder, 'aria-label': 'Add ' + kind.title.toLowerCase(),
+      var input = h('input', { id: 'opt-in-' + kind.key, type: 'text', placeholder: kind.placeholder, 'aria-label': 'Add ' + kind.title.toLowerCase(),
         value: state.optDraft[kind.key] || '', oninput: function (e) { state.optDraft[kind.key] = e.target.value; } });
-      if (kind.number) { input.min = '15'; input.max = '600'; input.step = '5'; } else input.maxLength = kind.max;
+      input.maxLength = kind.max;
       var isClear = !DEFAULT_OPTIONS[kind.key].length;
       grid.append(h('section', { class: 'panel' },
         h('div', { class: 'opt-head' },
@@ -1416,7 +1463,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
   function clearHostError() {
     $('#h-error').hidden = true; $('#h-error').textContent = '';
-    $('#h-date').removeAttribute('aria-invalid'); $('#h-start').removeAttribute('aria-invalid');
+    ['#h-date', '#h-start', '#h-end'].forEach(function (s) { $(s).removeAttribute('aria-invalid'); });
+  }
+  function showHostError(msg, ids, focusId) {
+    clearHostError();
+    $('#h-error').textContent = msg; $('#h-error').hidden = false;
+    ids.forEach(function (s) { $(s).setAttribute('aria-invalid', 'true'); });
+    $(focusId).focus();
   }
   function closeHost() { state.hostOpen = false; render(); }
   function logOut() {
@@ -1511,6 +1564,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       else renderRoles();
     }
     renderModal();
+    renderConfirm();
     if (focusId) {
       var el = document.getElementById(focusId);
       if (el && el !== document.activeElement) {
@@ -1538,6 +1592,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
+      if (state.confirmRemove) {
+        if (e.key === 'Escape') { cancelRemoveSession(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var cf = [].slice.call(document.querySelectorAll('#confirm button'));
+          var ci = cf.indexOf(document.activeElement);
+          if (e.shiftKey && ci <= 0) { e.preventDefault(); cf[cf.length - 1].focus(); }
+          else if (!e.shiftKey && (ci === cf.length - 1 || ci < 0)) { e.preventDefault(); cf[0].focus(); }
+        }
+        return;
+      }
       if (state.playersFor) {
         if (e.key === 'Escape') { closePlayers(); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the pop-up
@@ -1554,7 +1618,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       if (e.key === 'Escape' && state.menuOpen) { setMenu(false); $('#menu-btn').focus(); }
     });
     $('#h-cancel').addEventListener('click', function () { clearHostError(); closeHost(); });
-    ['#h-date', '#h-start'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
+    ['#h-date', '#h-start', '#h-end'].forEach(function (s) { $(s).addEventListener('input', clearHostError); });
+    // When the start moves past the end, push the end to 90 minutes after it (the common session length).
+    $('#h-start').addEventListener('change', function () {
+      var s = toMin($('#h-start').value);
+      if (!$('#h-end').value || toMin($('#h-end').value) <= s) $('#h-end').value = fromMin(s + 90);
+    });
 
     var rs = $('#pf-rating');
     rs.append(h('option', { value: '' }, 'Not set'));
@@ -1717,17 +1786,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       var cap = Math.min(32, Math.max(2, parseInt($('#h-cap').value, 10) || 12));
       var data = {
         title: $('#h-title').value.trim() || '-', date: $('#h-date').value, start: $('#h-start').value,
-        duration: parseInt($('#h-dur').value, 10), court: $('#h-court').value.trim() || '-', venue: $('#h-venue').value.trim() || '-',
+        duration: spanMinutes($('#h-start').value, $('#h-end').value), court: $('#h-court').value.trim() || '-', venue: $('#h-venue').value.trim() || '-',
         level: $('#h-level').value, format: $('#h-format').value, capacity: cap,
         hostId: state.me, hostName: myName(), createdAt: Date.now()
       };
-      if (!data.date || !data.start) { flash('Pick the day and start time.', 'err'); return; }
-      if (isPast(data.date, data.start)) {
-        $('#h-error').textContent = PAST_MSG; $('#h-error').hidden = false;
-        $('#h-date').setAttribute('aria-invalid', 'true'); $('#h-start').setAttribute('aria-invalid', 'true');
-        (data.date < dkey(new Date()) ? $('#h-date') : $('#h-start')).focus();
-        return;
-      }
+      if (!data.date || !data.start || !$('#h-end').value) { flash('Pick the day, start time and end time.', 'err'); return; }
+      if (data.duration <= 0) { showHostError(END_MSG, ['#h-end'], '#h-end'); return; }
+      if (isPast(data.date, data.start)) { showHostError(PAST_MSG, ['#h-date', '#h-start'], data.date < dkey(new Date()) ? '#h-date' : '#h-start'); return; }
       $('#h-submit').disabled = true;
       state.db.collection('sessions').add(data).then(function () {
         flash('Added ' + data.title + ' to the schedule.', 'ok');
