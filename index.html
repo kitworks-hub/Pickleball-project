@@ -346,10 +346,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   </div>
   <div class="wrap masthead">
     <div class="mast-text">
-      <p class="eyebrow">Open play · Ladders · Clinics</p>
+      <p class="eyebrow">Find your court · Meet your crew · Let’s play!</p>
       <h1>MPC</h1>
       <p class="lead">Pick a session, put your name down and see who else is on court. Full sessions keep a waitlist, and a spot opens up when someone leaves.</p>
-      <p class="stats" id="stats" aria-live="polite">Loading the schedule…</p>
+      <p class="stats" id="stats" aria-live="polite">Warming up the courts…</p>
     </div>
     <div class="logo" role="img" aria-label="MPC logo: crossed pickleball paddles and a yellow ball over a net"></div>
   </div>
@@ -396,13 +396,29 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         <input id="l-pass" type="password" maxlength="100" required autocomplete="current-password">
       </label>
       <div><button class="btn primary" type="submit" id="l-submit">Log in</button></div>
-      <p class="note">Forgot your password? Ask an admin to reset it from the Users page, then enter your email above and choose a new one.</p>
+      <p class="note"><button class="link" type="button" id="to-forgot">Forgot password?</button></p>
       <p class="note">Don't have an account? <button class="link" type="button" id="to-signup">Sign up</button></p>
+    </form>
+    <form id="forgot-form" class="panel" hidden novalidate>
+      <p class="eyebrow-dark">Password reset</p>
+      <h2>Forgot your password?</h2>
+      <div id="f-body">
+        <p>No worries, it happens to the best of us. Enter your email and we will send you a link to choose a new password.</p>
+        <label class="field" for="f-email">Email
+          <input id="f-email" type="email" maxlength="80" required autocomplete="email" inputmode="email" placeholder="maria@example.com">
+        </label>
+        <div class="submit-row"><button class="btn primary" type="submit" id="f-submit">Send reset link</button> <button class="btn" type="button" id="f-back">Back to log in</button></div>
+      </div>
+      <div id="f-done" hidden>
+        <p id="f-done-text"></p>
+        <p class="note">The link works for 1 hour and only once. Nothing in your inbox? Check your spam folder, or ask an admin to reset your password for you.</p>
+        <div class="submit-row"><button class="btn primary" type="button" id="f-back2">Back to log in</button></div>
+      </div>
     </form>
     <form id="pw-form" class="panel" hidden novalidate>
       <p class="eyebrow-dark">Password reset</p>
       <h2>Choose a new password</h2>
-      <p>An admin reset the password for this account. Choose a new one to continue. You will use it, with your email, the next time you log in.</p>
+      <p id="p-intro">An admin reset the password for this account. Choose a new one to continue. You will use it, with your email, the next time you log in.</p>
       <label class="field" for="p-email">Email
         <input id="p-email" type="email" readonly>
       </label>
@@ -623,7 +639,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -2281,7 +2297,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
   function gateState() {
     if (state.phase === 'error') return 'error';
-    if (!state.me) return state.resetId ? 'setpw' : (state.authMode === 'signup' ? 'signup' : 'login');
+    if (!state.me) return state.resetId ? 'setpw' : (state.authMode === 'signup' ? 'signup' : (state.authMode === 'forgot' ? 'forgot' : 'login'));
     var l = state.loaded;
     if (!(l.sessions && l.players && l.accounts && l.roles && l.cfg)) return 'loading';
     // Drop the saved login if that account was removed, or an admin reset its password.
@@ -2292,7 +2308,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     return 'ok';
   }
   var MESSAGES = {
-    loading: ['Loading', 'Checking your account and the latest schedule.'],
+    loading: ['Warming up the courts', 'Checking your account and lining up the latest games. Almost time to play!'],
     error: ['Something went wrong', 'The schedule could not be loaded. Reload the page to try again.'],
     suspended: ['Your access is paused', 'An admin has paused your account. Ask them to restore it and this page will open for you.'],
     noview: ['The schedule is hidden for your role', 'Your role does not include viewing sessions. Ask an admin or super admin to change your access.']
@@ -2307,8 +2323,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (msg) { $('#gate-title').textContent = msg[0]; $('#gate-text').textContent = msg[1]; }
     $('#login-form').hidden = (g !== 'login');
     $('#pw-form').hidden = (g !== 'setpw');
+    $('#forgot-form').hidden = (g !== 'forgot');
     $('#gate-logout').hidden = !(state.me && (g === 'suspended' || g === 'noview'));
-    if (g === 'setpw') $('#p-email').value = state.resetEmail;
+    if (g === 'setpw') {
+      $('#p-email').value = state.resetEmail;
+      $('#p-intro').textContent = state.resetToken
+        ? 'Almost there! Choose a new password for this account and you will be logged straight in, ready to play.'
+        : 'An admin reset the password for this account. Choose a new one to continue. You will use it, with your email, the next time you log in.';
+    }
   }
 
   /* ---------- accounts and passwords ----------
@@ -2439,7 +2461,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     logIn(res.id, email);
   }
   function logIn(id, email) {
-    state.me = id; state.email = email || ''; state.resetId = null; state.resetEmail = '';
+    state.me = id; state.email = email || ''; state.resetId = null; state.resetEmail = ''; state.resetToken = '';
     try { localStorage.setItem('kl-acct', id); localStorage.setItem('kl-email', state.email); } catch (e) {}
     startData();
     render();
@@ -2507,9 +2529,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var n = all.length, p = Object.keys(ids).length;
       el.textContent = n + (n === 1 ? ' session' : ' sessions') + ' coming up · ' + p + (p === 1 ? ' player' : ' players') + ' signed up';
     } else if (g === 'signup') el.textContent = 'Set up your account to see the schedule.';
-    else if (g === 'login') el.textContent = 'Log in to see the schedule.';
+    else if (g === 'login' || g === 'forgot') el.textContent = 'Lace up, log in and grab your spot on court!';
     else if (g === 'setpw') el.textContent = 'Choose a new password to continue.';
-    else el.textContent = 'Loading the schedule…';
+    else el.textContent = 'Warming up the courts…';
   }
 
   function syncFilters() {
@@ -2723,9 +2745,32 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
     $('#to-signup').addEventListener('click', function () { state.authMode = 'signup'; render(); $('#s-name').focus(); });
     $('#to-login').addEventListener('click', function () { state.authMode = 'login'; render(); $('#l-email').focus(); });
+    function openForgot() {
+      state.authMode = 'forgot';
+      $('#f-body').hidden = false; $('#f-done').hidden = true;
+      $('#f-email').value = normEmail($('#l-email').value);
+      render(); $('#f-email').focus();
+    }
+    function backToLogin() { state.authMode = 'login'; render(); $('#l-email').focus(); }
+    $('#to-forgot').addEventListener('click', openForgot);
+    $('#f-back').addEventListener('click', backToLogin);
+    $('#f-back2').addEventListener('click', backToLogin);
+    $('#forgot-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = normEmail($('#f-email').value);
+      if (!validEmail(email)) { flash('Enter the email you signed up with.', 'err'); $('#f-email').focus(); return; }
+      $('#f-submit').disabled = true;
+      authCall({ action: 'forgot', email: email }).then(function (res) {
+        $('#f-done-text').textContent = 'Check your inbox! If there is an account for ' + email + ', a reset link is on its way.';
+        $('#f-body').hidden = true; $('#f-done').hidden = false;
+        if (res.devLink) console.info('Local test only, reset link:', res.devLink);
+        $('#f-back2').focus();
+      }).catch(function (err) { flash(err.message, 'err'); })
+        .then(function () { $('#f-submit').disabled = false; });
+    });
     $('#gate-logout').addEventListener('click', logOut);
     $('#p-cancel').addEventListener('click', function () {
-      state.resetId = null; state.resetEmail = '';
+      state.resetId = null; state.resetEmail = ''; state.resetToken = '';
       $('#p-pass').value = ''; $('#p-pass2').value = '';
       render();
     });
@@ -2750,8 +2795,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (!state.resetId || !email) return;
       if (!checkNewPw($('#p-pass').value, $('#p-pass2').value, '#p-pass')) return;
       $('#p-submit').disabled = true;
-      authCall({ action: 'setpw', email: email, password: $('#p-pass').value }).then(function (res) {
+      var call = state.resetToken
+        ? { action: 'resetpw', token: state.resetToken, password: $('#p-pass').value }
+        : { action: 'setpw', email: email, password: $('#p-pass').value };
+      authCall(call).then(function (res) {
         $('#p-pass').value = ''; $('#p-pass2').value = '';
+        state.resetToken = '';
         afterAuth(res, email);
       }).catch(fail('Could not save your password.'))
         .then(function () { $('#p-submit').disabled = false; });
@@ -2874,8 +2923,25 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }, function () {});
   }
 
+  // A reset link looks like /#reset=<token>. The token stays in the address fragment (never sent to the server until it is used).
+  function takeResetLink() {
+    var m = /^#reset=([\w.\-]+)$/.exec(location.hash || '');
+    if (!m) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    var payload = null;
+    try {
+      var bin = atob(m[1].split('.')[0].replace(/-/g, '+').replace(/_/g, '/')), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      payload = JSON.parse(new TextDecoder().decode(bytes));
+    } catch (e) {}
+    if (!payload || payload.t !== 'reset' || !payload.email || !payload.id) { flash('That reset link is not valid. Ask for a new one.', 'err'); return; }
+    endSession();   // whoever was logged in on this browser is signed out; the link is for another account
+    state.resetToken = m[1]; state.resetId = payload.id; state.resetEmail = payload.email;
+  }
+
   function init() {
     setup();
+    takeResetLink();
     if (state.me && !state.token) endSession();   // a login saved before the site had its own server
     render();
     try { var msg = sessionStorage.getItem('kl-flash'); if (msg) { sessionStorage.removeItem('kl-flash'); flash(msg, 'ok'); } } catch (e) {}

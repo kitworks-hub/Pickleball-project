@@ -129,19 +129,49 @@ function secret() {
   return 'local-dev-only-secret';
 }
 const b64u = b => Buffer.from(b).toString('base64url');
-function signToken(id) {
-  const body = b64u(JSON.stringify({ id, exp: Date.now() + TOKEN_DAYS * 86400000 }));
-  return body + '.' + crypto.createHmac('sha256', secret()).update(body).digest('base64url');
+const sig = body => crypto.createHmac('sha256', secret()).update(body).digest('base64url');
+// A signed, expiring blob: used for login tokens (no "t" field) and for emailed reset links (t: 'reset').
+function signPayload(obj, ttlMs) {
+  const body = b64u(JSON.stringify(Object.assign({}, obj, { exp: Date.now() + ttlMs })));
+  return body + '.' + sig(body);
 }
+function verifyPayload(token) {
+  const [body, s] = String(token || '').split('.');
+  if (!body || !s) return null;
+  const want = sig(body);
+  if (s.length !== want.length || !crypto.timingSafeEqual(Buffer.from(s), Buffer.from(want))) return null;
+  const p = parse(Buffer.from(body, 'base64url').toString('utf8'));
+  return p && p.exp > Date.now() ? p : null;
+}
+const signToken = id => signPayload({ id }, TOKEN_DAYS * 86400000);
 function readToken(req) {
   const h = String(req.headers.authorization || '');
-  const t = h.startsWith('Bearer ') ? h.slice(7) : '';
-  const [body, sig] = t.split('.');
-  if (!body || !sig) return null;
-  const want = crypto.createHmac('sha256', secret()).update(body).digest('base64url');
-  if (sig.length !== want.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want))) return null;
-  const p = parse(Buffer.from(body, 'base64url').toString('utf8'));
-  return p && p.id && p.exp > Date.now() ? p : null;
+  const p = verifyPayload(h.startsWith('Bearer ') ? h.slice(7) : '');
+  return p && p.id && !p.t ? p : null;   // a reset link (t: 'reset') is never a login
+}
+
+/* ---------- email (password reset links) ----------
+   Set RESEND_API_KEY or BREVO_API_KEY, plus EMAIL_FROM (an address the service has verified).
+   With neither set, local runs print the link instead; production refuses to send. */
+const MAIL_FROM = process.env.EMAIL_FROM || '';
+const mailReady = () => !!(MAIL_FROM && (process.env.RESEND_API_KEY || process.env.BREVO_API_KEY));
+const fromAddress = () => (/<([^>]+)>/.exec(MAIL_FROM) || [null, MAIL_FROM])[1].trim();
+async function sendMail(to, subject, text, html) {
+  let r;
+  if (process.env.RESEND_API_KEY) {
+    r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: MAIL_FROM.includes('<') ? MAIL_FROM : 'MPC <' + MAIL_FROM + '>', to: [to], subject, text, html })
+    });
+  } else if (process.env.BREVO_API_KEY) {
+    r = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ sender: { name: 'MPC', email: fromAddress() }, to: [{ email: to }], subject, textContent: text, htmlContent: html })
+    });
+  } else throw httpErr(503, 'Email is not set up.');
+  if (!r.ok) throw httpErr(502, 'The email could not be sent. Try again in a few minutes.');
 }
 
 /* ---------- throttling ---------- */
@@ -207,6 +237,6 @@ function bookingEnded(b) {
 
 module.exports = {
   redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr,
-  emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken,
+  emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
   throttle, clearThrottle, clientIp, whoIs, sessionEnded, bookingEnded, FEATURE_KEYS, DEFAULTS
 };
