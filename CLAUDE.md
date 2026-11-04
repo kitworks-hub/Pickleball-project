@@ -1,4 +1,4 @@
-# Kitchen Line (pickleball scheduling site)
+# MPC (pickleball scheduling site)
 
 A single-file page, `index.html`, that runs as a published Claude Artifact. It handles account sign-up and log in, roles, a session schedule with sign-ups and waitlists, session editing, and admin menus.
 
@@ -8,7 +8,8 @@ Published copy: https://claude.ai/artifact/HkcE3XFhhgEVB3Xn9BdF22 (private to th
 
 - Edits to `index.html` stay local until the owner says "push" (or "publish", "deploy", "update the site").
 - On "push": read the live artifact first if this session has not read or published it, merge any newer live changes, then republish `index.html` to the URL above. Omit `icon`. Omit `capabilities` too, unless the stored declaration differs from the list under "How it works"; in that case pass the full list (a non-empty `capabilities` replaces the whole declaration).
-- Never push without being asked. After a push, report the URL and what changed.
+- "Push" also saves to GitHub (repository https://github.com/kitworks-hub/Pickleball-project, branch `main`, remote `origin`). After the artifact publish succeeds, commit `index.html` and `CLAUDE.md` (`git add index.html CLAUDE.md`, a short commit message describing the change, ending with the Co-Authored-By line from the attribution reminder) and run `git push origin main`. Skip the commit if nothing changed. If the git push fails (for example the sign-in expired, or the remote has new commits: `git pull --rebase origin main` first), say so; the live site is already updated. Never force-push. Git sign-in cannot be done from the background shell, so run `git push` in the user's Terminal panel if it asks for a login.
+- Never push without being asked. After a push, report the live URL, what changed, and that it was saved to GitHub.
 - The page only works on claude.ai, because it relies on the Artifact `db` and `user` capabilities. Hosting it on a custom domain would need a real backend (for example Supabase or Firebase) and a real login service in place of those capabilities.
 
 ## How it works
@@ -19,6 +20,7 @@ Published copy: https://claude.ai/artifact/HkcE3XFhhgEVB3Xn9BdF22 (private to th
 - Capabilities declared when publishing (the declaration changed from the old per-Claude-user rules, so pass it explicitly on the next push):
   - `user: {}`
   - `db: {}` with no rules. Every collection uses the default: signed-in viewers read, Contributors write. (The platform refuses a rule where read needs a higher level than write, so emails cannot be kept admin-only while members write them. Emails are therefore not stored at all.)
+- Branding: the business name is MPC. The logo (the supplied artwork, resized to 480px) is embedded once as the `--logo` CSS variable and shown in the header on a white rounded tile (`.logo`). Fonts are Montserrat (headings; the `MPC` wordmark is 800 italic) and Inter (body), plus IBM Plex Mono for small labels. Colours come from the logo: navy `--band`, royal blue `--accent`, yellow `--ball`; dark mode has its own navy palette. The text `'kitchen-line:'` in `emailId()` is the site's old name and must stay, because every account id is a hash that includes it.
 - Layout: `.wrap` fills the screen width (capped at 1920px) with side padding of `clamp(16px, 3vw, 48px)`; the top bar, header, filters and session cards all sit inside it so their left and right edges line up.
 - Navigation: a top bar in the header has a three-line menu (Dashboard = the session schedule, Profile, Users = member management, Role access, Add new session; Users, Role access and Add new session only when the role allows it) and, at the top right, the signed-in name, role and a Log out button. The new-session form is hidden until "Add new session" is picked.
 - Session level options are Open play, Beginner 2.0–2.5, Intermediate 3.0–3.5, Advanced 4.0+ (`LEVELS`). Sessions saved before the rename have level "All levels"; `lvl()` shows and filters those as "Open play". When adding or editing a session, an empty name, court or venue is saved as "-" (day and start time are still required, and an empty capacity falls back to 12).
