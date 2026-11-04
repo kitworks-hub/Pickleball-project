@@ -73,43 +73,31 @@ const actions = {
     return { status: 'ok', token: L.signToken(id), id };
   },
 
-  // "Forgot password?": emails a one-hour link. The email is never stored; it is only used to find the account (its id is a hash)
-  // and, inside the signed link, to rebuild the password hash. The answer is the same whether or not an account exists.
+  // "Forgot password?": looks the email up (its hash is the account id) and, if the account exists, hands back a 10-minute reset
+  // token so the page can go straight to "Choose a new password". The email itself is never stored. Admin and Super Admin
+  // accounts are left out unless ALLOW_ADMIN_SELF_RESET=yes, because anyone who knows an email could otherwise take that account.
   async forgot(b, req) {
     const email = L.normEmail(b.email);
     if (!L.validEmail(email)) throw L.httpErr(400, 'Enter a valid email address.');
     const id = L.emailId(email);
-    await L.throttle('forgot-ip:' + L.clientIp(req), 10, 3600);
-    await L.throttle('forgot:' + id, 3, 3600);
-    if (!L.mailReady() && L.IS_PROD) throw L.httpErr(503, 'Email is not set up on this site yet. Ask an admin to reset your password.');
-    const [member, cred] = await Promise.all([L.getDoc('members', id), L.getDoc('logins', id)]);
-    const out = { ok: true };
-    if (member) {
-      const token = L.signPayload({ t: 'reset', id, email, n: cred ? cred.setAt : 0 }, 3600000);
-      const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'localhost');
-      const proto = String(req.headers['x-forwarded-proto'] || (/^localhost|^127\./.test(host) ? 'http' : 'https')).split(',')[0];
-      const site = (process.env.SITE_URL || proto + '://' + host).replace(/\/$/, '');
-      const link = site + '/#reset=' + token;
-      if (L.mailReady()) {
-        const text = 'Hi ' + member.name + ',\n\nUse this link to choose a new MPC password. It works for 1 hour and only once:\n\n' + link + '\n\nIf you did not ask for this, you can ignore this email. Your password stays the same.\n\nSee you on court!\nMPC';
-        const html = '<p>Hi ' + member.name.replace(/[<>&"]/g, '') + ',</p><p>Use the button below to choose a new MPC password. The link works for 1 hour and only once.</p><p><a href="' + link + '" style="background:#f7d935;color:#0a2a6e;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block">Choose a new password</a></p><p style="color:#555">Or paste this into your browser:<br>' + link + '</p><p style="color:#555">If you did not ask for this, you can ignore this email. Your password stays the same.</p><p>See you on court!<br>MPC</p>';
-        await L.sendMail(email, 'Reset your MPC password', text, html);
-      } else if (!L.IS_PROD) {
-        out.devLink = link;   // local testing only: production never returns the link
-      }
-    }
-    return out;
+    await L.throttle('forgot-ip:' + L.clientIp(req), 20, 600);
+    await L.throttle('forgot:' + id, 8, 600);
+    const [member, role, cred] = await Promise.all([L.getDoc('members', id), L.getDoc('roles', id), L.getDoc('logins', id)]);
+    if (!member) throw L.httpErr(404, 'We could not find an account with that email. Check the spelling, or sign up.');
+    const elevated = role && (role.role === 'super_admin' || role.role === 'admin' || role.owner);
+    if (elevated && process.env.ALLOW_ADMIN_SELF_RESET !== 'yes') throw L.httpErr(403, 'For safety, admin accounts cannot be reset this way. Ask the Super Admin to reset your password from the Users page.');
+    return { token: L.signPayload({ t: 'reset', id, email, n: cred ? cred.setAt : 0 }, 600000), id };
   },
 
-  // Choosing a new password from the emailed link. The link dies once the password changes.
+  // Choosing a new password after "Forgot password?". The token works once: it dies as soon as the password changes.
   async resetpw(b, req) {
     pwOk(b.password);
     await L.throttle('resetpw-ip:' + L.clientIp(req), 20, 600);
     const p = L.verifyPayload(b.token);
-    if (!p || p.t !== 'reset' || !p.id || !p.email || L.emailId(p.email) !== p.id) throw L.httpErr(400, 'This reset link is not valid or has expired. Ask for a new one.');
+    if (!p || p.t !== 'reset' || !p.id || !p.email || L.emailId(p.email) !== p.id) throw L.httpErr(400, 'This reset has expired. Start again with "Forgot password?".');
     const [member, cred] = await Promise.all([L.getDoc('members', p.id), L.getDoc('logins', p.id)]);
-    if (!member) throw L.httpErr(400, 'This reset link is not valid or has expired. Ask for a new one.');
-    if ((cred ? cred.setAt : 0) !== p.n) throw L.httpErr(400, 'This reset link was already used. Ask for a new one if you still need it.');
+    if (!member) throw L.httpErr(400, 'This reset has expired. Start again with "Forgot password?".');
+    if ((cred ? cred.setAt : 0) !== p.n) throw L.httpErr(400, 'This reset was already used. Start again with "Forgot password?" if you still need it.');
     await L.one(['HSET', L.K('logins'), p.id, JSON.stringify(await L.makeCred(p.email, b.password))]);
     await L.one(['HSET', L.K('members'), p.id, JSON.stringify(Object.assign({}, member, { pwSetAt: Date.now() }))]);
     await L.bump();

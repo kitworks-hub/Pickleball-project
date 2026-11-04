@@ -94,6 +94,7 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 
 /* Gate */
 .gate { padding-block: 24px 40px; max-width: 560px; }
+.gate .submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
 
 /* Account bar and nav */
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
@@ -402,18 +403,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     <form id="forgot-form" class="panel" hidden novalidate>
       <p class="eyebrow-dark">Password reset</p>
       <h2>Forgot your password?</h2>
-      <div id="f-body">
-        <p>No worries, it happens to the best of us. Enter your email and we will send you a link to choose a new password.</p>
-        <label class="field" for="f-email">Email
-          <input id="f-email" type="email" maxlength="80" required autocomplete="email" inputmode="email" placeholder="maria@example.com">
-        </label>
-        <div class="submit-row"><button class="btn primary" type="submit" id="f-submit">Send reset link</button> <button class="btn" type="button" id="f-back">Back to log in</button></div>
-      </div>
-      <div id="f-done" hidden>
-        <p id="f-done-text"></p>
-        <p class="note">The link works for 1 hour and only once. Nothing in your inbox? Check your spam folder, or ask an admin to reset your password for you.</p>
-        <div class="submit-row"><button class="btn primary" type="button" id="f-back2">Back to log in</button></div>
-      </div>
+      <p>No worries, it happens to the best of us. Enter the email you signed up with and we will find your account so you can choose a new password.</p>
+      <label class="field" for="f-email">Email
+        <input id="f-email" type="email" maxlength="80" required autocomplete="email" inputmode="email" placeholder="maria@example.com">
+      </label>
+      <div class="submit-row"><button class="btn primary" type="submit" id="f-submit">Find my account</button> <button class="btn" type="button" id="f-back">Back to log in</button></div>
     </form>
     <form id="pw-form" class="panel" hidden novalidate>
       <p class="eyebrow-dark">Password reset</p>
@@ -2328,7 +2322,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (g === 'setpw') {
       $('#p-email').value = state.resetEmail;
       $('#p-intro').textContent = state.resetToken
-        ? 'Almost there! Choose a new password for this account and you will be logged straight in, ready to play.'
+        ? 'We found your account! Choose a new password and you will be logged straight in, ready to play.'
         : 'An admin reset the password for this account. Choose a new one to continue. You will use it, with your email, the next time you log in.';
     }
   }
@@ -2747,28 +2741,24 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#to-login').addEventListener('click', function () { state.authMode = 'login'; render(); $('#l-email').focus(); });
     function openForgot() {
       state.authMode = 'forgot';
-      $('#f-body').hidden = false; $('#f-done').hidden = true;
       $('#f-email').value = normEmail($('#l-email').value);
       render(); $('#f-email').focus();
     }
     function backToLogin() { state.authMode = 'login'; render(); $('#l-email').focus(); }
     $('#to-forgot').addEventListener('click', openForgot);
     $('#f-back').addEventListener('click', backToLogin);
-    $('#f-back2').addEventListener('click', backToLogin);
     $('#forgot-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var email = normEmail($('#f-email').value);
       if (!validEmail(email)) { flash('Enter the email you signed up with.', 'err'); $('#f-email').focus(); return; }
       $('#f-submit').disabled = true;
       authCall({ action: 'forgot', email: email }).then(function (res) {
-        $('#f-done-text').textContent = 'Check your inbox! If there is an account for ' + email + ', a reset link is on its way.';
-        $('#f-body').hidden = true; $('#f-done').hidden = false;
-        if (res.devLink) console.info('Local test only, reset link:', res.devLink);
-        $('#f-back2').focus();
-      }).catch(function (err) { flash(err.message, 'err'); })
+        // found: go straight to choosing a new password (the token is good for 10 minutes and works once)
+        state.resetToken = res.token; state.resetId = res.id; state.resetEmail = email; state.authMode = 'login';
+        render(); $('#p-pass').focus();
+      }).catch(function (err) { flash(err.message, 'err'); $('#f-email').focus(); })
         .then(function () { $('#f-submit').disabled = false; });
     });
-    $('#gate-logout').addEventListener('click', logOut);
     $('#p-cancel').addEventListener('click', function () {
       state.resetId = null; state.resetEmail = ''; state.resetToken = '';
       $('#p-pass').value = ''; $('#p-pass2').value = '';
