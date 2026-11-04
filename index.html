@@ -1,6 +1,7 @@
 <title>MPC</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>try { var kt = localStorage.getItem('kl-theme'); if (kt === 'light' || kt === 'dark') document.documentElement.setAttribute('data-theme', kt); } catch (e) {}</script>
 <style>
 /* Layout: navy masthead with the MPC logo; below it a log in / sign up gate, then the app (Dashboard, Profile, Users, Role access). */
 :root {
@@ -114,7 +115,10 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 .who strong { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who .who-role { font: 500 0.75rem/1.2 var(--mono); color: var(--band-muted); }
 .btn.on-band { border-color: var(--band-muted); color: var(--band-ink); white-space: nowrap; }
-@media (max-width: 420px) { .who .who-role { display: none; } .who strong { max-width: 8ch; } .menu-btn .menu-label { display: none; } }
+.theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; flex: none; border: 1px solid var(--band-muted); border-radius: 6px; background: none; color: var(--band-ink); cursor: pointer; }
+.theme-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.theme-btn svg { width: 18px; height: 18px; }
+@media (max-width: 420px) { .who .who-text { display: none; } .menu-btn .menu-label { display: none; } }
 
 /* Day strip and filters */
 .cal-wrap { position: relative; margin-bottom: 8px; }
@@ -318,7 +322,7 @@ table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
 .tile span { font-size: var(--fs-s); color: var(--muted); }
 .dash-search { max-width: 360px; }
 .row .meta .email { color: var(--ink); overflow-wrap: anywhere; }
-footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
+footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: no-preference) { .btn, .cal-day { transition: background-color 0.15s, border-color 0.15s; } }
 </style>
 
@@ -556,7 +560,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
   </div>
 
-  <footer>Times show in your local time zone. A pickleball court is 20 × 44 ft, and the kitchen reaches 7 ft back from the net on each side.</footer>
+  <footer>Copyright © 2026. KitCraft All Rights Reserved.</footer>
 </main>
 
 <div id="modal" class="modal" hidden></div>
@@ -2405,11 +2409,37 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (gateState() === 'ok') flash('Welcome, ' + myName() + '.', 'ok');
   }
 
+  /* ---------- light / dark ----------
+     Follows the device until someone picks a side; the choice is kept on that device (kl-theme). */
+  function themeNow() {
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'light' || t === 'dark') return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function toggleTheme() {
+    var next = themeNow() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('kl-theme', next); } catch (e) {}
+    renderBar();
+  }
+  function themeButton() {
+    var dark = themeNow() === 'dark', ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+    ['fill', 'none', 'stroke', 'currentColor', 'stroke-width', '2', 'stroke-linecap', 'round', 'stroke-linejoin', 'round'].forEach(function (v, i, a) { if (i % 2 === 0) svg.setAttribute(v, a[i + 1]); });
+    svg.innerHTML = dark
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+      : '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+    var label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    return h('button', { id: 'theme-btn', class: 'theme-btn', type: 'button', title: label, 'aria-label': label, onclick: toggleTheme }, svg);
+  }
+
   function renderBar() {
     $('#who').replaceChildren(
       h('div', { class: 'who-text' },
         h('strong', { title: myName() }, myName()),
         h('span', { class: 'who-role' }, roleLabel(myRole()))),
+      themeButton(),
       h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
