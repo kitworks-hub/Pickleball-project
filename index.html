@@ -192,6 +192,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .time-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 360px; }
 .time-pair .sub { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-s); color: var(--muted); }
 .confirm-panel { width: min(420px, 100%); }
+.edit-panel { width: min(560px, 100%); max-height: min(90vh, 780px); }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 .opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; align-items: start; }
 .opt-grid .panel { gap: 10px; padding: 14px 16px; }
@@ -426,6 +427,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 
 <div id="modal" class="modal" hidden></div>
 <div id="confirm" class="modal" hidden></div>
+<div id="editdlg" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -679,7 +681,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -738,11 +740,18 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     };
     state.edit.orig = { start: state.edit.draft.start, end: state.edit.draft.end };   // to tell whether the times were touched
     render();
+    var first = $('#e-title'); if (first) first.focus();
   }
   function editError(msg, keys, focusSel) {
     state.edit.error = msg; state.edit.errorKeys = keys;
     render();
     var f = $(focusSel); if (f) f.focus();
+  }
+  function closeEdit() {
+    var id = state.edit && state.edit.id;
+    state.edit = null;
+    renderEditDialog();
+    var b = id && document.getElementById('ed-' + id); if (b) b.focus();
   }
   function saveEdit() {
     var d = state.edit.draft;
@@ -763,10 +772,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       court: d.court.trim() || '-', venue: d.venue.trim() || '-', level: d.level, format: d.format, capacity: cap
     };
     queue(function () { return state.db.doc('sessions/' + id).update(patch); }, 'Could not save the changes.').then(function () {
-      if (state.edit && state.edit.id === id) { state.edit = null; flash('Session updated.', 'ok'); render(); }
+      if (state.edit && state.edit.id === id) {
+        state.edit = null; flash('Session updated.', 'ok'); render();
+        var b = document.getElementById('ed-' + id); if (b) b.focus();
+      }
     });
   }
-  function editCard(s) {
+  function editFields(s) {
     var d = state.edit.draft;
     function inp(key, label, type, attrs, sub) {
       var timing = key === 'date' || key === 'start' || key === 'end';
@@ -792,8 +804,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       var vals = list.slice(); if (d[key] && vals.indexOf(d[key]) < 0) vals.push(d[key]);
       return sel(key, label, [['', '-']].concat(vals.map(function (v) { return [v, v]; })));
     }
-    return h('article', { class: 'card editing' },
-      h('p', { class: 'time' }, 'Editing session'),
+    return h('div', { class: 'edit-body' },
       h('div', { class: 'form-grid' },
         (function () { var t = inp('title', 'Session name', 'text', { maxlength: '60' }); t.classList.add('wide'); return t; })(),
         inp('date', 'Day', 'date'),
@@ -805,9 +816,42 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         sel('format', 'Format', fmts.map(function (x) { return [x, x]; })),
         inp('capacity', 'Player spots', 'number', { min: '2', max: '32', step: '1' })),
       state.edit.error ? h('p', { class: 'form-error', role: 'alert' }, state.edit.error) : null,
-      h('div', { class: 'actions' },
-        h('button', { class: 'btn primary', type: 'button', onclick: saveEdit }, 'Save changes'),
-        h('button', { class: 'btn', type: 'button', onclick: function () { state.edit = null; render(); } }, 'Cancel')));
+      h('div', { class: 'confirm-actions' },
+        h('button', { class: 'btn', type: 'button', onclick: closeEdit }, 'Cancel'),
+        h('button', { class: 'btn primary', type: 'button', onclick: saveEdit }, 'Save changes')));
+  }
+  // The edit dialog. It is rebuilt only when something it shows changes, so typing and focus are not disturbed by live updates.
+  var editSig = '';
+  function renderEditDialog() {
+    var box = $('#editdlg'), e = state.edit;
+    var s = e ? state.sessions.filter(function (x) { return x.id === e.id; })[0] : null;
+    if (e && !s) flash('That session was removed while you were editing it.', 'err');
+    if (!s || !canEditSession(s) || gateState() !== 'ok') {
+      state.edit = null; editSig = '';
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    var sig = [e.id, e.error || '', JSON.stringify(e.errorKeys || []), JSON.stringify(opts())].join('|');
+    if (sig === editSig && !box.hidden) return;
+    editSig = sig;
+    var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '', selA = null, selB = null;
+    if (hadFocus) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (err) {} }
+    var t = times(s);
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel edit-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'edit-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null, h('h2', { id: 'edit-title' }, 'Edit session'),
+            h('p', { class: 'time' }, (s.title || '-') + ' · ' + fullFmt.format(parse(s.date, '00:00')) + ', ' + tfmt.format(t.start))),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close without saving', onclick: closeEdit }, '×')),
+        editFields(s)));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) {
+      var el = document.getElementById(focusKey);
+      if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (err) {} } }
+    }
   }
 
   /* ---------- schedule rendering ---------- */
@@ -922,7 +966,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
 
   function card(s) {
-    if (state.edit && state.edit.id === s.id) return editCard(s);
     var list = roster(s.id);
     var cap = Math.max(2, Number(s.capacity) || 12);
     var going = list.slice(0, cap);
@@ -946,10 +989,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       actions.push(myIdx < cap ? h('span', { class: 'pill' }, "✓ You're in") : h('span', { class: 'pill wl' }, 'Waitlist #' + (myIdx - cap + 1)));
       ruleNote = 'You cannot leave a session once you have joined it.';
     } else if (can('join')) {
-      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin || blocked, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join session'));
+      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin || blocked, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join'));
       if (blocked) ruleNote = 'You are already in ' + (activeSession.title || 'another session') + '. You can join another once it ends.';
     }
-    if (canEditSession(s)) actions.push(h('button', { class: 'link', type: 'button', onclick: function () { startEdit(s); } }, 'Edit'));
+    if (canEditSession(s)) actions.push(h('button', { id: 'ed-' + s.id, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { startEdit(s); } }, 'Edit'));
     if (canRemoveSession(s)) actions.push(h('button', { id: 'rs-' + s.id, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveSession(s); } }, 'Remove session'));
 
     return h('article', { class: 'card' + (myIdx >= 0 && myIdx < cap ? ' mine' : '') },
@@ -1565,6 +1608,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }
     renderModal();
     renderConfirm();
+    renderEditDialog();
     if (focusId) {
       var el = document.getElementById(focusId);
       if (el && el !== document.activeElement) {
@@ -1599,6 +1643,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
           var ci = cf.indexOf(document.activeElement);
           if (e.shiftKey && ci <= 0) { e.preventDefault(); cf[cf.length - 1].focus(); }
           else if (!e.shiftKey && (ci === cf.length - 1 || ci < 0)) { e.preventDefault(); cf[0].focus(); }
+        }
+        return;
+      }
+      if (state.edit) {
+        if (e.key === 'Escape') { closeEdit(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var ef = [].slice.call(document.querySelectorAll('#editdlg button:not(:disabled), #editdlg input, #editdlg select'));
+          var ei = ef.indexOf(document.activeElement);
+          if (e.shiftKey && ei <= 0) { e.preventDefault(); ef[ef.length - 1].focus(); }
+          else if (!e.shiftKey && (ei === ef.length - 1 || ei < 0)) { e.preventDefault(); ef[0].focus(); }
         }
         return;
       }
