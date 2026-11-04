@@ -2,7 +2,7 @@
    Accounts, password hashes, roles (including the Super Admin), role access, settings, sessions and sign-ups all move over.
 
    Usage (PowerShell), with the same variables the site uses:
-     $env:UPSTASH_REDIS_REST_URL = "https://..."; $env:UPSTASH_REDIS_REST_TOKEN = "..."
+     $env:SUPABASE_URL = "https://xxxx.supabase.co"; $env:SUPABASE_SERVICE_ROLE_KEY = "..."
      node scripts/import-data.js            # adds only what is missing
      node scripts/import-data.js --replace  # overwrites documents that already exist
    The migration folder holds password hashes: it is git-ignored. Do not commit or share it. */
@@ -15,8 +15,8 @@ const dir = path.join(__dirname, '..', 'migration');
 const replace = process.argv.includes('--replace');
 
 (async () => {
-  if (!process.env.UPSTASH_REDIS_REST_URL && !process.env.KV_REST_API_URL) {
-    console.error('Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN first (see CLAUDE.md).');
+  if (!process.env.SUPABASE_URL || !(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)) {
+    console.error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY first (see CLAUDE.md).');
     process.exit(1);
   }
   let added = 0, skipped = 0;

@@ -1,56 +1,107 @@
-/* Shared server code for the MPC API (Vercel Node functions).
-   Storage: Upstash Redis over its REST API (no npm packages needed). With no Redis variables set and
-   NODE_ENV not "production", an in-memory store is used so the site can be tried locally. */
+/* Shared server code for the MPC API (Vercel Node functions). Storage is Supabase (see below); no npm packages are needed. */
 'use strict';
 const crypto = require('crypto');
 
-const REST_URL = (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || '').replace(/\/$/, '');
-const REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || '';
+const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 const TZ = process.env.APP_TIMEZONE || 'Asia/Manila';
 const PW_ITER = 200000;
 const TOKEN_DAYS = 30;
 
-/* ---------- storage ---------- */
-const mem = { hashes: {}, strings: {} };
+function httpErr(status, message) { const e = new Error(message); e.status = status; return e; }
+
+/* ---------- storage ----------
+   Supabase (Postgres) through its REST API, using the server-only service key. One table, public.docs(col, id, data),
+   holds every document; public.counters backs the change counter and the login rate limits (see supabase/setup.sql).
+   The page's code talks to it with a few Redis-style commands (HGET, HSET, HSETNX, HDEL, HGETALL) kept from the first version.
+   With no Supabase variables set and NODE_ENV not "production", an in-memory store is used so the site can be tried locally. */
+const mem = { docs: {}, counters: {} };
+const memCol = c => (mem.docs[c] = mem.docs[c] || {});
 function memRun(cmd) {
-  const op = String(cmd[0]).toUpperCase(), k = cmd[1];
-  const hash = () => (mem.hashes[k] = mem.hashes[k] || {});
+  const op = cmd[0], col = String(cmd[1]).replace(/^mpc:c:/, '');
   switch (op) {
-    case 'HGET': return (mem.hashes[k] || {})[cmd[2]] ?? null;
-    case 'HSET': hash()[cmd[2]] = cmd[3]; return 1;
-    case 'HSETNX': if (cmd[2] in hash()) return 0; hash()[cmd[2]] = cmd[3]; return 1;
-    case 'HDEL': { const had = cmd[2] in (mem.hashes[k] || {}); if (had) delete mem.hashes[k][cmd[2]]; return had ? 1 : 0; }
-    case 'HGETALL': { const o = mem.hashes[k] || {}; const a = []; Object.keys(o).forEach(f => a.push(f, o[f])); return a; }
-    case 'GET': return mem.strings[k] ?? null;
-    case 'INCR': mem.strings[k] = String((Number(mem.strings[k]) || 0) + 1); return Number(mem.strings[k]);
-    case 'DEL': delete mem.strings[k]; delete mem.hashes[k]; return 1;
-    case 'EXPIRE': return 1;
+    case 'HGET': return memCol(col)[cmd[2]] ?? null;
+    case 'HSET': memCol(col)[cmd[2]] = cmd[3]; return 1;
+    case 'HSETNX': if (cmd[2] in memCol(col)) return 0; memCol(col)[cmd[2]] = cmd[3]; return 1;
+    case 'HDEL': { const had = cmd[2] in memCol(col); delete memCol(col)[cmd[2]]; return had ? 1 : 0; }
+    case 'HGETALL': { const o = memCol(col), a = []; Object.keys(o).forEach(f => a.push(f, o[f])); return a; }
     default: throw new Error('memory store: unsupported ' + op);
   }
 }
+async function sb(method, pathAndQuery, body, prefer) {
+  // New-style keys (sb_secret_...) go in the apikey header only; old-style service_role keys are JWTs and are also sent as Bearer.
+  const headers = { apikey: SB_KEY, 'Content-Type': 'application/json' };
+  if (SB_KEY.startsWith('eyJ')) headers.Authorization = 'Bearer ' + SB_KEY;
+  if (prefer) headers.Prefer = prefer;
+  const r = await fetch(SB_URL + '/rest/v1/' + pathAndQuery, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  if (!r.ok) throw httpErr(502, 'The database did not accept that (' + r.status + ').');
+  const text = await r.text();
+  return text ? JSON.parse(text) : null;
+}
+const q = v => encodeURIComponent(v);
+async function sbRun(cmd) {
+  const op = cmd[0], col = String(cmd[1]).replace(/^mpc:c:/, '');
+  switch (op) {
+    case 'HGET': {
+      const rows = await sb('GET', 'docs?select=data&col=eq.' + q(col) + '&id=eq.' + q(cmd[2]));
+      return rows.length ? JSON.stringify(rows[0].data) : null;
+    }
+    case 'HGETALL': {
+      const rows = await sb('GET', 'docs?select=id,data&col=eq.' + q(col));
+      const flat = []; rows.forEach(r => flat.push(r.id, JSON.stringify(r.data)));
+      return flat;
+    }
+    case 'HSET':
+      await sb('POST', 'docs?on_conflict=col,id', { col, id: cmd[2], data: JSON.parse(cmd[3]) }, 'resolution=merge-duplicates,return=minimal');
+      return 1;
+    case 'HSETNX': {   // inserts only when absent; the row comes back only if it was inserted
+      const rows = await sb('POST', 'docs?on_conflict=col,id', { col, id: cmd[2], data: JSON.parse(cmd[3]) }, 'resolution=ignore-duplicates,return=representation');
+      return rows && rows.length ? 1 : 0;
+    }
+    case 'HDEL':
+      await sb('DELETE', 'docs?col=eq.' + q(col) + '&id=eq.' + q(cmd[2]), undefined, 'return=minimal');
+      return 1;
+    default: throw new Error('unsupported ' + op);
+  }
+}
+const configured = () => !!(SB_URL && SB_KEY);
 async function redis(cmds) {
-  if (!REST_URL || !REST_TOKEN) {
-    if (IS_PROD) throw httpErr(500, 'The database is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.');
+  if (!configured()) {
+    if (IS_PROD) throw httpErr(500, 'The database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
     return cmds.map(memRun);
   }
-  const r = await fetch(REST_URL + '/pipeline', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + REST_TOKEN, 'Content-Type': 'application/json' },
-    body: JSON.stringify(cmds)
-  });
-  if (!r.ok) throw httpErr(502, 'The database did not answer (' + r.status + ').');
-  const out = await r.json();
-  return out.map(x => { if (x.error) throw httpErr(502, 'Database error: ' + x.error); return x.result; });
+  return Promise.all(cmds.map(sbRun));
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
 const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
-async function bump() { await one(['INCR', 'mpc:rev']); }
 
-function httpErr(status, message) { const e = new Error(message); e.status = status; return e; }
+// A counter that goes up on every write, so the page can ask "has anything changed?" cheaply.
+async function bump() {
+  if (!configured()) { mem.counters.rev = (mem.counters.rev || 0) + 1; return; }
+  await sb('POST', 'rpc/mpc_incr', { k: 'rev' });
+}
+async function getRev() {
+  if (!configured()) return mem.counters.rev || 0;
+  const rows = await sb('GET', 'counters?select=n&key=eq.rev');
+  return rows.length ? Number(rows[0].n) : 0;
+}
+// Counts tries in a time window (login rate limits). Returns how many there have been, including this one.
+async function hit(key, seconds) {
+  if (!configured()) {
+    const c = mem.counters['h:' + key];
+    if (!c || c.until < Date.now()) { mem.counters['h:' + key] = { n: 1, until: Date.now() + seconds * 1000 }; return 1; }
+    return ++c.n;
+  }
+  return Number(await sb('POST', 'rpc/mpc_hit', { k: key, secs: seconds }));
+}
+async function clearHit(key) {
+  if (!configured()) { delete mem.counters['h:' + key]; return; }
+  await sb('DELETE', 'counters?key=eq.' + q(key), undefined, 'return=minimal');
+}
 
 /* ---------- ids, passwords, tokens ---------- */
 // The 'kitchen-line:' text is the site's original name. It is part of every account id, so it must never change.
@@ -95,10 +146,9 @@ function readToken(req) {
 
 /* ---------- throttling ---------- */
 async function throttle(key, max, seconds) {
-  const [n] = await redis([['INCR', 'mpc:rl:' + key], ['EXPIRE', 'mpc:rl:' + key, seconds]]);
-  if (n > max) throw httpErr(429, 'Too many tries. Wait a few minutes and try again.');
+  if ((await hit('rl:' + key, seconds)) > max) throw httpErr(429, 'Too many tries. Wait a few minutes and try again.');
 }
-const clearThrottle = key => one(['DEL', 'mpc:rl:' + key]);
+const clearThrottle = key => clearHit('rl:' + key);
 const clientIp = req => String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || 'ip').split(',')[0].trim();
 
 /* ---------- roles and permissions (same table as the page) ---------- */
@@ -156,7 +206,7 @@ function bookingEnded(b) {
 }
 
 module.exports = {
-  redis, one, K, COLS, parse, getDoc, bump, httpErr,
+  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken,
   throttle, clearThrottle, clientIp, whoIs, sessionEnded, bookingEnded, FEATURE_KEYS, DEFAULTS
 };

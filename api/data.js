@@ -19,7 +19,7 @@ function mapOf(flat) {
 async function read(req, res) {
   await L.whoIs(req);
   const want = Number(req.query && req.query.rev);
-  const rev = Number(await L.one(['GET', 'mpc:rev'])) || 0;
+  const rev = await L.getRev();
   if (want === rev) return res.status(200).json({ rev, same: true });
   const r = await L.redis(READ_COLS.concat(['config']).map(c => ['HGETALL', L.K(c)]));
   const cols = {};

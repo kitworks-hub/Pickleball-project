@@ -1,5 +1,5 @@
 /* Local test server: serves index.html and runs the /api functions with the same handlers Vercel uses.
-   With no Redis variables set it keeps data in memory (lost when it stops).
+   With no Supabase variables set it keeps data in memory (lost when it stops).
    Usage: node scripts/dev-server.js [port] */
 'use strict';
 const http = require('http');
