@@ -118,7 +118,8 @@ select.plain { width: auto; max-width: 100%; padding: 8px 10px; background: var(
 .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; flex: none; border: 1px solid var(--band-muted); border-radius: 6px; background: none; color: var(--band-ink); cursor: pointer; }
 .theme-btn:hover { background: rgba(255, 255, 255, 0.12); }
 .theme-btn svg { width: 18px; height: 18px; }
-@media (max-width: 420px) { .who .who-text { display: none; } .menu-btn .menu-label { display: none; } }
+@media (max-width: 460px) { .who .who-text { display: none; } }
+@media (max-width: 420px) { .menu-btn .menu-label { display: none; } }
 
 /* Day strip and filters */
 .cal-wrap { position: relative; margin-bottom: 8px; }
@@ -565,6 +566,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
 <div id="modal" class="modal" hidden></div>
 <div id="confirm" class="modal" hidden></div>
+<div id="confirmuser" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
 <div id="bklist" class="modal" hidden></div>
@@ -621,7 +623,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -632,7 +634,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   var chain = Promise.resolve();
   var ownerSyncing = false;
   var dashQuery = '';
-  var pendingRemoveUser = null;
 
   function $(s) { return document.querySelector(s); }
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -827,7 +828,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1268,20 +1269,56 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
 
   /* ---------- admin dashboard ---------- */
-  function removeUser(u) {
-    if (pendingRemoveUser !== u) {
-      pendingRemoveUser = u;
-      render();
-      setTimeout(function () { if (pendingRemoveUser === u) { pendingRemoveUser = null; render(); } }, 4000);
-      return;
-    }
-    pendingRemoveUser = null;
+  // Removing a member opens a Yes / No dialog. Nothing is deleted until "Yes" is pressed.
+  function askRemoveUser(u) {
+    state.confirmUser = u;
+    renderConfirmUser();
+    var no = $('#confirmuser .confirm-no'); if (no) no.focus();   // the safe choice has focus first
+  }
+  function cancelRemoveUser() {
+    var u = state.confirmUser;
+    state.confirmUser = null;
+    renderConfirmUser();
+    var b = u && document.getElementById('ru-' + u); if (b) b.focus();
+  }
+  function removeUser() {
+    var u = state.confirmUser;
+    if (!u || !isSuper()) return;
+    state.confirmUser = null;
+    renderConfirmUser();
     var name = personName(u);
     queue(function () {
       return Promise.all(['members', 'roles', 'signups', 'logins'].map(function (c) {
         return state.db.doc(c + '/' + u).delete().catch(function () {});
       }));
     }, 'Could not remove that member.').then(function () { flash(name + ' was removed. They can set up a new account if they come back.', 'ok'); });
+  }
+  var confirmUserSig = '';
+  function renderConfirmUser() {
+    var box = $('#confirmuser'), u = state.confirmUser;
+    if (!u || !state.accounts[u] || !isSuper() || u === state.me || isOwnerAccount(u) || gateState() !== 'ok') {
+      state.confirmUser = null; confirmUserSig = '';
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    var name = personName(u), sig = u + '|' + name + '|' + roleOf(u);
+    if (sig === confirmUserSig && !box.hidden) return;
+    confirmUserSig = sig;
+    var hadFocus = box.contains(document.activeElement);
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop', onclick: cancelRemoveUser }),
+      h('div', { class: 'modal-panel confirm-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'cu-title', 'aria-describedby': 'cu-text' },
+        h('h2', { id: 'cu-title' }, 'Remove ' + name + '?'),
+        h('div', { id: 'cu-text' },
+          h('p', null, roleLabel(roleOf(u)) + '. Their account, password and session sign-up will be deleted.'),
+          h('p', { class: 'note' }, 'This cannot be undone. They can set up a new account later.')),
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn confirm-no', type: 'button', onclick: cancelRemoveUser }, 'No'),
+          h('button', { class: 'btn danger confirm-yes', type: 'button', onclick: removeUser }, 'Yes'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus) { var no = $('#confirmuser .confirm-no'); if (no) no.focus(); }
   }
 
   function resetPassword(u) {
@@ -1358,7 +1395,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
             .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
         } }, r.suspended ? 'Restore access' : 'Pause access'));
         ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () { resetPassword(u); } }, 'Reset password'));
-        if (isSuper()) ctl.push(h('button', { class: 'link' + (pendingRemoveUser === u ? ' danger' : ''), type: 'button', onclick: function () { removeUser(u); } }, pendingRemoveUser === u ? 'Tap again to remove' : 'Remove'));
+        if (isSuper()) ctl.push(h('button', { id: 'ru-' + u, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveUser(u); } }, 'Remove'));
       } else {
         ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
       }
@@ -2436,10 +2473,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
   function renderBar() {
     $('#who').replaceChildren(
+      themeButton(),
       h('div', { class: 'who-text' },
         h('strong', { title: myName() }, myName()),
         h('span', { class: 'who-role' }, roleLabel(myRole()))),
-      themeButton(),
       h('button', { id: 'logout', class: 'btn small on-band', type: 'button', onclick: logOut }, 'Log out'));
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
@@ -2514,6 +2551,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }
     renderModal();
     renderConfirm();
+    renderConfirmUser();
     renderEditDialog();
     renderBookCfg();
     renderSessCfg();
@@ -2546,6 +2584,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
+      if (state.confirmUser) {
+        if (e.key === 'Escape') { cancelRemoveUser(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var uf = [].slice.call(document.querySelectorAll('#confirmuser button'));
+          var ui = uf.indexOf(document.activeElement);
+          if (e.shiftKey && ui <= 0) { e.preventDefault(); uf[uf.length - 1].focus(); }
+          else if (!e.shiftKey && (ui === uf.length - 1 || ui < 0)) { e.preventDefault(); uf[0].focus(); }
+        }
+        return;
+      }
       if (state.confirmRemove) {
         if (e.key === 'Escape') { cancelRemoveSession(); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
