@@ -214,7 +214,21 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .hr-chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .rate-list { display: flex; flex-direction: column; gap: 8px; }
 .rate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-.rate-row select, .price-in input { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.rate-row select, .price-in input, .court-row select, .court-add select, .move-form input, .move-form select { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.mb-panel { width: min(620px, 100%); max-height: min(92vh, 840px); }
+.mb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mb-list > li { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.mb-list .p-row { align-items: flex-start; }
+.sub-note { display: block; color: var(--muted); font-size: 0.75rem; }
+.move-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.move-form select, .move-form input { min-width: 0; }
+.confirm-inline { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--danger); border-radius: 8px; }
+.confirm-inline p { margin: 0; }
+.court-list { display: flex; flex-direction: column; }
+.court-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.court-row strong { flex: 1 1 110px; overflow-wrap: anywhere; }
+.court-add { flex-wrap: wrap; }
+.court-add input { flex: 1 1 120px; }
 .price-in { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
 .price-in input { width: 92px; }
 .book-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
@@ -227,7 +241,8 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .slot-scroll { overflow-x: auto; padding-bottom: 4px; }
 .slot-grid { display: grid; gap: 4px; grid-template-columns: 84px repeat(var(--n, 4), minmax(76px, 1fr)); }
 @media (max-width: 480px) { .slot-grid { gap: 3px; grid-template-columns: 62px repeat(var(--n, 4), minmax(54px, 1fr)); } .slot { padding: 2px; font-size: 0.75rem; } .slot-label { font-size: 0.7rem; } }
-.slot-head { padding: 8px 4px; text-align: center; font: 700 var(--fs-s)/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.slot-head { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; text-align: center; font: 700 var(--fs-s)/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.slot-head small { font: 500 0.68rem/1.25 var(--body); text-transform: none; letter-spacing: 0; color: var(--muted); overflow-wrap: anywhere; }
 .slot-label { position: sticky; left: 0; z-index: 1; display: flex; flex-direction: column; justify-content: center; padding-right: 6px; background: var(--paper); font: 500 var(--fs-s)/1.2 var(--mono); color: var(--ink); }
 .slot-label small { font-size: 0.7rem; color: var(--muted); }
 .slot { min-height: 48px; padding: 4px; border-radius: 8px; border: 1.5px solid var(--rule); background: var(--card); font: 600 var(--fs-s)/1.1 var(--body); cursor: pointer; }
@@ -237,7 +252,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .slot.bk, .sw.bk { background: var(--slot-bk-bg); border-color: var(--slot-bk-bd); color: var(--slot-bk-ink); }
 .slot.mine, .sw.mine { background: var(--card); border: 2px solid var(--accent); color: var(--accent); }
 .slot.un, .sw.un { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(120, 135, 170, 0.28) 5px 7px), var(--slot-un-bg); color: var(--slot-un-ink); }
+.slot { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slot:disabled { cursor: not-allowed; }
+.slot.manage { cursor: pointer; }
+.slot.manage:hover { filter: brightness(0.95); }
 .slot.mine:disabled { cursor: default; }
 .book-summary { position: sticky; top: 12px; gap: 10px; }
 .book-summary.book-done { border-color: var(--ok); }
@@ -493,9 +511,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
         </label>
         <button id="bk-next" class="cal-nav" type="button" aria-label="Next day">›</button>
         <button id="bk-today" class="btn small" type="button">Today</button>
-        <label class="field" for="bk-venue" id="bk-venue-wrap" hidden>Venue
-          <select id="bk-venue"></select>
-        </label>
+
       </div>
       <ul class="legend" aria-label="Legend">
         <li><span class="sw av"></span>Available</li>
@@ -522,6 +538,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
 <div id="confirm" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
+<div id="mbdlg" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -559,19 +576,21 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     { key: 'options', label: 'Manage session configurations', hint: 'Levels, formats, courts, venues and lengths' },
     { key: 'moveplayers', label: 'Remove or move players', hint: 'Take a player out of a session, or move them to another session' },
     { key: 'book', label: 'Book courts', hint: 'Use the Book a Court page to reserve hours' },
-    { key: 'bookconfig', label: 'Configure booking', hint: 'Time slots, courts, venues and hourly rates on the Book a Court page' }
+    { key: 'bookconfig', label: 'Court Booking Configuration', hint: 'Manage booking times, courts, venues and hourly rates' },
+    { key: 'managebookings', label: 'Manage Bookings', hint: "Edit or cancel users' bookings" },
+    { key: 'viewbookers', label: 'View Bookers', hint: 'See the names of players who booked each court' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false } }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', isOwner: false, canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', venue: '', sel: {}, busy: false, done: null, error: '' }, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: ''
   };
   // state.me is the id of the logged-in MPC account: a hash of its email, not the Claude sign-in.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -777,7 +796,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.edit || state.bookCfg || state.mb) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1331,7 +1350,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   }
 
   /* ---------- court booking ---------- */
-  // What can be booked and what it costs is set in the booking configuration (config/booking and the court / venue lists in config/options).
+  // What can be booked and what it costs is set in the court booking configuration (config/booking; the venue names are shared with config/options).
   // Until an admin saves something, the defaults apply: 7:00 AM to 10:00 PM in one-hour slots, 200 pesos before 5:00 PM and 300 after.
   var DEFAULT_BOOKING = {
     hours: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],   // the hour each slot starts
@@ -1355,26 +1374,36 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   function peso(n) { return '₱' + Number(n).toLocaleString('en-PH'); }
   function hourText(hr) { return (hr % 12 || 12) + ':00 ' + (hr % 24 < 12 ? 'AM' : 'PM'); }
   function hourShort(hr) { return (hr % 12 || 12) + (hr % 24 < 12 ? ' AM' : ' PM'); }
-  function bookingCourts() { var c = opts().courts; return c.length ? c : ['Court 1', 'Court 2', 'Court 3', 'Court 4']; }
   function bookingVenues() { return opts().venues; }
-  function bookingVenue() {   // the venue being looked at; '' when no venues are set up
-    var list = bookingVenues(), b = state.booking;
-    if (!list.length) return '';
-    if (list.indexOf(b.venue) < 0) b.venue = list[0];
-    return b.venue;
+  // The columns of the grid. Each court belongs to one venue (or none). Until a configuration with courts is saved, the court names from
+  // Session Configurations (or Court 1 to 4) are repeated for every venue, so nothing changes for a site with no venues.
+  function bookingColumns() {
+    var stored = [], seen = {};
+    (state.bookingCfg && Array.isArray(state.bookingCfg.courts) ? state.bookingCfg.courts : []).forEach(function (c) {
+      var name = String(c && c.name || '').trim(), venue = String(c && c.venue || '').trim(), k = (venue + '|' + name).toLowerCase();
+      if (name && !seen[k]) { seen[k] = 1; stored.push({ name: name, venue: venue }); }
+    });
+    if (stored.length) return stored;
+    var names = opts().courts.length ? opts().courts : ['Court 1', 'Court 2', 'Court 3', 'Court 4'], venues = bookingVenues(), out = [];
+    if (!venues.length) return names.map(function (n) { return { name: n, venue: '' }; });
+    venues.forEach(function (v) { names.forEach(function (n) { out.push({ name: n, venue: v }); }); });
+    return out;
   }
   function courtKey(x) { return String(x || '').toLowerCase().replace(/^courts?\s*/, '').trim(); }
   function slugOf(x) { return String(x).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function slotKey(date, venue, court, hour) { return date + '|' + venue + '|' + court + '|' + hour; }
   function slotId(date, venue, court, hour) { return date + '_' + (venue ? slugOf(venue) + '_' : '') + slugOf(court) + '_' + pad(hour); }
-  function parsePick(k) { var i = k.lastIndexOf('|'); return { court: k.slice(0, i), hour: parseInt(k.slice(i + 1), 10) }; }
+  // A pick is one hour on one column. Its key is kept in b.sel.
+  function pickKey(p) { return p.hour + '|' + encodeURIComponent(p.venue) + '|' + encodeURIComponent(p.court); }
+  function parsePick(k) { var a = k.split('|'); return { hour: parseInt(a[0], 10), venue: decodeURIComponent(a[1] || ''), court: decodeURIComponent(a[2] || '') }; }
+  function sameCol(p, c) { return p.court === (c.name || c.court) && p.venue === c.venue; }
 
   // available / booked (by someone else) / mine / unavailable (the hour has started, no rate is set, or a session is using that court)
-  function slotInfo(date, venue, court, hour) {
-    var map = state.bookingMap;
+  function slotInfo(date, col, hour) {
+    var map = state.bookingMap, venue = col.venue, court = col.name;
     var b = map[slotKey(date, venue, court, hour)];
     if (!b && venue === (bookingVenues()[0] || '')) b = map[slotKey(date, '', court, hour)];   // bookings made before venues existed belong to the first venue
-    if (b) return { s: b.by === state.me ? 'mine' : 'booked' };
+    if (b) return { s: b.by === state.me ? 'mine' : 'booked', b: b };
     if (slotPrice(hour) === null) return { s: 'unavailable', why: 'No rate is set for this hour.' };
     if (parse(date, pad(hour) + ':00').getTime() <= Date.now()) return { s: 'unavailable', why: 'This hour has already started or passed.' };
     var lo = hour * 60, hi = lo + 60, ck = courtKey(court);
@@ -1387,19 +1416,20 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (use) return { s: 'unavailable', why: 'In use by ' + (use.title || 'a session') + '.' };
     return { s: 'available' };
   }
-  function selectedSlots(courts) {
+  function selectedSlots(cols) {
     var out = [];
-    Object.keys(state.booking.sel).forEach(function (k) { var p = parsePick(k); if (courts.indexOf(p.court) >= 0) out.push(p); });
-    out.sort(function (a, c) { return courts.indexOf(a.court) - courts.indexOf(c.court) || a.hour - c.hour; });
+    Object.keys(state.booking.sel).forEach(function (k) { var p = parsePick(k); if (cols.some(function (c) { return sameCol(p, c); })) out.push(p); });
+    function idx(p) { for (var i = 0; i < cols.length; i++) if (sameCol(p, cols[i])) return i; return -1; }
+    out.sort(function (a, c) { return idx(a) - idx(c) || a.hour - c.hour; });
     return out;
   }
   // Consecutive hours on one court are shown as one line, e.g. "Court 2, 4:00 PM to 6:00 PM".
   function runsOf(picks, priceOf) {
     var runs = [];
     picks.forEach(function (p) {
-      var last = runs[runs.length - 1];
-      if (last && last.court === p.court && last.to === p.hour) { last.to = p.hour + 1; last.slots.push(p); }
-      else runs.push({ court: p.court, from: p.hour, to: p.hour + 1, slots: [p] });
+      var last = runs[runs.length - 1], v = p.venue || '';
+      if (last && last.court === p.court && last.venue === v && last.to === p.hour) { last.to = p.hour + 1; last.slots.push(p); }
+      else runs.push({ court: p.court, venue: v, from: p.hour, to: p.hour + 1, slots: [p] });
     });
     runs.forEach(function (r) { r.price = r.slots.reduce(function (n, p) { return n + priceOf(p); }, 0); });
     return runs;
@@ -1410,7 +1440,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       return n ? plural(n, 'hr') + ' × ' + peso(rt.price) : null;
     }).filter(Boolean).join(' + ');
   }
-  function runLine(r) { return r.court + ' · ' + hourText(r.from) + ' – ' + hourText(r.to); }
+  function courtText(court, venue) { return court + (venue ? ' · ' + venue : ''); }
+  function runLine(r) { return courtText(r.court, r.venue) + ' · ' + hourText(r.from) + ' – ' + hourText(r.to); }
   function codeOf() {
     var chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', a = new Uint8Array(6);
     window.crypto.getRandomValues(a);
@@ -1445,13 +1476,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   function confirmBooking() {
     var b = state.booking;
     if (b.busy) return;
-    var courts = bookingCourts(), picks = selectedSlots(courts), date = b.date, venue = bookingVenue();
+    var cols = bookingColumns(), picks = selectedSlots(cols), date = b.date;
     if (!picks.length) return;
     if (!state.db || !state.me || !state.canWrite || !can('book')) { b.error = 'Your account cannot book courts.'; render(); return; }
-    var gone = picks.filter(function (p) { return slotInfo(date, venue, p.court, p.hour).s !== 'available'; });
+    var gone = picks.filter(function (p) { return slotInfo(date, { name: p.court, venue: p.venue }, p.hour).s !== 'available'; });
     if (gone.length) {
-      gone.forEach(function (p) { delete b.sel[p.court + '|' + p.hour]; });
-      b.error = 'No longer available, so nothing was booked: ' + gone.map(function (p) { return p.court + ' ' + hourText(p.hour); }).join(', ') + '.';
+      gone.forEach(function (p) { delete b.sel[pickKey(p)]; });
+      b.error = 'No longer available, so nothing was booked: ' + gone.map(function (p) { return courtText(p.court, p.venue) + ' ' + hourText(p.hour); }).join(', ') + '.';
       render(); return;
     }
     b.busy = true; b.error = ''; render();
@@ -1460,20 +1491,20 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       try {
         for (var i = 0; i < picks.length; i++) {
           var p = picks[i];
-          var ref = await claimSlot({ date: date, venue: venue, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
+          var ref = await claimSlot({ date: date, venue: p.venue, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
           if (!ref) throw { taken: p };
           claimed.push(ref);
         }
         var runs = runsOf(picks, function (p) { return slotPrice(p.hour); });
-        b.done = { ref: code, date: date, venue: venue, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
+        b.done = { ref: code, date: date, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
         b.sel = {};
         flash('Booking confirmed. Reference ' + code + '.', 'ok');
       } catch (e) {
         // all or nothing: give back anything claimed in this attempt
         await Promise.all(claimed.map(function (r) { return r.delete().catch(function () {}); }));
         if (e && e.taken) {
-          delete b.sel[e.taken.court + '|' + e.taken.hour];
-          b.error = 'Someone just booked ' + e.taken.court + ' at ' + hourText(e.taken.hour) + '. Nothing was booked. Pick another hour and try again.';
+          delete b.sel[pickKey(e.taken)];
+          b.error = 'Someone just booked ' + courtText(e.taken.court, e.taken.venue) + ' at ' + hourText(e.taken.hour) + '. Nothing was booked. Pick another hour and try again.';
         } else b.error = 'The booking could not be completed, and nothing was booked. ' + (e && e.message ? e.message : '');
       }
       b.busy = false;
@@ -1489,44 +1520,37 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     if (di.value !== b.date) di.value = b.date;
     $('#bk-prev').disabled = b.date <= today; $('#bk-next').disabled = b.date >= max;
     $('#bk-config').hidden = !can('bookconfig');
-    var courts = bookingCourts(), venue = bookingVenue(), venues = bookingVenues(), cfg = bcfg();
-
-    // the venue picker only appears when there is more than one venue
-    var vw = $('#bk-venue-wrap'), vs = $('#bk-venue');
-    vw.hidden = venues.length < 2;
-    if (venues.length >= 2) {
-      if (vs.options.length !== venues.length || venues.some(function (v, i) { return vs.options[i].value !== v; })) {
-        vs.replaceChildren();
-        venues.forEach(function (v) { vs.append(h('option', { value: v }, v)); });
-      }
-      vs.value = venue;
-    }
+    var cols = bookingColumns(), cfg = bcfg();
+    var canManage = can('managebookings') && state.canWrite, canNames = can('viewbookers');
 
     // anything picked that stopped being available (someone booked it, or the hour began) comes off the list
     var lost = [];
     Object.keys(b.sel).forEach(function (k) {
       var p = parsePick(k);
-      if (courts.indexOf(p.court) < 0 || cfg.hours.indexOf(p.hour) < 0 || slotInfo(b.date, venue, p.court, p.hour).s !== 'available') { delete b.sel[k]; lost.push(p.court + ' ' + hourText(p.hour)); }
+      if (!cols.some(function (c) { return sameCol(p, c); }) || cfg.hours.indexOf(p.hour) < 0 || slotInfo(b.date, { name: p.court, venue: p.venue }, p.hour).s !== 'available') { delete b.sel[k]; lost.push(courtText(p.court, p.venue) + ' ' + hourText(p.hour)); }
     });
     if (lost.length) b.error = 'No longer available, so taken off your picks: ' + lost.join(', ') + '.';
 
-    // the grid: hours down the side, courts across the top
-    var grid = h('div', { class: 'slot-grid', style: '--n: ' + courts.length + ';' });
+    // the grid: hours down the side, courts across the top, each court labelled with its venue underneath
+    var grid = h('div', { class: 'slot-grid', style: '--n: ' + cols.length + ';' });
     grid.append(h('div', { class: 'slot-corner' }));
-    courts.forEach(function (c) { grid.append(h('div', { class: 'slot-head' }, c)); });
+    cols.forEach(function (c) { grid.append(h('div', { class: 'slot-head' }, h('span', null, c.name), c.venue ? h('small', null, c.venue) : null)); });
     cfg.hours.forEach(function (hr) {
       grid.append(h('div', { class: 'slot-label' }, hourText(hr), h('small', null, 'to ' + hourText(hr + 1))));
-      courts.forEach(function (court, ci) {
-        var hour = hr, key = court + '|' + hour, info = slotInfo(b.date, venue, court, hour), sel = !!b.sel[key], price = slotPrice(hour);
+      cols.forEach(function (col, ci) {
+        var hour = hr, pick = { court: col.name, venue: col.venue, hour: hour }, key = pickKey(pick), info = slotInfo(b.date, col, hour), sel = !!b.sel[key], price = slotPrice(hour);
         var kind = sel ? 'sel' : info.s === 'available' ? 'av' : info.s === 'mine' ? 'mine' : info.s === 'booked' ? 'bk' : 'un';
-        var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'bk' ? 'Booked' : '–';
-        var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'bk' ? 'booked' : 'unavailable';
+        var who = info.b && info.b.byName ? info.b.byName : '';
+        var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'bk' ? (canNames && who ? who : 'Booked') : '–';
+        var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'bk' ? 'booked' + (canNames && who ? ' by ' + who : '') : 'unavailable';
+        var manageable = canManage && info.b;
         grid.append(h('button', {
-          id: 'bk-' + ci + '-' + hour, type: 'button', class: 'slot ' + kind, disabled: info.s !== 'available',
-          'aria-pressed': info.s === 'available' ? String(sel) : null, title: info.why || null,
-          'aria-label': court + ', ' + hourText(hour) + ' to ' + hourText(hour + 1) + ', ' + words + (info.why ? '. ' + info.why : ''),
+          id: 'bk-' + ci + '-' + hour, type: 'button', class: 'slot ' + kind + (manageable ? ' manage' : ''), disabled: info.s !== 'available' && !manageable,
+          'aria-pressed': info.s === 'available' ? String(sel) : null, title: manageable ? (canNames && who ? who + ' · ' : '') + 'Manage this booking' : (kind === 'bk' && canNames && who ? who : info.why || null),
+          'aria-label': courtText(col.name, col.venue) + ', ' + hourText(hour) + ' to ' + hourText(hour + 1) + ', ' + words + (info.why ? '. ' + info.why : '') + (manageable ? '. Opens booking management.' : ''),
           onclick: function () {
-            if (slotInfo(b.date, bookingVenue(), court, hour).s !== 'available') return;   // never select a slot that is not open
+            var now2 = slotInfo(b.date, col, hour);
+            if (now2.s !== 'available') { if (canManage && now2.b) openManage(now2.b.ref || now2.b.id, 'bk-' + ci + '-' + hour); return; }   // never select a slot that is not open
             if (b.sel[key]) delete b.sel[key]; else b.sel[key] = true;
             b.error = ''; b.done = null; render();
           }
@@ -1539,7 +1563,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     $('#bk-rates').textContent = 'Price is per court, per hour: ' + cfg.rates.map(function (r) { return peso(r.price) + ' from ' + hourText(r.from) + ' to ' + hourText(r.to); }).join(', and ') + '.';
 
     // the summary
-    var picks = selectedSlots(courts), box = $('#bk-summary');
+    var picks = selectedSlots(cols), box = $('#bk-summary');
     box.replaceChildren();
     box.className = 'panel book-summary' + (b.done ? ' book-done' : '');
     if (b.done) {
@@ -1547,7 +1571,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       box.append(
         h('h3', null, 'Booking confirmed ✓'),
         h('p', { class: 'ref' }, 'Reference ', h('strong', null, d.ref)),
-        h('p', { class: 'note' }, (d.venue ? d.venue + ' · ' : '') + fullFmt.format(parse(d.date, '00:00'))),
+        h('p', { class: 'note' }, fullFmt.format(parse(d.date, '00:00'))),
         h('ul', { class: 'sum-list' }, d.runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
         h('div', { class: 'sum-total' }, h('span', null, 'Total due'), h('span', null, peso(d.total))),
         h('p', { class: 'note' }, 'Keep this reference. No payment is taken on this site.'),
@@ -1559,7 +1583,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       } else {
         var runs = runsOf(picks, function (p) { return slotPrice(p.hour); }), total = runs.reduce(function (n, r) { return n + r.price; }, 0);
         box.append(
-          h('p', { class: 'note' }, (venue ? venue + ' · ' : '') + fullFmt.format(parse(b.date, '00:00'))),
+          h('p', { class: 'note' }, fullFmt.format(parse(b.date, '00:00'))),
           h('ul', { class: 'sum-list' }, runs.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, plural(r.slots.length, 'hr') + ' · ' + runBreakdown(r))), h('strong', null, peso(r.price))); })),
           h('div', { class: 'sum-total' }, h('span', null, 'Total (' + plural(picks.length, 'court hour') + ')'), h('span', null, peso(total))));
       }
@@ -1585,23 +1609,155 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       });
       mineBox.append(h('h3', { class: 'sub-h' }, 'Your upcoming bookings'));
       mineBox.append(h('div', { class: 'mine-list' }, refs.map(function (ref) {
-        var slots = groups[ref].slice().sort(function (a, c) { return a.court < c.court ? -1 : a.court > c.court ? 1 : a.hour - c.hour; });
+        var slots = groups[ref].slice().sort(function (a, c) { return a.date < c.date ? -1 : a.date > c.date ? 1 : (a.venue || '') < (c.venue || '') ? -1 : (a.venue || '') > (c.venue || '') ? 1 : a.court < c.court ? -1 : a.court > c.court ? 1 : a.hour - c.hour; });
         var runs = runsOf(slots, function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour); });
         var total = runs.reduce(function (n, r) { return n + r.price; }, 0);
         return h('div', { class: 'row' },
-          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, (slots[0].venue ? slots[0].venue + ' · ' : '') + runs.map(runLine).join(' · ')), h('span', null, ref)),
+          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref)),
           h('strong', null, peso(total)));
       })));
     }
   }
 
-  /* ---------- booking configuration (Super Admins and Admins): hours, rates, courts, venues ---------- */
+  /* ---------- manage bookings (edit or cancel anyone's booking) ---------- */
+  var mbSig = '', mbOpener = '';
+  function openManage(group, opener) {
+    if (!can('managebookings')) return;
+    state.mb = { group: group, move: null, confirm: '', busy: false, error: '', done: false };
+    mbOpener = opener || '';
+    mbSig = '';
+    renderManage();
+    var c = $('#mbdlg .modal-close'); if (c) c.focus();
+  }
+  function closeManage() {
+    state.mb = null;
+    renderManage();
+    var b = mbOpener && document.getElementById(mbOpener); if (b) b.focus();
+  }
+  function mbSlots() {
+    var g = state.mb.group;
+    return state.bookingList.filter(function (x) { return (x.ref || x.id) === g; }).sort(function (a, c) {
+      var ka = a.date + '|' + (a.venue || '') + '|' + a.court + '|' + pad(a.hour), kc = c.date + '|' + (c.venue || '') + '|' + c.court + '|' + pad(c.hour);
+      return ka < kc ? -1 : ka > kc ? 1 : 0;
+    });
+  }
+  function slotLine(x) { return courtText(x.court, x.venue) + ' · ' + fullFmt.format(parse(x.date, '00:00')) + ' · ' + hourText(x.hour) + ' – ' + hourText(x.hour + 1); }
+  function mbRun(job, message) {
+    var m = state.mb;
+    if (m.busy) return;
+    if (!state.db || !state.canWrite || !can('managebookings')) { m.error = 'Your role cannot change bookings.'; renderManage(); return; }
+    m.busy = true; m.error = ''; renderManage();
+    job().then(function () { if (message) flash(message, 'ok'); }).catch(function (e) {
+      if (state.mb) state.mb.error = (e && e.message) || 'That did not work. Nothing was changed.';
+    }).then(function () { if (state.mb) { state.mb.busy = false; state.mb.confirm = ''; state.mb.move = null; renderManage(); } });
+  }
+  function cancelSlots(list, message, closeAfter) {
+    mbRun(function () {
+      return Promise.all(list.map(function (x) { return state.db.doc('bookings/' + x.id).delete(); })).then(function () { if (closeAfter && state.mb) state.mb.done = true; });
+    }, message);
+  }
+  function moveSlot(x, to) {
+    mbRun(async function () {
+      var col = bookingColumns()[to.col];
+      if (!col || slotInfo(to.date, col, to.hour).s !== 'available') throw new Error('That slot is no longer available. Pick another.');
+      var data = { date: to.date, venue: col.venue, court: col.name, hour: to.hour, by: x.by, byName: x.byName, ref: x.ref || x.id, price: slotPrice(to.hour), at: x.at || Date.now() };
+      var ref = await claimSlot(data, state.me + ':move');
+      if (!ref) throw new Error('Someone just booked that slot. Pick another.');
+      await state.db.doc('bookings/' + x.id).delete();
+    }, 'Booking moved.');
+  }
+  function renderManage() {
+    var box = $('#mbdlg'), m = state.mb;
+    if (!m || !can('managebookings') || gateState() !== 'ok') {
+      state.mb = null; mbSig = '';
+      box.hidden = true; box.replaceChildren();
+      lockScroll();
+      return;
+    }
+    var slots = mbSlots();
+    if (!slots.length) {
+      if (!m.done) flash('That booking no longer exists.', 'err');
+      state.mb = null; mbSig = '';
+      box.hidden = true; box.replaceChildren(); lockScroll();
+      var ob = mbOpener && document.getElementById(mbOpener); if (ob) ob.focus();
+      return;
+    }
+    var names = can('viewbookers'), cols = bookingColumns(), cfg = bcfg();
+    var sig = [m.group, slots.map(function (x) { return x.id + x.date + x.hour; }).join(','), JSON.stringify(m.move), m.confirm, m.busy, m.error, names, JSON.stringify(cols), JSON.stringify(cfg)].join('|');
+    if (sig === mbSig && !box.hidden) return;
+    mbSig = sig;
+    var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '';
+    var total = slots.reduce(function (n, x) { return n + (typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0); }, 0);
+    var today = dkey(new Date()), max = dkey(new Date(Date.now() + 90 * 86400000));
+
+    function picker(x) {
+      var mv = m.move;
+      if (!mv.date || mv.date < today) mv.date = today;
+      if (mv.col == null || !cols[mv.col]) { mv.col = 0; for (var i = 0; i < cols.length; i++) if (cols[i].name === x.court && cols[i].venue === (x.venue || '')) mv.col = i; }
+      var avail = cfg.hours.filter(function (hr) { return slotInfo(mv.date, cols[mv.col], hr).s === 'available'; });
+      if (avail.indexOf(mv.hour) < 0) mv.hour = avail[0];
+      var dateIn = h('input', { id: 'mv-date', type: 'date', min: today, max: max, value: mv.date, 'aria-label': 'Move to date',
+        onchange: function (e) { mv.date = e.target.value || today; mv.hour = undefined; renderManage(); } });
+      var colSel = h('select', { id: 'mv-col', 'aria-label': 'Move to court', onchange: function (e) { mv.col = parseInt(e.target.value, 10); mv.hour = undefined; renderManage(); } },
+        cols.map(function (c, i) { return h('option', { value: String(i) }, courtText(c.name, c.venue)); }));
+      colSel.value = String(mv.col);
+      var hourSel = h('select', { id: 'mv-hour', 'aria-label': 'Move to hour', onchange: function (e) { mv.hour = parseInt(e.target.value, 10); renderManage(); } },
+        avail.length ? avail.map(function (hr) { return h('option', { value: String(hr) }, hourText(hr) + ' · ' + peso(slotPrice(hr))); }) : [h('option', { value: '' }, 'No free hours')]);
+      if (avail.length) hourSel.value = String(mv.hour);
+      return h('div', { class: 'move-form' }, dateIn, colSel, hourSel,
+        h('button', { id: 'mv-go', class: 'btn small primary', type: 'button', disabled: !avail.length || m.busy,
+          onclick: function () { moveSlot(x, { date: mv.date, col: mv.col, hour: mv.hour }); } }, 'Move here'));
+    }
+
+    var items = slots.map(function (x) {
+      var kids = [h('div', { class: 'p-row' },
+        h('span', null, slotLine(x), h('small', { class: 'sub-note' }, peso(typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0))),
+        h('span', { class: 'p-actions' },
+          h('button', { id: 'mb-mv-' + x.id, class: 'link', type: 'button', 'aria-expanded': String(!!(m.move && m.move.id === x.id)), disabled: m.busy,
+            onclick: function () { m.move = m.move && m.move.id === x.id ? null : { id: x.id, date: x.date, col: null, hour: x.hour }; m.confirm = ''; m.error = ''; renderManage(); } }, m.move && m.move.id === x.id ? 'Close' : 'Edit'),
+          h('button', { id: 'mb-rm-' + x.id, class: 'link', type: 'button', disabled: m.busy,
+            onclick: function () { m.confirm = 'slot:' + x.id; m.move = null; m.error = ''; renderManage(); } }, 'Cancel hour')))];
+      if (m.move && m.move.id === x.id) kids.push(picker(x));
+      if (m.confirm === 'slot:' + x.id) kids.push(h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm cancelling this hour' },
+        h('p', null, 'Cancel this hour? It becomes free for others to book.'),
+        h('div', { class: 'confirm-actions' },
+          h('button', { id: 'mb-no', class: 'btn small', type: 'button', onclick: function () { m.confirm = ''; renderManage(); } }, 'No, keep it'),
+          h('button', { class: 'btn small danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots([x], 'That hour was cancelled.', slots.length === 1); } }, 'Yes, cancel hour'))));
+      return h('li', null, kids);
+    });
+
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel mb-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mb-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null, h('h2', { id: 'mb-title' }, 'Manage booking'),
+            h('p', { class: 'time' }, 'Reference ' + (slots[0].ref || slots[0].id) + (names && slots[0].byName ? ' · ' + slots[0].byName : ''))),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeManage }, '×')),
+        h('p', { class: 'note' }, plural(slots.length, 'court hour') + ' · total ' + peso(total) + '. Edit moves one hour to another court, hour or day. Prices follow the current rates.'),
+        h('ul', { class: 'mb-list' }, items),
+        m.error ? h('p', { class: 'form-error', role: 'alert' }, m.error) : null,
+        m.confirm === 'all'
+          ? h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm cancelling the whole booking' },
+              h('p', null, 'Cancel this whole booking? ' + (slots.length === 1 ? 'The court hour becomes' : 'All ' + slots.length + ' court hours become') + ' free for others to book. This cannot be undone.'),
+              h('div', { class: 'confirm-actions' },
+                h('button', { id: 'mb-no', class: 'btn', type: 'button', onclick: function () { m.confirm = ''; renderManage(); } }, 'No, keep it'),
+                h('button', { class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots(slots, 'Booking cancelled.', true); } }, 'Yes, cancel booking')))
+          : h('div', { class: 'confirm-actions' },
+              h('button', { id: 'mb-all', class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { m.confirm = 'all'; m.move = null; m.error = ''; renderManage(); var n = $('#mb-no'); if (n) n.focus(); } }, 'Cancel whole booking'),
+              h('button', { class: 'btn', type: 'button', onclick: closeManage }, 'Close'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) { var el = document.getElementById(focusKey); if (el) el.focus(); }
+  }
+
+  /* ---------- court booking configuration: hours, rates, courts (each at a venue) and venues ---------- */
   var bookCfgRev = -1;
   function openBookCfg() {
     if (!can('bookconfig')) return;
     var c = bcfg(), hours = {};
     c.hours.forEach(function (x) { hours[x] = true; });
-    state.bookCfg = { hours: hours, rates: c.rates.map(function (r) { return Object.assign({}, r); }), courts: bookingCourts().slice(), venues: bookingVenues().slice(), draftCourt: '', draftVenue: '', error: '', rev: 0 };
+    state.bookCfg = { hours: hours, rates: c.rates.map(function (r) { return Object.assign({}, r); }), courts: bookingColumns().map(function (x) { return { name: x.name, venue: x.venue }; }), venues: bookingVenues().slice(),
+      draftCourt: '', draftCourtVenue: '', draftVenue: '', error: '', rev: 0 };
     bookCfgRev = -1;
     renderBookCfg();
     var first = $('#bookcfg .hr-chip'); if (first) first.focus();
@@ -1616,6 +1772,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     var hours = Object.keys(c.hours).filter(function (k) { return c.hours[k]; }).map(Number).sort(function (a, b) { return a - b; });
     if (!hours.length) return { error: 'Open at least one hour for booking.' };
     if (!c.courts.length) return { error: 'Add at least one court.' };
+    var bad = c.courts.filter(function (x) { return x.venue && c.venues.indexOf(x.venue) < 0; })[0];
+    if (bad) return { error: bad.name + ' is set to a venue that is not in the venue list. Choose another venue for it.' };
     var rates = [];
     for (var i = 0; i < c.rates.length; i++) {
       var r = c.rates[i], f = parseInt(r.from, 10), t = parseInt(r.to, 10), p = Number(r.price);
@@ -1632,29 +1790,37 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
   function saveBookCfg() {
     var c = state.bookCfg;
     if (!c) return;
-    if (!state.db || !state.canWrite || !can('bookconfig')) { c.error = 'Your role cannot change the booking configuration.'; bumpBookCfg(); return; }
+    if (!state.db || !state.canWrite || !can('bookconfig')) { c.error = 'Your role cannot change the court booking configuration.'; bumpBookCfg(); return; }
     var res = checkBookCfg(c);
     if (res.error) { c.error = res.error; bumpBookCfg(); return; }
-    var booking = { hours: res.hours, rates: res.rates };
-    var options = Object.assign({}, state.options, { courts: c.courts.slice(), venues: c.venues.slice() });
+    var booking = { hours: res.hours, rates: res.rates, courts: c.courts.map(function (x) { return { name: x.name, venue: x.venue || '' }; }) };
+    var options = Object.assign({}, state.options, { venues: c.venues.slice() });   // venue names are shared with the session forms
     c.saving = true; c.error = ''; bumpBookCfg();
     state.db.doc('config/booking').set(booking).then(function () { return state.db.doc('config/options').set(options); }).then(function () {
       state.bookingCfg = booking; state.options = options;
       state.booking.sel = {};
       state.bookCfg = null; renderBookCfg(); render();
-      flash('Booking settings saved.', 'ok');
+      flash('Court booking settings saved.', 'ok');
       var b = $('#bk-config'); if (b) b.focus();
     }).catch(function (e) {
       if (state.bookCfg) { state.bookCfg.saving = false; state.bookCfg.error = 'Could not save: ' + (e && e.message ? e.message : 'try again.'); bumpBookCfg(); }
     });
   }
-  function addCfgItem(list, draftKey, max, label) {
-    var c = state.bookCfg, v = String(c[draftKey] || '').trim();
-    if (!v) { c.error = 'Type the ' + label + ' to add first.'; bumpBookCfg(); return; }
-    if (v.length > max) { c.error = 'That is too long. Use ' + max + ' characters or fewer.'; bumpBookCfg(); return; }
-    if (c[list].some(function (x) { return x.toLowerCase() === v.toLowerCase(); })) { c.error = 'That ' + label + ' is already in the list.'; bumpBookCfg(); return; }
-    c[list].push(v); c[draftKey] = ''; c.error = ''; bumpBookCfg();
-    var inp = document.getElementById('cfg-in-' + list); if (inp) inp.focus();
+  function addCfgVenue() {
+    var c = state.bookCfg, v = String(c.draftVenue || '').trim();
+    if (!v) { c.error = 'Type the venue to add first.'; bumpBookCfg(); return; }
+    if (v.length > 60) { c.error = 'That is too long. Use 60 characters or fewer.'; bumpBookCfg(); return; }
+    if (c.venues.some(function (x) { return x.toLowerCase() === v.toLowerCase(); })) { c.error = 'That venue is already in the list.'; bumpBookCfg(); return; }
+    c.venues.push(v); c.draftVenue = ''; c.error = ''; bumpBookCfg();
+    var inp = document.getElementById('cfg-in-venues'); if (inp) inp.focus();
+  }
+  function addCfgCourt() {
+    var c = state.bookCfg, name = String(c.draftCourt || '').trim(), venue = c.draftCourtVenue || '';
+    if (!name) { c.error = 'Type the court to add first.'; bumpBookCfg(); return; }
+    if (name.length > 30) { c.error = 'That is too long. Use 30 characters or fewer.'; bumpBookCfg(); return; }
+    if (c.courts.some(function (x) { return x.name.toLowerCase() === name.toLowerCase() && x.venue === venue; })) { c.error = 'That court already exists' + (venue ? ' at ' + venue : '') + '.'; bumpBookCfg(); return; }
+    c.courts.push({ name: name, venue: venue }); c.draftCourt = ''; c.error = ''; bumpBookCfg();
+    var inp = document.getElementById('cfg-in-courts'); if (inp) inp.focus();
   }
   function renderBookCfg() {
     var box = $('#bookcfg'), c = state.bookCfg;
@@ -1687,23 +1853,24 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
           oninput: function (e) { r.price = e.target.value; } })),
         h('button', { class: 'link', type: 'button', 'aria-label': 'Remove rate ' + (i + 1), onclick: function () { c.rates.splice(i, 1); c.error = ''; bumpBookCfg(); } }, 'Remove'));
     });
-    function listBlock(list, draftKey, title, hint, label, max, keepOne) {
-      var chips = c[list].map(function (v) {
-        return h('span', { class: 'opt-chip' }, v, h('button', { type: 'button', disabled: keepOne && c[list].length <= 1, 'aria-label': 'Remove ' + v, title: 'Remove ' + v,
-          onclick: function () { c[list] = c[list].filter(function (x) { return x !== v; }); c.error = ''; bumpBookCfg(); } }, '×'));
-      });
-      return h('section', { class: 'cfg-block' }, h('h3', null, title), h('p', { class: 'note' }, hint),
-        h('div', { class: 'opt-chips' }, chips.length ? chips : h('span', { class: 'note' }, 'None yet')),
-        h('form', { class: 'opt-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addCfgItem(list, draftKey, max, label); } },
-          h('input', { id: 'cfg-in-' + list, type: 'text', maxlength: String(max), placeholder: label === 'court' ? 'Court 5' : 'Riverside', 'aria-label': 'Add ' + label, value: c[draftKey] || '',
-            oninput: function (e) { c[draftKey] = e.target.value; } }),
-          h('button', { class: 'btn small', type: 'submit' }, 'Add')));
+    function venueSelect(id, value, onchange) {
+      var s = h('select', { id: id, 'aria-label': 'Venue' }, h('option', { value: '' }, 'No venue'), c.venues.map(function (v) { return h('option', { value: v }, v); }));
+      s.value = c.venues.indexOf(value) >= 0 ? value : ''; s.onchange = function (e) { onchange(e.target.value); }; return s;
     }
+    var courtRows = c.courts.map(function (ct, i) {
+      return h('div', { class: 'court-row' }, h('strong', null, ct.name),
+        venueSelect('cfg-cv-' + i, ct.venue, function (v) { ct.venue = v; c.error = ''; }),
+        h('button', { class: 'link', type: 'button', disabled: c.courts.length <= 1, 'aria-label': 'Remove ' + ct.name, onclick: function () { c.courts.splice(i, 1); c.error = ''; bumpBookCfg(); } }, 'Remove'));
+    });
+    var venueChips = c.venues.map(function (v) {
+      return h('span', { class: 'opt-chip' }, v, h('button', { type: 'button', 'aria-label': 'Remove ' + v, title: 'Remove ' + v,
+        onclick: function () { c.venues = c.venues.filter(function (x) { return x !== v; }); c.courts.forEach(function (ct) { if (ct.venue === v) ct.venue = ''; }); if (c.draftCourtVenue === v) c.draftCourtVenue = ''; c.error = ''; bumpBookCfg(); } }, '×'));
+    });
     box.replaceChildren(
       h('div', { class: 'modal-backdrop' }),
       h('div', { class: 'modal-panel cfg-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'cfg-title' },
         h('div', { class: 'modal-head' },
-          h('div', null, h('h2', { id: 'cfg-title' }, 'Booking configuration'), h('p', { class: 'note' }, 'Applies to the Book a Court page as soon as you save.')),
+          h('div', null, h('h2', { id: 'cfg-title' }, 'Court booking configuration'), h('p', { class: 'note' }, 'Applies to the Book a Court page as soon as you save.')),
           h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close without saving', onclick: closeBookCfg }, '×')),
         h('section', { class: 'cfg-block' }, h('h3', null, 'Time slots'), h('p', { class: 'note' }, 'Tap an hour to open or close it. Each slot is one hour starting at the time shown.'), h('div', { class: 'hr-grid' }, hourBtns)),
         h('section', { class: 'cfg-block' }, h('h3', null, 'Hourly rates'), h('p', { class: 'note' }, 'Price per court, per hour. Every open hour needs a rate, and rates cannot overlap.'),
@@ -1713,8 +1880,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
             var from = last ? Math.min(23, parseInt(last.to, 10)) : (open[0] || 7);
             c.rates.push({ from: from, to: Math.min(24, from + 1), price: last ? last.price : 200 }); c.error = ''; bumpBookCfg();
           } }, '+ Add rate')),
-        listBlock('courts', 'draftCourt', 'Court numbers', 'The columns of the booking grid. These are the same courts offered when adding a session.', 'court', 30, true),
-        listBlock('venues', 'draftVenue', 'Venues', 'With two or more venues, people choose a venue first. Shared with the session forms. Leave empty if you only have one place.', 'venue', 60, false),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Venues'), h('p', { class: 'note' }, 'Shared with the session forms. Leave empty if you only have one place.'),
+          h('div', { class: 'opt-chips' }, venueChips.length ? venueChips : h('span', { class: 'note' }, 'None yet')),
+          h('form', { class: 'opt-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addCfgVenue(); } },
+            h('input', { id: 'cfg-in-venues', type: 'text', maxlength: '60', placeholder: 'Estragen Beach Resort', 'aria-label': 'Add venue', value: c.draftVenue || '', oninput: function (e) { c.draftVenue = e.target.value; } }),
+            h('button', { class: 'btn small', type: 'submit' }, 'Add'))),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Court numbers'), h('p', { class: 'note' }, 'Each court is a column of the grid, with its venue shown underneath. A session at the same court and venue blocks those hours.'),
+          h('div', { class: 'court-list' }, courtRows),
+          h('form', { class: 'opt-add court-add', novalidate: true, onsubmit: function (e) { e.preventDefault(); addCfgCourt(); } },
+            h('input', { id: 'cfg-in-courts', type: 'text', maxlength: '30', placeholder: 'Court 5', 'aria-label': 'Add court', value: c.draftCourt || '', oninput: function (e) { c.draftCourt = e.target.value; } }),
+            venueSelect('cfg-addv', c.draftCourtVenue, function (v) { c.draftCourtVenue = v; }),
+            h('button', { class: 'btn small', type: 'submit' }, 'Add'))),
         c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
         h('div', { class: 'confirm-actions' },
           h('button', { class: 'btn', type: 'button', onclick: closeBookCfg }, 'Cancel'),
@@ -2104,6 +2280,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
     renderConfirm();
     renderEditDialog();
     renderBookCfg();
+    renderManage();
     if (focusId) {
       var el = document.getElementById(focusId);
       if (el && el !== document.activeElement) {
@@ -2138,6 +2315,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
           var ci = cf.indexOf(document.activeElement);
           if (e.shiftKey && ci <= 0) { e.preventDefault(); cf[cf.length - 1].focus(); }
           else if (!e.shiftKey && (ci === cf.length - 1 || ci < 0)) { e.preventDefault(); cf[0].focus(); }
+        }
+        return;
+      }
+      if (state.mb) {
+        if (e.key === 'Escape') { closeManage(); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var mf = [].slice.call(document.querySelectorAll('#mbdlg button:not(:disabled), #mbdlg input, #mbdlg select'));
+          var mi = mf.indexOf(document.activeElement);
+          if (e.shiftKey && mi <= 0) { e.preventDefault(); mf[mf.length - 1].focus(); }
+          else if (!e.shiftKey && (mi === mf.length - 1 || mi < 0)) { e.preventDefault(); mf[0].focus(); }
         }
         return;
       }
@@ -2181,7 +2368,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       render(); window.scrollTo(0, 0);
     });
     $('#bk-config').addEventListener('click', openBookCfg);
-    $('#bk-venue').addEventListener('change', function (e) { state.booking.venue = e.target.value; state.booking.sel = {}; state.booking.done = null; state.booking.error = ''; render(); });
     $('#bk-date').addEventListener('change', function (e) { setBookDate(e.target.value); });
     $('#bk-prev').addEventListener('click', function () { shiftBookDate(-1); });
     $('#bk-next').addEventListener('click', function () { shiftBookDate(1); });
@@ -2453,7 +2639,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); }
       var map = {}, list = [];
       snap.docs.forEach(function (d) {
         var x = d.data();
-        if (x && x.by && x.date && x.court && typeof x.hour === 'number') { map[slotKey(x.date, x.venue || '', x.court, x.hour)] = x; list.push(Object.assign({ id: d.id }, x)); }
+        if (x && x.by && x.date && x.court && typeof x.hour === 'number') { var rec = Object.assign({ id: d.id }, x); map[slotKey(x.date, x.venue || '', x.court, x.hour)] = rec; list.push(rec); }
       });
       state.bookingMap = map; state.bookingList = list;
       purgeEnded(); render();
