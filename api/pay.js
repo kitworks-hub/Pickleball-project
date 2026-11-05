@@ -44,6 +44,23 @@ function gcashInput(b) {
   need(b.proof, 400, 'Upload a screenshot or photo of your GCash receipt.');
   return { gref, img: parseImage(b.proof) };
 }
+// Adds a refund to the player's Refundable Balance, once: the ledger entry credit_<refundId> is the one-time marker.
+async function creditRefundToBalance(id, r, uid) {
+  need(await lockOnce('ev:rfchoose:' + id, uid), 409, 'You already chose how to receive this refund.');
+  let newBalance = 0;
+  try {
+    await withBalance(uid, async () => {
+      const bal = await getBal(uid);
+      newBalance = bal.amount + r.refundable;
+      if (!(await putNew('ledger', 'credit_' + id, { uid, type: 'refund-credit', amount: r.refundable, balanceAfter: newBalance, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited.');   // one credit per refund, ever
+      await putBal(uid, Object.assign({}, bal, { amount: newBalance }));
+    });
+  } catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
+  await put('refunds', id, Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: r.refundable, refundRef: 'REFUND BALANCE', chosenAt: Date.now(), refundedAt: Date.now(), refundedByName: 'Refund balance' }));
+  await L.bump();
+  await B.notify([uid], { event: 'refund-done', refId: id, kind: 'refund-done', read: true, data: { ref: r.bookingRef, amount: r.refundable, method: 'balance', balance: newBalance }, title: 'Refund added to your balance', body: B.money(r.refundable) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
+  return newBalance;
+}
 async function tellBookingConfirmed(uid, name, payId, ref, slots, total, how) {
   const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when };
   await B.notify([uid], { event: 'payment-approved', refId: payId, kind: 'payment-approved', data, title: 'Booking confirmed ✓', body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + ref + '. Show it to the venue staff before using the court.' });
@@ -316,40 +333,49 @@ const actions = {
     for (const s of slots) {
       need(s.status !== 'pending' && s.status !== 'resched', 409, 'This booking is waiting for payment verification. It can be cancelled once the payment is approved or denied.');
       need(!Object.keys(pays).some(k => pays[k].status === 'pending_verification' && pays[k].move && pays[k].move.from === s.id), 409, 'A reschedule for this hour is waiting for payment verification. Cancel after it is approved or denied.');
-      if (!staff) {   // a player can only cancel a confirmed booking that has not started
+      need(!L.bookingEnded(s), 409, 'This hour has already ended, so it can no longer be cancelled.');
+      if (!staff) {   // a player can cancel their own confirmed booking, before or after it starts (until the hour ends)
         need(s.status !== 'hold', 409, 'This booking has not been paid yet. Close its payment window to release the hours.');
-        need(B.startMs(s.date, s.hour) > Date.now(), 409, 'This hour has already started, so it can no longer be cancelled.');
       }
     }
-    const policy = (await B.payCfg()).refundPolicy, byPlayer = {};
+    // The refund rules: cancelled BEFORE the booked start time = full refund, which the player may take by GCash or as Refundable Balance.
+    // Cancelled AFTER the start time = the amount paid goes to the Refundable Balance instead (never to GCash).
+    const byPlayer = {}, now = Date.now();
     for (const s of slots) {
       await del('bookings', s.id);
       const paid = Number(s.paid) || 0;
       if (s.status === 'hold' || !paid) continue;
       if (!(await lockOnce('ev:refundslot:' + s.id + ':' + s.at, 1))) continue;   // this paid hour already produced a refund
-      const hoursUntil = (B.startMs(s.date, s.hour) - Date.now()) / 3600000, pct = B.refundPercent(policy, hoursUntil);
-      const k = s.by + '|' + s.ref;
-      (byPlayer[k] = byPlayer[k] || []).push({ s, paid, pct, refundable: Math.round(paid * pct / 100) });
+      const after = B.startMs(s.date, s.hour) <= now, k = s.by + '|' + s.ref + '|' + (after ? 'after' : 'before');
+      (byPlayer[k] = byPlayer[k] || []).push({ s, paid, pct: 100, refundable: paid, after });
     }
-    const made = []; let totalRefundable = 0, totalPaid = 0;
+    const made = [], choose = []; let totalRefundable = 0, totalPaid = 0, chooseAmount = 0, credited = 0, balance = null;
     for (const key of Object.keys(byPlayer)) {
-      const g = byPlayer[key], first = g[0].s, id = newId('rf_'), paidSum = sum(g, x => x.paid), refundable = sum(g, x => x.refundable);
+      const g = byPlayer[key], first = g[0].s, after = g[0].after, id = newId('rf_'), paidSum = sum(g, x => x.paid), refundable = sum(g, x => x.refundable);
       const own = first.by === w.uid;   // the player cancelled it themselves: they already know, so no pop-up or push for it
       totalPaid += paidSum; totalRefundable += refundable;
-      if (!refundable) {   // the policy gives nothing back: no request is opened
-        await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled. No refund applies under the refund policy.' });
-        continue;
-      }
       const doc = {
         bookingRef: first.ref, by: first.by, byName: first.byName, status: 'awaiting_user', method: null, requestedBy: w.uid, requestedByName: w.member.name, requestedAt: Date.now(),
         slots: g.map(x => ({ date: x.s.date, venue: x.s.venue, court: x.s.court, hour: x.s.hour, paid: x.paid, percent: x.pct })),
-        paid: paidSum, refundable, policy
+        paid: paidSum, refundable, rule: after ? 'after_start' : 'before_start', afterStart: after, policy: B.REFUND_RULES
       };
       await put('refunds', id, doc); made.push(id);
-      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: choose your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled. You can get back ' + B.money(refundable) + '. Choose to request it by GCash or to keep it as refund balance for future bookings.' });
+      if (after) {   // started hour: straight to the Refundable Balance (once; if that step fails the refund stays waiting and can only be kept as balance)
+        try {
+          balance = await creditRefundToBalance(id, doc, first.by); credited += refundable;
+          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' was added to your Refundable Balance.' });
+        } catch (e) {
+          console.error('after-start credit failed:', e && e.message);
+          choose.push(id); chooseAmount += refundable;
+          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: keep your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' goes to your Refundable Balance. Please confirm it.' });
+        }
+        continue;
+      }
+      choose.push(id); chooseAmount += refundable;
+      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: choose your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled before it started. You can get back ' + B.money(refundable) + '. Choose to request it by GCash or to keep it as refund balance for future bookings.' });
     }
     await L.bump();
-    return { ok: true, refunds: made, refundable: totalRefundable, paid: totalPaid };
+    return { ok: true, refunds: made, choose, refundable: totalRefundable, paid: totalPaid, chooseAmount, credited, balance };
   },
 
   /* ----- the player: GCash details for refunds ----- */
@@ -384,7 +410,7 @@ const actions = {
   async 'avatar-set'(w, b) {
     const img = parseImage(b.image);
     need(img.buf.length <= 600 * 1024, 400, 'That picture is too large. Use a smaller one.');
-    const cur = (await L.getDoc('members', w.uid)) || {}, path = 'avatars/' + w.uid + '-' + Date.now() + '.' + img.ext;
+    const cur = (await L.getDoc('members', w.uid)) || {}, path = 'avatars/' + w.uid + '-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex') + '.' + img.ext;
     await L.putFile(path, img.buf, img.type);
     await put('members', w.uid, Object.assign({}, cur, { avatar: path, avatarAt: Date.now() }));
     if (cur.avatar && cur.avatar !== path) await L.delFile(cur.avatar);
@@ -463,6 +489,7 @@ const actions = {
     need(r && r.by === w.uid, 404, 'Refund not found.');
     need(method === 'gcash' || method === 'balance', 400, 'Choose "Request GCash Refund" or "Keep as Refund Balance".');
     need(B.isAwaiting(r), 409, r.status === 'refunded' ? 'This refund was already completed.' : 'You already chose how to receive this refund.');
+    need(!(r.afterStart && method === 'gcash'), 400, 'This hour had already started when it was cancelled, so the refund goes to your Refundable Balance, not GCash.');
     if (method === 'gcash') {
       const a = await L.getDoc('refundaccts', w.uid);
       const miss = [!(a && a.number) && 'GCash number', !(a && a.name) && 'account name', !(a && a.qrPath) && 'GCash QR code'].filter(Boolean);
@@ -475,19 +502,7 @@ const actions = {
       await B.notify(staff.filter(u => u !== w.uid), { event: 'refund-requested', refId: id, kind: 'refund-requested', data: { refundId: id }, title: 'New GCash refund request', body: r.byName + ' · ' + r.bookingRef + ' · ' + B.money(r.refundable) + ' to send to GCash ' + a.number + '.' });
       return { ok: true, method: 'gcash', status: 'requested' };
     }
-    need(await lockOnce('ev:rfchoose:' + id, w.uid), 409, 'You already chose how to receive this refund.');
-    let newBalance = 0;
-    try {
-      await withBalance(w.uid, async () => {
-        const bal = await getBal(w.uid);
-        newBalance = bal.amount + r.refundable;
-        if (!(await putNew('ledger', 'credit_' + id, { uid: w.uid, type: 'refund-credit', amount: r.refundable, balanceAfter: newBalance, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited.');   // one credit per refund, ever
-        await putBal(w.uid, Object.assign({}, bal, { amount: newBalance }));
-      });
-    } catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
-    await put('refunds', id, Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: r.refundable, refundRef: 'REFUND BALANCE', chosenAt: Date.now(), refundedAt: Date.now(), refundedByName: 'Refund balance' }));
-    await L.bump();
-    await B.notify([w.uid], { event: 'refund-done', refId: id, kind: 'refund-done', read: true, data: { ref: r.bookingRef, amount: r.refundable, method: 'balance', balance: newBalance }, title: 'Refund added to your balance', body: B.money(r.refundable) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
+    const newBalance = await creditRefundToBalance(id, r, w.uid);
     return { ok: true, method: 'balance', status: 'refunded', credited: r.refundable, balance: newBalance };
   },
 

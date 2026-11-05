@@ -7,6 +7,9 @@ const HOLD_MS = 15 * 60000;          // how long picked hours are held while the
 const RETRY_HOLD_MS = 30 * 60000;    // after a payment is denied, how long the hours stay held for a corrected resubmission
 const DEFAULT_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 const DEFAULT_RATES = [{ from: 7, to: 17, price: 200 }, { from: 17, to: 22, price: 300 }];
+// The refund rules: before the booked start time a paid hour is refunded in full (GCash or Refundable Balance, the player's choice);
+// after the start time the amount paid goes to the Refundable Balance only.
+const REFUND_RULES = [{ when: 'before_start', percent: 100, to: 'gcash_or_balance' }, { when: 'after_start', percent: 100, to: 'balance' }];
 const DEFAULT_POLICY = [{ hours: 48, percent: 100 }, { hours: 24, percent: 50 }, { hours: 0, percent: 0 }];
 const pad = n => String(n).padStart(2, '0');
 
@@ -127,10 +130,12 @@ async function notify(uids, spec) {
     if (!(await L.one(['HSETNX', L.K('notifications'), id, JSON.stringify(doc)]))) continue;   // this event was already announced to this person
     made.push(id);
     if (spec.read === true) continue;
+    let changed = false;
     try {
       const r = await pushTo(uid, { title: spec.title, body: spec.body, data: Object.assign({}, spec.data, { kind: doc.kind, nid: id }) });
-      if (r && (r.sent || r.failed)) await L.one(['HSET', L.K('notifications'), id, JSON.stringify(Object.assign(doc, { push: { sent: r.sent || 0, failed: r.failed || 0 } }))]);
+      if (r && (r.sent || r.failed)) { doc.push = { sent: r.sent || 0, failed: r.failed || 0 }; changed = true; }
     } catch (e) { console.error('push failed:', e && e.message); }
+    if (changed) await L.one(['HSET', L.K('notifications'), id, JSON.stringify(doc)]);
   }
   return made;
 }
@@ -226,7 +231,7 @@ function scheduleText(slots) {
 }
 
 module.exports = {
-  HOLD_MS, RETRY_HOLD_MS, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
+  HOLD_MS, RETRY_HOLD_MS, REFUND_RULES, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
   slotId, courtKey, startMs, occupies, allMap, sameVenue, sessionBlocking, bookingBlocking,
   DEFAULT_LEVELS, levelsOf, isAwaiting, acctOk, refundBlockers, usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
 };
