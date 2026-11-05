@@ -369,11 +369,22 @@ const actions = {
   }
 };
 
+// This key is sent to every visitor, so only something that really is a Supabase publishable (or legacy anon) key may ever go out.
+// Anything else, above all a secret key pasted in by mistake, is refused.
+function safePublicKey(k) {
+  k = String(k || '').trim();
+  if (/^sb_publishable_[A-Za-z0-9_\-]+$/.test(k)) return k;
+  if (/^eyJ[\w\-]+\.[\w\-]+\.[\w\-]+$/.test(k)) {   // a legacy JWT key: only the "anon" role is public
+    try { return JSON.parse(Buffer.from(k.split('.')[1], 'base64url').toString('utf8')).role === 'anon' ? k : ''; } catch (e) { return ''; }
+  }
+  return '';
+}
 function publicConfig() {
   let fb = null;
   try { fb = process.env.FIREBASE_WEB_CONFIG ? JSON.parse(process.env.FIREBASE_WEB_CONFIG) : null; } catch (e) { fb = null; }
+  const pk = safePublicKey(process.env.SUPABASE_PUBLISHABLE_KEY);
   return {
-    realtime: process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY ? { url: process.env.SUPABASE_URL, key: process.env.SUPABASE_PUBLISHABLE_KEY, topic: 'mpc-sync' } : null,
+    realtime: process.env.SUPABASE_URL && pk ? { url: process.env.SUPABASE_URL, key: pk, topic: 'mpc-sync' } : null,
     firebase: fb && process.env.FIREBASE_VAPID_KEY ? { config: fb, vapidKey: process.env.FIREBASE_VAPID_KEY } : null
   };
 }
