@@ -4,6 +4,7 @@
 'use strict';
 const crypto = require('crypto');
 const L = require('./_lib');
+const B = require('./_book');
 
 const READ_COLS = ['sessions', 'signups', 'members', 'roles', 'bookings'];
 const ID_RE = /^[A-Za-z0-9_.\-]{1,200}$/;
@@ -17,14 +18,28 @@ function mapOf(flat) {
 }
 
 async function read(req, res) {
-  await L.whoIs(req);
+  const w = await L.whoIs(req);
   const want = Number(req.query && req.query.rev);
   const rev = await L.getRev();
   if (want === rev) return res.status(200).json({ rev, same: true });
-  const r = await L.redis(READ_COLS.concat(['config']).map(c => ['HGETALL', L.K(c)]));
+  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'config']);
+  const r = await L.redis(names.map(c => ['HGETALL', L.K(c)]));
   const cols = {};
-  READ_COLS.forEach((c, i) => { cols[c] = mapOf(r[i]); });
-  res.status(200).json({ rev, cols, config: mapOf(r[READ_COLS.length]) });
+  names.slice(0, -1).forEach((c, i) => { cols[c] = mapOf(r[i]); });
+  const config = mapOf(r[names.length - 1]);
+  const now = Date.now(), staffSees = w.can('managebookings') || w.can('payments');
+  Object.keys(cols.bookings).forEach(id => {
+    const b = cols.bookings[id];
+    if (!b.by || (b.status === 'hold' && Number(b.holdUntil) <= now)) { delete cols.bookings[id]; return; }   // claims with no owner, and holds that ran out
+    if (b.by !== w.uid && !staffSees) { delete b.paid; delete b.payId; delete b.moveFrom; }
+  });
+  // payments, refunds and notifications: staff with the permission see all, everyone else only their own
+  const onlyMine = (col, perm, ownerField) => {
+    if (perm && w.can(perm)) return;
+    Object.keys(cols[col]).forEach(id => { if (cols[col][id][ownerField] !== w.uid) delete cols[col][id]; });
+  };
+  onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to');
+  res.status(200).json({ rev, cols, config });
 }
 
 /* ---------- write rules: return the document to store (or null to delete) ---------- */
@@ -81,6 +96,8 @@ const rules = {
     const role = String(next.role || 'player').slice(0, 40);
     if (!w.isSuper && (role === 'super_admin' || role === 'admin')) throw forbid('Only a super admin can make an admin.');
     const out = { role, by: w.uid, at: Date.now() };
+    const venues = Array.isArray(next.venues) ? next.venues : (cur && cur.venues);
+    if (Array.isArray(venues) && venues.length) out.venues = venues.map(v => String(v).slice(0, 60)).slice(0, 20);   // venues this person staffs: they are told about confirmed bookings there
     if (next.suspended) out.suspended = true;
     if (next.pwReset) out.pwReset = Number(next.pwReset) || Date.now();
     return out;
@@ -99,6 +116,7 @@ const rules = {
       if (!(w.can('options') || w.can('bookconfig'))) throw forbid();
       return next;
     }
+    if (id === 'payment') throw forbid('Payment settings are saved from the Payments page.');
     if (id === 'booking') {
       if (!w.can('bookconfig')) throw forbid();
       return next;
@@ -107,32 +125,10 @@ const rules = {
   },
 
   bookings(w, id, next, cur, op) {
-    const leased = cur && !cur.by;                                   // a lease-only placeholder
-    const leaseMine = leased && cur.lease && String(cur.lease.holder || '').startsWith(w.uid + ':');
-    const leaseLive = leased && cur.lease && cur.lease.until > Date.now() && !leaseMine;
-    if (next === null) {
-      if (w.can('managebookings')) return null;
-      if (leased && (leaseMine || !leaseLive)) return null;                              // giving back a claim
-      if (cur.by === w.uid && Date.now() - Number(cur.at || 0) < 120000) return null;     // undoing a half-finished booking
-      if (L.bookingEnded(cur)) return null;                                              // tidying past hours
-      throw forbid('Only roles with Manage Bookings can cancel bookings.');
-    }
-    if (!isObj(next)) throw L.httpErr(400, 'Bad booking.');
-    if (op === 'update') {
-      if (!w.can('managebookings') || !cur || !cur.by) throw forbid();
-      return Object.assign({}, cur, next, { by: cur.by });
-    }
-    const valid = /^\d{4}-\d{2}-\d{2}$/.test(String(next.date || '')) && Number.isInteger(next.hour) && next.hour >= 0 && next.hour <= 23 && next.court;
-    if (!valid) throw L.httpErr(400, 'Bad booking.');
-    const mine = next.by === w.uid;
-    if (!(mine ? w.can('book') : w.can('managebookings'))) throw forbid('Your role cannot book courts.');
-    if (cur && cur.by && !(w.can('managebookings') && cur.by === next.by)) throw L.httpErr(409, 'That hour was just booked.');
-    if (leaseLive) throw L.httpErr(409, 'That hour was just booked.');
-    return {
-      date: next.date, venue: String(next.venue || ''), court: String(next.court), hour: next.hour, by: String(next.by),
-      byName: mine ? w.member.name : String(next.byName || '').slice(0, 80), ref: String(next.ref || '').slice(0, 40), price: Number(next.price) || 0,
-      at: Number(next.at) || Date.now()
-    };
+    // Bookings are made, paid for, moved and cancelled through /api/pay (it checks conflicts, prices and payments). The only thing
+    // allowed here is tidying: an hour that has ended, or a hold that ran out.
+    if (next === null && cur && (L.bookingEnded(cur) || !B.occupies(cur))) return null;
+    throw forbid('Bookings are changed from the Book a Court page.');
   }
 };
 
@@ -144,7 +140,7 @@ async function write(req, res) {
   const col = parts[0];
   let id = parts[1];
   const op = b.op;
-  if (L.COLS.indexOf(col) < 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
+  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
   if (op === 'add') {
     if (col !== 'sessions' || parts.length !== 1) throw forbid();
     id = crypto.randomBytes(10).toString('hex');
@@ -160,18 +156,7 @@ async function write(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  if (op === 'acquire') {
-    if (col !== 'bookings') throw forbid();
-    if (!(w.can('book') || w.can('managebookings'))) throw forbid('Your role cannot book courts.');
-    const holder = String((b.data && b.data.holder) || '');
-    if (!holder.startsWith(w.uid + ':')) throw L.httpErr(400, 'Bad claim.');
-    if (cur && cur.by) return res.status(200).json({ acquired: false });
-    if (cur && cur.lease && cur.lease.until > Date.now() && cur.lease.holder !== holder && !String(cur.lease.holder).startsWith(w.uid + ':')) return res.status(200).json({ acquired: false });
-    const ttl = Math.min(30000, Math.max(1000, Number(b.data && b.data.ttlMs) || 10000));
-    const doc = JSON.stringify({ lease: { holder, until: Date.now() + ttl } });
-    const claimed = cur ? (await L.one(['HSET', L.K('bookings'), id, doc]), true) : !!(await L.one(['HSETNX', L.K('bookings'), id, doc]));
-    return res.status(200).json({ acquired: claimed });
-  }
+  if (op === 'acquire') throw forbid('Bookings are made from the Book a Court page.');
 
   if (['set', 'update', 'delete', 'add'].indexOf(op) < 0) throw L.httpErr(400, 'Unknown operation.');
   if (op === 'delete' && !cur) return res.status(200).json({ ok: true });
@@ -183,11 +168,22 @@ async function write(req, res) {
   else next = b.data || {};
 
   const out = rules[col](w, id, next, cur, op);
+  if (col === 'sessions' && out !== null) {   // a session cannot take a court that is booked at that time
+    const hit = B.bookingBlocking(await B.allMap('bookings'), out);
+    if (hit) throw L.httpErr(409, 'That court is already booked on ' + B.dateText(hit.date) + ' at ' + B.hourText(hit.hour) + ' (booking ' + hit.ref + '). Pick another court or time.');
+  }
 
   if (out === null) await L.one(['HDEL', L.K(col), id]);
   else if (col === 'bookings' && !cur) {
     if (!(await L.one(['HSETNX', L.K(col), id, JSON.stringify(out)]))) throw L.httpErr(409, 'That hour was just booked.');
   } else await L.one(['HSET', L.K(col), id, JSON.stringify(out)]);
+  if (col === 'sessions' && out !== null) {   // look again: a booking may have landed while this was being saved
+    const hit = B.bookingBlocking(await B.allMap('bookings'), out);
+    if (hit) {
+      await L.one(cur ? ['HSET', L.K(col), id, JSON.stringify(cur)] : ['HDEL', L.K(col), id]);
+      throw L.httpErr(409, 'That court was just booked at that time (booking ' + hit.ref + '). Nothing was saved.');
+    }
+  }
   await L.bump();
   res.status(200).json({ ok: true, id });
 }

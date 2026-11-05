@@ -75,14 +75,29 @@ async function redis(cmds) {
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
-const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins'];
+const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
 
-// A counter that goes up on every write, so the page can ask "has anything changed?" cheaply.
+// A counter that goes up on every write, so the page can ask "has anything changed?" cheaply. Every bump also sends a
+// Realtime Broadcast ping ({ rev } only, never data) so open pages refresh at once instead of waiting for the next check.
 async function bump() {
-  if (!configured()) { mem.counters.rev = (mem.counters.rev || 0) + 1; return; }
-  await sb('POST', 'rpc/mpc_incr', { k: 'rev' });
+  let rev;
+  if (!configured()) { mem.counters.rev = (mem.counters.rev || 0) + 1; rev = mem.counters.rev; }
+  else rev = Number(await sb('POST', 'rpc/mpc_incr', { k: 'rev' }));
+  await ping(rev);
+  return rev;
+}
+async function ping(rev) {
+  if (!configured()) return;
+  try {
+    const headers = { apikey: SB_KEY, 'Content-Type': 'application/json' };
+    if (SB_KEY.startsWith('eyJ')) headers.Authorization = 'Bearer ' + SB_KEY;
+    await fetch(SB_URL + '/realtime/v1/api/broadcast', {
+      method: 'POST', headers, signal: AbortSignal.timeout(2000),
+      body: JSON.stringify({ messages: [{ topic: 'mpc-sync', event: 'rev', payload: { rev }, private: false }] })
+    });
+  } catch (e) { /* best effort: pages still catch up on their next check */ }
 }
 async function getRev() {
   if (!configured()) return mem.counters.rev || 0;
@@ -101,6 +116,36 @@ async function hit(key, seconds) {
 async function clearHit(key) {
   if (!configured()) { delete mem.counters['h:' + key]; return; }
   await sb('DELETE', 'counters?key=eq.' + q(key), undefined, 'return=minimal');
+}
+
+/* ---------- file storage (private bucket "payment-assets") ----------
+   Payment proofs and the GCash QR code live here, never in the page data. Files are only served through /api/pay?file=... after a permission check. */
+const BUCKET = 'payment-assets';
+const memFiles = {};
+let bucketReady = false;
+function sbHeaders(extra) {
+  const h = Object.assign({ apikey: SB_KEY }, extra || {});
+  if (SB_KEY.startsWith('eyJ')) h.Authorization = 'Bearer ' + SB_KEY;
+  return h;
+}
+async function ensureBucket() {
+  if (bucketReady) return;
+  const r = await fetch(SB_URL + '/storage/v1/bucket', { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ id: BUCKET, name: BUCKET, public: false, file_size_limit: 3145728, allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp'] }) });
+  if (!r.ok && r.status !== 409 && r.status !== 400) throw httpErr(502, 'File storage is not available (' + r.status + ').');
+  bucketReady = true;
+}
+async function putFile(path, buffer, contentType) {
+  if (!configured()) { memFiles[path] = { buffer, contentType }; return; }
+  await ensureBucket();
+  const r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: sbHeaders({ 'Content-Type': contentType, 'x-upsert': 'true' }), body: buffer });
+  if (!r.ok) throw httpErr(502, 'The file could not be saved (' + r.status + ').');
+}
+async function getFile(path) {
+  if (!configured()) return memFiles[path] || null;
+  const r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, { headers: sbHeaders() });
+  if (r.status === 404 || r.status === 400) return null;
+  if (!r.ok) throw httpErr(502, 'The file could not be read (' + r.status + ').');
+  return { buffer: Buffer.from(await r.arrayBuffer()), contentType: r.headers.get('content-type') || 'image/jpeg' };
 }
 
 /* ---------- ids, passwords, tokens ---------- */
@@ -182,12 +227,12 @@ const clearThrottle = key => clearHit('rl:' + key);
 const clientIp = req => String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || 'ip').split(',')[0].trim();
 
 /* ---------- roles and permissions (same table as the page) ---------- */
-const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers'];
+const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers', 'payments', 'refunds', 'paysettings'];
 const ALL_ON = {}; FEATURE_KEYS.forEach(k => { ALL_ON[k] = true; });
 const DEFAULTS = {
-  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true },
-  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false },
-  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false }
+  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true },
+  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false },
+  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false }
 };
 function permsFor(role, cfgDefs) {
   if (role === 'super_admin') return ALL_ON;
@@ -236,7 +281,7 @@ function bookingEnded(b) {
 }
 
 module.exports = {
-  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr,
+  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, SB_URL, configured,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
-  throttle, clearThrottle, clientIp, whoIs, sessionEnded, bookingEnded, FEATURE_KEYS, DEFAULTS
+  throttle, clearThrottle, clientIp, whoIs, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

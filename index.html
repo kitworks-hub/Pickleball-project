@@ -1,5 +1,8 @@
 <title>MPC</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon.jpg">
+<meta name="theme-color" content="#0a2a6e">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script>try { var kt = localStorage.getItem('kl-theme'); if (kt === 'light' || kt === 'dark') document.documentElement.setAttribute('data-theme', kt); } catch (e) {}</script>
 <style>
@@ -268,6 +271,58 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .slot.sel, .sw.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .slot.bk, .sw.bk { background: var(--slot-bk-bg); border-color: var(--slot-bk-bd); color: var(--slot-bk-ink); }
 .slot.mine, .sw.mine { background: var(--card); border: 2px solid var(--accent); color: var(--accent); }
+.slot.pend, .sw.pend { background: var(--card); border: 2px dashed var(--warn); color: var(--warn); }
+.refund-pill { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; padding: 5px 12px; border: 1.5px solid var(--accent); border-radius: 999px; background: var(--card); font-size: var(--fs-s); color: var(--muted); cursor: help; }
+.refund-pill strong { font: 700 var(--fs-m)/1 var(--display); color: var(--accent); }
+.co-panel { width: min(560px, 100%); max-height: min(94vh, 920px); overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.co-amount { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 12px 14px; background: var(--paper); border: 1.5px solid var(--accent); border-radius: 8px; }
+.co-amount strong { font: 800 1.7rem/1 var(--display); color: var(--accent); }
+.co-gcash { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 12px; border: 1.5px solid var(--rule); border-radius: 8px; }
+.co-gcash-text { flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.co-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.co-line span { min-width: 96px; font-size: var(--fs-s); color: var(--muted); }
+.co-line strong { overflow-wrap: anywhere; }
+.co-qrbox { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); }
+.co-qr { width: 168px; height: 168px; object-fit: contain; background: #fff; border: 1px solid var(--rule); border-radius: 8px; }
+.co-proof { display: block; max-width: 100%; max-height: 200px; margin-top: 8px; object-fit: contain; border: 1px solid var(--rule); border-radius: 8px; }
+.move-note { max-width: 46ch; }
+.chip.st-hold, .chip.st-pending { border-color: var(--warn); color: var(--warn); }
+.chip.st-confirmed { border-color: var(--ok); color: var(--ok); }
+.pay-reason { color: var(--danger) !important; }
+.pay-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pay-filters input { flex: 1 1 220px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.pay-list { display: flex; flex-direction: column; gap: 12px; }
+.pay-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
+.pay-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; }
+.pay-top small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.pay-amt { display: flex; align-items: center; gap: 10px; }
+.pay-amt strong { font: 700 var(--fs-l)/1 var(--display); }
+.pay-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.pay-info { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pay-info p { margin: 0; overflow-wrap: anywhere; }
+.pay-lines { margin: 0; padding-left: 18px; }
+.proof-btn { padding: 0; border: 1.5px solid var(--rule); border-radius: 8px; background: var(--paper); cursor: zoom-in; }
+.pay-proof { display: block; width: 120px; height: 120px; object-fit: cover; border-radius: 6px; }
+.img-panel { width: min(720px, 100%); max-height: 94vh; overflow: auto; }
+.img-full { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+.chip.rs-pending_verification, .chip.rs-requested, .chip.rs-approved { border-color: var(--warn); color: var(--warn); }
+.chip.rs-paid, .chip.rs-refunded { border-color: var(--ok); color: var(--ok); }
+.chip.rs-rejected, .chip.rs-denied { border-color: var(--danger); color: var(--danger); }
+.venue-pick { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.venue-pick .chip.opt { cursor: pointer; background: var(--card); color: var(--ink); }
+.venue-pick .chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.notice-ref { display: flex; flex-direction: column; gap: 2px; margin: 12px 0 4px; padding: 12px 14px; border: 2px solid var(--accent); border-radius: 8px; background: var(--paper); }
+.notice-ref span, .notice-ref small { color: var(--muted); font-size: var(--fs-s); }
+.notice-ref strong { font: 800 1.5rem/1.1 var(--mono); letter-spacing: 0.04em; color: var(--accent); overflow-wrap: anywhere; }
+.nf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.nf-head h4 { margin: 0; font: 700 var(--fs-m)/1.2 var(--display); text-transform: uppercase; }
+.nf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.nf-list li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; }
+.nf-list li.unread { border-color: var(--accent); background: var(--paper); }
+.nf-list span { color: var(--muted); font-size: var(--fs-s); overflow-wrap: anywhere; }
+.nf-list small { color: var(--muted); font: 500 0.72rem/1.2 var(--mono); }
+.pol-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
+.pol-row .field { flex: 1 1 110px; }
 .slot.un, .sw.un { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(120, 135, 170, 0.28) 5px 7px), var(--slot-un-bg); color: var(--slot-un-ink); }
 .slot { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slot:disabled { cursor: not-allowed; }
@@ -529,10 +584,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           <div class="submit-row"><button id="pf-save" class="btn primary" type="submit">Save new password</button> <button id="pf-cancel" class="btn" type="button">Cancel</button></div>
         </form>
       </div>
+      <div id="pf-notify" class="panel"></div>
     </section>
     <section id="view-book" class="view-stack" aria-label="Book a court" hidden>
       <div class="book-head">
         <h2>Book a court</h2>
+        <div id="bk-refund" class="refund-pill" hidden></div>
         <div class="dash-actions">
         <button id="bk-manage" class="btn small" type="button" hidden aria-haspopup="dialog">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -559,6 +616,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         <li><span class="sw sel"></span>Selected</li>
         <li><span class="sw bk"></span>Booked</li>
         <li><span class="sw mine"></span>Your booking</li>
+        <li><span class="sw pend"></span>Awaiting payment or verification</li>
         <li><span class="sw un"></span>Unavailable (time passed, or a session is using the court)</li>
       </ul>
       <div class="book-layout">
@@ -569,6 +627,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     </section>
     <section id="view-people" class="view-stack" aria-label="People" hidden></section>
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
+    <section id="view-payments" class="view-stack" aria-label="Payments" hidden></section>
+    <section id="view-refunds" class="view-stack" aria-label="Refunds" hidden></section>
   </div>
 
   <footer>Copyright © 2026. KitCraft All Rights Reserved.</footer>
@@ -582,6 +642,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 <div id="bklist" class="modal" hidden></div>
 <div id="mbdlg" class="modal" hidden></div>
 <div id="sesscfg" class="modal" hidden></div>
+<div id="checkout" class="modal" hidden></div>
+<div id="thanks" class="modal" hidden></div>
+<div id="notice" class="modal" hidden></div>
+<div id="paycfg" class="modal" hidden></div>
+<div id="imgview" class="modal" hidden></div>
 
 <script>
 (function () {
@@ -621,19 +686,22 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     { key: 'book', label: 'Book courts', hint: 'Use the Book a Court page to reserve hours' },
     { key: 'bookconfig', label: 'Court Booking Configuration', hint: 'Manage booking times, courts, venues and hourly rates' },
     { key: 'managebookings', label: 'Manage Bookings', hint: "Edit or cancel users' bookings" },
-    { key: 'viewbookers', label: 'View Bookers', hint: 'See the names of players who booked each court' }
+    { key: 'viewbookers', label: 'View Bookers', hint: 'See the names of players who booked each court' },
+    { key: 'payments', label: 'Payments', hint: 'Review GCash payments: see the receipts, approve or deny them' },
+    { key: 'refunds', label: 'Refunds', hint: 'Review refund requests and record refunds sent by GCash' },
+    { key: 'paysettings', label: 'Payment settings', hint: 'GCash number, account name, QR code and refund policy' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false } }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -809,6 +877,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var next = { role: role, by: state.me, at: Date.now() };
       if (prev.suspended) next.suspended = true;
       if (prev.owner) next.owner = true;
+      if (prev.venues) next.venues = prev.venues;
       if (prev.pwReset) next.pwReset = prev.pwReset;
       if (extra) Object.assign(next, extra);
       return state.db.doc('roles/' + uid).set(next);
@@ -838,7 +907,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.checkout || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -924,6 +993,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       editError(PAST_MSG, ['date', 'start'], d.date < dkey(new Date()) ? '#e-date' : '#e-start');
       return;
     }
+    var cNew = d.court.trim() || '-', vNew = d.venue.trim() || '-';
+    var changed = !orig || orig.date !== d.date || orig.start !== d.start || Number(orig.duration) !== duration || orig.court !== cNew || orig.venue !== vNew;
+    var clash = changed ? bookingOnSession(d.date, vNew, cNew, d.start, duration) : null;
+    if (clash) { editError('That court is already booked at that time (booking ' + clash.ref + '). Pick another court or time.', ['court', 'date', 'start'], '#e-court'); return; }
     var patch = {
       title: d.title.trim() || '-', date: d.date, start: d.start, duration: duration,
       court: d.court.trim() || '-', venue: d.venue.trim() || '-', level: d.level, format: d.format, capacity: cap
@@ -1331,6 +1404,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (hadFocus) { var no = $('#confirmuser .confirm-no'); if (no) no.focus(); }
   }
 
+  function toggleVenue(u, v) {
+    queue(function () {
+      var prev = state.roles[u] || { role: roleOf(u) }, list = (prev.venues || []).slice(), i = list.indexOf(v);
+      if (i >= 0) list.splice(i, 1); else list.push(v);
+      return state.db.doc('roles/' + u).set(Object.assign({}, prev, { venues: list, by: state.me, at: Date.now() }));
+    }, 'Could not change the venues.');
+  }
   function resetPassword(u) {
     var name = personName(u);
     queue(function () {
@@ -1405,6 +1485,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
             .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
         } }, r.suspended ? 'Restore access' : 'Pause access'));
         ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () { resetPassword(u); } }, 'Reset password'));
+        if (bookingVenues().length) ctl.push(h('button', { id: 'vn-' + u, class: 'btn small', type: 'button', 'aria-expanded': String(state.venueEdit === u), onclick: function () { state.venueEdit = state.venueEdit === u ? null : u; render(); } }, 'Venues' + ((r.venues || []).length ? ' (' + r.venues.length + ')' : '')));
         if (isSuper()) ctl.push(h('button', { id: 'ru-' + u, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveUser(u); } }, 'Remove'));
       } else {
         ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
@@ -1418,11 +1499,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var acct = state.accounts[u];
       if (Number(r.pwReset) > Number(acct.pwSetAt || 0)) facts.push('password reset pending');
       if (r.suspended) facts.push('access paused');
+      var picker = state.venueEdit === u && opts.length ? h('div', { class: 'venue-pick' },
+        h('span', { class: 'note' }, 'Venues ' + personName(u) + ' staffs. They are told when a booking there is confirmed:'),
+        bookingVenues().map(function (v) {
+          var on = (r.venues || []).indexOf(v) >= 0;
+          return h('button', { class: 'chip opt' + (on ? ' on' : ''), type: 'button', 'aria-pressed': String(on), onclick: function () { toggleVenue(u, v); } }, (on ? '✓ ' : '') + v);
+        })) : null;
       return h('div', { class: 'row' },
         h('div', { class: 'meta' },
           h('strong', null, personName(u) + (u === state.me ? ' (you)' : '')),
-          h('span', null, facts.join(' · '))),
-        h('div', { class: 'ctl' }, ctl));
+          h('span', null, facts.join(' · ') + ((r.venues || []).length ? ' · ' + r.venues.join(', ') : ''))),
+        h('div', { class: 'ctl' }, ctl), picker);
     });
     box.append(h('div', { class: 'rows' }, rows));
   }
@@ -1477,22 +1564,44 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function sameCol(p, c) { return p.court === (c.name || c.court) && p.venue === c.venue; }
 
   // available / booked (by someone else) / mine / unavailable (the hour has started, no rate is set, or a session is using that court)
+  // Mine comes in three kinds: confirmed, waiting for staff to verify the payment (minepend), and held while I pay (minehold).
   function slotInfo(date, col, hour) {
     var map = state.bookingMap, venue = col.venue, court = col.name;
     var b = map[slotKey(date, venue, court, hour)];
     if (!b && venue === (bookingVenues()[0] || '')) b = map[slotKey(date, '', court, hour)];   // bookings made before venues existed belong to the first venue
-    if (b) return { s: b.by === state.me ? 'mine' : 'booked', b: b };
+    if (b && b.status === 'hold' && Number(b.holdUntil) <= Date.now()) b = null;               // a hold that ran out is free again
+    if (b) {
+      var st = b.status || 'confirmed';
+      if (b.by !== state.me) return { s: 'booked', b: b };
+      return { s: st === 'hold' ? 'minehold' : st === 'confirmed' ? 'mine' : 'minepend', b: b };
+    }
     if (slotPrice(hour) === null) return { s: 'unavailable', why: 'No rate is set for this hour.' };
     if (parse(date, pad(hour) + ':00').getTime() <= Date.now()) return { s: 'unavailable', why: 'This hour has already started or passed.' };
+    var use = sessionOnCourt(date, venue, court, hour);
+    if (use) return { s: 'unavailable', why: 'In use by ' + (use.title || 'a session') + '.' };
+    return { s: 'available' };
+  }
+  // A session that uses this court at this hour (a session with no court, "-", blocks nothing).
+  function sessionOnCourt(date, venue, court, hour) {
     var lo = hour * 60, hi = lo + 60, ck = courtKey(court);
-    var use = ck && ck !== '-' ? state.sessions.filter(function (s) {
+    return ck && ck !== '-' ? state.sessions.filter(function (s) {
       if (s.date !== date || courtKey(s.court) !== ck) return false;
       if (venue && s.venue && s.venue !== '-' && String(s.venue).toLowerCase() !== venue.toLowerCase()) return false;
       var a = toMin(s.start), z = a + (Number(s.duration) || 90);
       return a < hi && z > lo;
-    })[0] : null;
-    if (use) return { s: 'unavailable', why: 'In use by ' + (use.title || 'a session') + '.' };
-    return { s: 'available' };
+    })[0] || null : null;
+  }
+  // A booked hour that overlaps this session's court and time (the other half of the two-way conflict check).
+  function bookingOnSession(date, venue, court, start, duration, ignoreId) {
+    var ck = courtKey(court);
+    if (!ck || ck === '-') return null;
+    var a = toMin(start), z = a + (Number(duration) || 90), now = Date.now();
+    return state.bookingList.filter(function (x) {
+      if (x.status === 'hold' && Number(x.holdUntil) <= now) return false;
+      if (x.date !== date || courtKey(x.court) !== ck) return false;
+      if (x.venue && venue && venue !== '-' && String(x.venue).toLowerCase() !== String(venue).toLowerCase()) return false;
+      return a < x.hour * 60 + 60 && z > x.hour * 60;
+    })[0] || null;
   }
   function selectedSlots(cols) {
     var out = [];
@@ -1538,19 +1647,83 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     setBookDate(dkey(new Date(p.getFullYear(), p.getMonth(), p.getDate() + delta)));
   }
 
-  // Claim one slot. The slot's document id is unique to date, venue, court and hour, and a short lease stops two people claiming it at the same moment.
-  async function claimSlot(data, holder) {
-    var ref = state.db.doc('bookings/' + slotId(data.date, data.venue, data.court, data.hour));
-    if (typeof ref.acquire === 'function') {
-      var lease = await ref.acquire({ holder: holder, ttlMs: 10000 });
-      if (!lease.acquired) return null;
-    }
-    var snap = await ref.get();
-    var cur = snap.exists ? snap.data() : null;
-    if (cur && cur.by) return null;
-    await ref.set(data);
-    return ref;
+  /* ---------- payments: the server does the checking, the page asks and shows ---------- */
+  function payCall(body) {
+    return fetch('/api/pay', { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + state.token }, body: JSON.stringify(body) }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (r.status === 401) { forceLogout('Your session ended. Please log in again.'); throw new Error(j.error || 'Please log in again.'); }
+        if (!r.ok) throw new Error(j.error || 'That did not work.');
+        // pull the fresh data straight away, so this page shows the result without waiting for the next update
+        return state.db && state.db.refresh ? state.db.refresh().then(function () { return j; }, function () { return j; }) : j;
+      });
+    }, function () { throw new Error('Could not reach the server. Check your connection.'); });
   }
+  // Payment proofs and the GCash QR are private. They are fetched with the login token and shown from a temporary local URL.
+  var fileCache = {};
+  function fileUrl(path) {
+    if (!path) return Promise.resolve('');
+    if (!fileCache[path]) {
+      fileCache[path] = fetch('/api/pay?file=' + encodeURIComponent(path), { headers: { Authorization: 'Bearer ' + state.token } })
+        .then(function (r) { if (!r.ok) throw new Error('x'); return r.blob(); })
+        .then(function (b) { return URL.createObjectURL(b); })
+        .catch(function () { delete fileCache[path]; return ''; });
+    }
+    return fileCache[path];
+  }
+  function fileImg(path, alt, cls, onclick) {
+    var img = h('img', { alt: alt, class: cls || '', loading: 'lazy' });
+    if (onclick) { img.addEventListener('click', onclick); img.style.cursor = 'zoom-in'; }
+    fileUrl(path).then(function (u) { if (u) img.src = u; else img.alt = alt + ' (could not load)'; });
+    return img;
+  }
+  // A photo or screenshot, shrunk in the browser so it uploads quickly (a receipt stays readable at 1280px).
+  function resizeImage(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\//.test(file.type)) { reject(new Error('Choose an image (a screenshot or photo of the receipt).')); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1280, k = Math.min(1, max / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        var q = 0.85, out = cv.toDataURL('image/jpeg', q);
+        while (out.length > 2400000 && q > 0.4) { q -= 0.15; out = cv.toDataURL('image/jpeg', q); }
+        resolve(out);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That image could not be read. Try a screenshot.')); };
+      img.src = url;
+    });
+  }
+  /* refund policy: what share of the amount paid comes back, by how long before the hour starts (editable in Payment settings) */
+  var DEFAULT_POLICY = [{ hours: 48, percent: 100 }, { hours: 24, percent: 50 }, { hours: 0, percent: 0 }];
+  function refundPolicy() {
+    var p = state.payCfg && Array.isArray(state.payCfg.refundPolicy) && state.payCfg.refundPolicy.length ? state.payCfg.refundPolicy : DEFAULT_POLICY;
+    return p.slice().sort(function (a, c) { return c.hours - a.hours; });
+  }
+  function refundPercent(hoursUntil) {
+    var p = refundPolicy();
+    for (var i = 0; i < p.length; i++) if (hoursUntil >= p[i].hours) return p[i].percent;
+    return 0;
+  }
+  function policyText() {
+    return refundPolicy().map(function (t) { return t.hours > 0 ? t.percent + '% if cancelled ' + t.hours + ' hours or more before the hour starts' : t.percent + '% after that'; }).join('; ') + '.';
+  }
+  // What this person would get back if their paid, upcoming bookings were cancelled right now.
+  function refundableBalance() {
+    var now = Date.now(), total = 0;
+    state.bookingList.forEach(function (x) {
+      if (x.by !== state.me || (x.status && x.status !== 'confirmed')) return;
+      var start = parse(x.date, pad(x.hour) + ':00').getTime();
+      if (start <= now) return;
+      total += Math.round((Number(x.paid) || 0) * refundPercent((start - now) / 3600000) / 100);
+    });
+    return total;
+  }
+  function statusWords(st) {
+    return { hold: 'Awaiting payment', pending: 'Pending verification', resched: 'Reschedule pending verification', confirmed: 'Confirmed' }[st || 'confirmed'] || 'Confirmed';
+  }
+
+  /* ---------- picking hours: the server holds them, then you pay ---------- */
   function confirmBooking() {
     var b = state.booking;
     if (b.busy) return;
@@ -1564,31 +1737,131 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       render(); return;
     }
     b.busy = true; b.error = ''; render();
-    var code = codeOf(), holder = state.me + ':' + code, claimed = [];
-    (async function () {
-      try {
-        for (var i = 0; i < picks.length; i++) {
-          var p = picks[i];
-          var ref = await claimSlot({ date: date, venue: p.venue, court: p.court, hour: p.hour, by: state.me, byName: myName(), ref: code, price: slotPrice(p.hour), at: Date.now() }, holder);
-          if (!ref) throw { taken: p };
-          claimed.push(ref);
-        }
-        var runs = runsOf(picks, function (p) { return slotPrice(p.hour); });
-        b.done = { ref: code, date: date, runs: runs, total: runs.reduce(function (n, r) { return n + r.price; }, 0) };
-        b.sel = {};
-        flash('Booking confirmed. Reference ' + code + '.', 'ok');
-      } catch (e) {
-        // all or nothing: give back anything claimed in this attempt
-        await Promise.all(claimed.map(function (r) { return r.delete().catch(function () {}); }));
-        if (e && e.taken) {
-          delete b.sel[pickKey(e.taken)];
-          b.error = 'Someone just booked ' + courtText(e.taken.court, e.taken.venue) + ' at ' + hourText(e.taken.hour) + '. Nothing was booked. Pick another hour and try again.';
-        } else b.error = 'The booking could not be completed, and nothing was booked. ' + (e && e.message ? e.message : '');
-      }
-      b.busy = false;
-      render();
-    })();
+    payCall({ action: 'book', picks: picks.map(function (p) { return { date: date, venue: p.venue, court: p.court, hour: p.hour }; }) }).then(function (res) {
+      b.sel = {};
+      openCheckout({ mode: 'booking', ref: res.ref, amount: res.total, holdUntil: res.holdUntil, slots: res.slots });
+    }).catch(function (e) {
+      b.error = (e && e.message) || 'The booking could not be completed, and nothing was booked.';
+    }).then(function () { b.busy = false; render(); });
   }
+
+  /* ---------- checkout: pay with GCash, send the receipt ---------- */
+  var coSig = '', coTimer = null;
+  function openCheckout(c) {
+    state.checkout = Object.assign({ gcashRef: '', proof: '', proofName: '', busy: false, error: '', expired: false }, c);
+    coSig = '';
+    renderCheckout();
+    var f = $('#co-ref'); if (f) f.focus();
+    if (!coTimer) coTimer = setInterval(tickCheckout, 1000);
+  }
+  function stopCheckoutTimer() { if (coTimer) { clearInterval(coTimer); coTimer = null; } }
+  function closeCheckout() { state.checkout = null; stopCheckoutTimer(); renderCheckout(); }
+  function tickCheckout() {
+    var c = state.checkout; if (!c || !c.holdUntil) return;
+    var ms = c.holdUntil - Date.now(), el = $('#co-timer');
+    if (ms <= 0) { if (!c.expired) { c.expired = true; renderCheckout(); } return; }
+    if (el) el.textContent = 'Your hours are held for ' + Math.floor(ms / 60000) + ':' + pad(Math.floor(ms / 1000) % 60) + '. Send your payment before the time runs out.';
+  }
+  function resumeCheckout(ref) {
+    var mine = state.bookingList.filter(function (x) { return x.ref === ref && x.by === state.me && x.status === 'hold' && Number(x.holdUntil) > Date.now(); });
+    if (!mine.length) { flash('Those hours were released. Please pick them again.', 'err'); return; }
+    openCheckout({ mode: 'booking', ref: ref, amount: mine.reduce(function (n, x) { return n + (Number(x.price) || 0); }, 0), holdUntil: Math.min.apply(null, mine.map(function (x) { return Number(x.holdUntil); })),
+      slots: mine.map(function (x) { return { date: x.date, venue: x.venue, court: x.court, hour: x.hour, price: x.price }; }) });
+  }
+  function cancelHold() {
+    var c = state.checkout;
+    if (!c || c.busy || c.mode !== 'booking') return;
+    c.busy = true; renderCheckout();
+    payCall({ action: 'release', ref: c.ref }).then(function () { flash('Your hold was released.', 'ok'); }).catch(fail('Could not release the hold.')).then(function () { closeCheckout(); });
+  }
+  function submitCheckout() {
+    var c = state.checkout; if (!c || c.busy) return;
+    if (c.expired) { c.error = 'Your hold ran out. Please pick the hours again.'; renderCheckout(); return; }
+    if (c.gcashRef.replace(/[^A-Za-z0-9]/g, '').length < 8) { c.error = 'Enter the GCash reference number from your receipt (at least 8 letters or numbers).'; renderCheckout(); var f = $('#co-ref'); if (f) f.focus(); return; }
+    if (!c.proof) { c.error = 'Upload a screenshot or photo of your GCash receipt.'; renderCheckout(); return; }
+    c.busy = true; c.error = ''; renderCheckout();
+    var body = c.mode === 'reschedule' ? { action: 'reschedule', id: c.payload.id, to: c.payload.to } : { action: 'pay', ref: c.ref };
+    body.gcashRef = c.gcashRef; body.proof = c.proof; body.email = state.email;
+    payCall(body).then(function () {
+      var t = { mode: c.mode, ref: c.ref, amount: c.amount };
+      state.checkout = null; stopCheckoutTimer();
+      state.thanks = t;
+      render();
+      var ok = $('#thanks .thanks-ok'); if (ok) ok.focus();
+    }).catch(function (e) {
+      if (state.checkout) { state.checkout.busy = false; state.checkout.error = (e && e.message) || 'That did not go through.'; renderCheckout(); }
+    });
+  }
+  function copyText(text, label) {
+    var done = function () { flash(label + ' copied.', 'ok'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { flash('Copy it by hand: ' + text, 'ok'); });
+    else flash('Copy it by hand: ' + text, 'ok');
+  }
+  function renderCheckout() {
+    var box = $('#checkout'), c = state.checkout, pc = state.payCfg || {};
+    if (!c || gateState() !== 'ok') { state.checkout = null; coSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var sig = [c.mode, c.ref, c.amount, c.busy, c.error, !!c.proof, c.proofName, c.expired, pc.gcashNumber, pc.accountName, pc.qrPath].join('|');
+    if (sig === coSig && !box.hidden) return;
+    coSig = sig;
+    var hadFocus = box.contains(document.activeElement), focusKey = hadFocus ? document.activeElement.id : '';
+    var ready = !!pc.gcashNumber, isBooking = c.mode === 'booking';
+    var lines = (c.slots || c.lines || []).length ? runsOf((c.slots || []).map(function (s) { return { court: s.court, venue: s.venue || '', hour: s.hour, date: s.date, price: s.price }; }), function (p) { return p.price; }) : [];
+    var summary = c.mode === 'booking'
+      ? h('ul', { class: 'sum-list' }, lines.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, fullFmt.format(parse(r.slots[0].date, '00:00')))), h('strong', null, peso(r.price))); }))
+      : h('p', null, c.summary || 'Reschedule payment');
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel co-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'co-title' },
+        h('div', { class: 'modal-head' },
+          h('div', null, h('h2', { id: 'co-title' }, isBooking ? 'Pay with GCash' : 'Pay the difference'), h('p', { class: 'time' }, 'Reference ' + c.ref)),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeCheckout }, '×')),
+        summary,
+        h('div', { class: 'co-amount' }, h('span', null, 'Send exactly'), h('strong', null, peso(c.amount))),
+        c.holdUntil ? h('p', { id: 'co-timer', class: 'note' }, c.expired ? 'Your hold ran out.' : 'Your hours are held for 15:00. Send your payment before the time runs out.') : h('p', { class: 'note' }, 'Your current booking stays as it is until this payment is verified.'),
+        ready
+          ? h('div', { class: 'co-gcash' },
+              h('div', { class: 'co-gcash-text' },
+                h('p', { class: 'note' }, '1. Open GCash and send the amount to:'),
+                h('div', { class: 'co-line' }, h('span', null, 'GCash number'), h('strong', null, pc.gcashNumber), h('button', { class: 'btn small', type: 'button', onclick: function () { copyText(pc.gcashNumber, 'GCash number'); } }, 'Copy')),
+                h('div', { class: 'co-line' }, h('span', null, 'Account name'), h('strong', null, pc.accountName || '-'))),
+              pc.qrPath ? h('div', { class: 'co-qrbox' }, fileImg(pc.qrPath, 'GCash QR code', 'co-qr'), h('small', null, 'or scan this QR code')) : null)
+          : h('p', { class: 'form-error', role: 'alert' }, 'Payments are not set up yet. Please ask an admin to add the GCash details, then try again.'),
+        h('p', { class: 'note' }, '2. Enter the reference number from your GCash receipt and upload a screenshot of it. Staff will check it and confirm your booking. This can take a little while.'),
+        h('label', { class: 'field', for: 'co-ref' }, 'GCash reference number',
+          h('input', { id: 'co-ref', type: 'text', maxlength: '40', autocomplete: 'off', inputmode: 'text', placeholder: 'e.g. 1234 567 890123', value: c.gcashRef, disabled: c.busy || !ready, oninput: function (e) { c.gcashRef = e.target.value; } })),
+        h('div', { class: 'field' }, 'Receipt screenshot',
+          h('input', { id: 'co-file', type: 'file', accept: 'image/*', disabled: c.busy || !ready, 'aria-label': 'Receipt screenshot', onchange: function (e) {
+            var f = e.target.files && e.target.files[0]; if (!f) return;
+            resizeImage(f).then(function (d) { c.proof = d; c.proofName = f.name; c.error = ''; renderCheckout(); }).catch(function (er) { c.error = er.message; renderCheckout(); });
+          } }),
+          c.proof ? h('img', { class: 'co-proof', src: c.proof, alt: 'Your receipt screenshot' }) : null),
+        c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
+        h('div', { class: 'confirm-actions' },
+          isBooking ? h('button', { class: 'btn', type: 'button', disabled: c.busy, onclick: cancelHold }, 'Cancel booking') : h('button', { class: 'btn', type: 'button', disabled: c.busy, onclick: closeCheckout }, 'Cancel'),
+          h('button', { id: 'co-submit', class: 'btn primary', type: 'button', disabled: c.busy || !ready || c.expired, onclick: submitCheckout }, c.busy ? 'Sending…' : 'I have paid · send for verification')),
+        isBooking ? h('p', { class: 'note' }, 'You can close this window and finish later: your hours stay held until the timer runs out.') : null));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) { var el = document.getElementById(focusKey); if (el) el.focus(); }
+  }
+
+  /* ---------- thank-you after a booking or reschedule is sent ---------- */
+  function renderThanks() {
+    var box = $('#thanks'), t = state.thanks;
+    if (!t || gateState() !== 'ok') { state.thanks = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    if (!box.hidden) return;
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop', onclick: closeThanks }),
+      h('div', { class: 'modal-panel confirm-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'th-title', 'aria-describedby': 'th-text' },
+        h('h2', { id: 'th-title' }, 'Thank you! 🎾'),
+        h('div', { id: 'th-text' },
+          h('p', null, (t.mode === 'reschedule' ? 'Your reschedule request ' : 'Your booking ') + t.ref + ' was received with your payment of ' + peso(t.amount) + '. It is now pending verification, and we will tell you as soon as it is approved.'),
+          h('p', { class: 'note' }, 'Please note: cancellations, refund requests and rescheduling must be coordinated directly with the admin or staff, or handled in person.')),
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn primary thanks-ok', type: 'button', onclick: closeThanks }, 'OK, got it'))));
+    box.hidden = false;
+    lockScroll();
+  }
+  function closeThanks() { state.thanks = null; renderThanks(); }
 
   function renderBooking() {
     var b = state.booking, now = new Date(), today = dkey(now);
@@ -1599,6 +1872,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#bk-prev').disabled = b.date <= today; $('#bk-next').disabled = b.date >= max;
     $('#bk-config').hidden = !can('bookconfig');
     $('#bk-manage').hidden = !can('managebookings');
+    var rp = $('#bk-refund'), rb = refundableBalance();
+    rp.hidden = !can('book');
+    rp.replaceChildren(h('span', null, 'Refundable balance'), h('strong', null, peso(rb)));
+    rp.title = 'What you would get back if your paid, upcoming bookings were cancelled right now. ' + policyText();
     var cols = bookingColumns(), cfg = bcfg();
     var canManage = can('managebookings') && state.canWrite, canNames = can('viewbookers');
 
@@ -1618,18 +1895,22 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       grid.append(h('div', { class: 'slot-label' }, hourText(hr), h('small', null, 'to ' + hourText(hr + 1))));
       cols.forEach(function (col, ci) {
         var hour = hr, pick = { court: col.name, venue: col.venue, hour: hour }, key = pickKey(pick), info = slotInfo(b.date, col, hour), sel = !!b.sel[key], price = slotPrice(hour);
-        var kind = sel ? 'sel' : info.s === 'available' ? 'av' : info.s === 'mine' ? 'mine' : info.s === 'booked' ? 'bk' : 'un';
+        var kind = sel ? 'sel' : info.s === 'available' ? 'av' : info.s === 'mine' ? 'mine' : (info.s === 'minepend' || info.s === 'minehold') ? 'pend' : info.s === 'booked' ? 'bk' : 'un';
         var who = info.b && info.b.byName ? info.b.byName : '';
-        var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'bk' ? (canNames && who ? who : 'Booked') : '–';
-        var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'bk' ? 'booked' + (canNames && who ? ' by ' + who : '') : 'unavailable';
-        var manageable = canManage && info.b;
+        var text = sel ? '✓ ' + peso(price) : kind === 'av' ? peso(price) : kind === 'mine' ? '✓ Yours' : kind === 'pend' ? (info.s === 'minehold' ? 'Pay now' : '⏳ Pending') : kind === 'bk' ? (canNames && who ? who : 'Booked') : '–';
+        var words = sel ? 'selected, ' + peso(price) : kind === 'av' ? 'available, ' + peso(price) : kind === 'mine' ? 'booked by you' : kind === 'pend' ? (info.s === 'minehold' ? 'held for you, waiting for your payment' : 'yours, waiting for payment verification') : kind === 'bk' ? 'booked' + (canNames && who ? ' by ' + who : '') : 'unavailable';
+        var manageable = !!info.b && (canManage || info.b.by === state.me);
         grid.append(h('button', {
           id: 'bk-' + ci + '-' + hour, type: 'button', class: 'slot ' + kind + (manageable ? ' manage' : ''), disabled: info.s !== 'available' && !manageable,
           'aria-pressed': info.s === 'available' ? String(sel) : null, title: manageable ? (canNames && who ? who + ' · ' : '') + 'Manage this booking' : (kind === 'bk' && canNames && who ? who : info.why || null),
           'aria-label': courtText(col.name, col.venue) + ', ' + hourText(hour) + ' to ' + hourText(hour + 1) + ', ' + words + (info.why ? '. ' + info.why : '') + (manageable ? '. Opens booking management.' : ''),
           onclick: function () {
             var now2 = slotInfo(b.date, col, hour);
-            if (now2.s !== 'available') { if (canManage && now2.b) openManage(now2.b.ref || now2.b.id, 'bk-' + ci + '-' + hour); return; }   // never select a slot that is not open
+            if (now2.s !== 'available') {   // never select a slot that is not open
+              if (now2.s === 'minehold') resumeCheckout(now2.b.ref);
+              else if (now2.b && (canManage || now2.b.by === state.me)) openManage(now2.b.ref || now2.b.id, 'bk-' + ci + '-' + hour);
+              return;
+            }
             if (b.sel[key]) delete b.sel[key]; else b.sel[key] = true;
             b.error = ''; b.done = null; render();
           }
@@ -1672,13 +1953,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         h('button', { class: 'btn', type: 'button', disabled: !picks.length || b.busy, onclick: function () { b.sel = {}; b.error = ''; render(); } }, 'Clear'),
         h('button', { id: 'bk-confirm', class: 'btn primary', type: 'button', disabled: !picks.length || b.busy, onclick: confirmBooking },
           b.busy ? 'Booking…' : picks.length ? 'Confirm booking · ' + peso(total2) : 'Confirm booking')));
-      box.append(h('p', { class: 'note' }, 'This reserves the hours. The total is the amount due; no payment is taken on this site.'));
+      box.append(h('p', { class: 'note' }, 'Next you pay with GCash. Your hours are held for 15 minutes while you pay, and the booking is confirmed once staff verify your payment.'));
     }
 
-    // this person's upcoming bookings
+    // this person's bookings, with what is needed next
     var mineBox = $('#bk-mine'), nowMs = Date.now();
     mineBox.replaceChildren();
-    var mine = state.bookingList.filter(function (x) { return x.by === state.me && parse(x.date, pad(x.hour + 1) + ':00').getTime() > nowMs; });
+    var mine = state.bookingList.filter(function (x) { return x.by === state.me && parse(x.date, pad(x.hour + 1) + ':00').getTime() > nowMs && !(x.status === 'hold' && Number(x.holdUntil) <= nowMs); });
     if (mine.length) {
       var groups = {};
       mine.forEach(function (x) { (groups[x.ref || x.id] = groups[x.ref || x.id] || []).push(x); });
@@ -1691,17 +1972,23 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         var slots = groups[ref].slice().sort(function (a, c) { return a.date < c.date ? -1 : a.date > c.date ? 1 : (a.venue || '') < (c.venue || '') ? -1 : (a.venue || '') > (c.venue || '') ? 1 : a.court < c.court ? -1 : a.court > c.court ? 1 : a.hour - c.hour; });
         var runs = runsOf(slots, function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour); });
         var total = runs.reduce(function (n, r) { return n + r.price; }, 0);
+        var st = slots.some(function (x) { return x.status === 'hold'; }) ? 'hold' : slots.some(function (x) { return x.status === 'pending' || x.status === 'resched'; }) ? 'pending' : 'confirmed';
+        var rej = st === 'hold' ? Object.keys(state.payments).map(function (k) { return state.payments[k]; }).filter(function (p) { return p.bookingRef === ref && p.status === 'rejected'; }).sort(function (a, c) { return (c.reviewedAt || 0) - (a.reviewedAt || 0); })[0] : null;
+        var btn = st === 'hold' ? h('button', { class: 'btn small primary', type: 'button', onclick: function () { resumeCheckout(ref); } }, rej ? 'Send a new receipt' : 'Pay now')
+          : h('button', { id: 'mine-' + ref, class: 'btn small', type: 'button', onclick: function () { openManage(ref, 'mine-' + ref); } }, st === 'confirmed' ? 'Reschedule' : 'Details');
         return h('div', { class: 'row' },
-          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref)),
-          h('strong', null, peso(total)));
+          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref),
+            rej ? h('span', { class: 'pay-reason' }, 'Payment not approved' + (rej.reason ? ': ' + rej.reason : '') + '.') : null),
+          h('div', { class: 'ctl' }, h('span', { class: 'chip st-' + st }, statusWords(st)), h('strong', null, peso(total)), btn));
       })));
     }
   }
 
-  /* ---------- manage bookings (edit or cancel anyone's booking) ---------- */
+  /* ---------- manage a booking: reschedule (the player, or staff), cancel (staff only) ---------- */
   var mbSig = '', mbOpener = '';
+  function myGroup(g) { return state.bookingList.some(function (x) { return (x.ref || x.id) === g && x.by === state.me; }); }
   function openManage(group, opener) {
-    if (!can('managebookings')) return;
+    if (!can('managebookings') && !myGroup(group)) return;
     state.mb = { group: group, move: null, confirm: '', busy: false, error: '', done: false };
     mbOpener = opener || '';
     mbSig = '';
@@ -1714,8 +2001,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var b = mbOpener && document.getElementById(mbOpener); if (b) b.focus();
   }
   function mbSlots() {
-    var g = state.mb.group;
-    return state.bookingList.filter(function (x) { return (x.ref || x.id) === g; }).sort(function (a, c) {
+    var g = state.mb.group, now = Date.now();
+    return state.bookingList.filter(function (x) { return (x.ref || x.id) === g && !(x.status === 'hold' && Number(x.holdUntil) <= now); }).sort(function (a, c) {
       var ka = a.date + '|' + (a.venue || '') + '|' + a.court + '|' + pad(a.hour), kc = c.date + '|' + (c.venue || '') + '|' + c.court + '|' + pad(c.hour);
       return ka < kc ? -1 : ka > kc ? 1 : 0;
     });
@@ -1724,30 +2011,43 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function mbRun(job, message) {
     var m = state.mb;
     if (m.busy) return;
-    if (!state.db || !state.canWrite || !can('managebookings')) { m.error = 'Your role cannot change bookings.'; renderManage(); return; }
+    if (!state.db || !state.canWrite) { m.error = 'You cannot change bookings right now.'; renderManage(); return; }
     m.busy = true; m.error = ''; renderManage();
     job().then(function () { if (message) flash(message, 'ok'); }).catch(function (e) {
       if (state.mb) state.mb.error = (e && e.message) || 'That did not work. Nothing was changed.';
     }).then(function () { if (state.mb) { state.mb.busy = false; state.mb.confirm = ''; state.mb.move = null; renderManage(); } });
   }
-  function cancelSlots(list, message, closeAfter) {
+  // Staff cancel: the server frees the hours and, for paid hours, opens a refund request under the refund policy.
+  function cancelSlots(list, closeAfter) {
     mbRun(function () {
-      return Promise.all(list.map(function (x) { return state.db.doc('bookings/' + x.id).delete(); })).then(function () { if (closeAfter && state.mb) state.mb.done = true; });
-    }, message);
+      return payCall({ action: 'cancel', ids: list.map(function (x) { return x.id; }) }).then(function (res) {
+        if (closeAfter && state.mb) state.mb.done = true;
+        flash(res.refunds && res.refunds.length ? 'Cancelled. A refund request was sent to the Refunds menu.' : 'Cancelled. Nothing was paid, so no refund is needed.', 'ok');
+      });
+    });
   }
-  function moveSlot(x, to) {
-    mbRun(async function () {
-      var col = bookingColumns()[to.col];
-      if (!col || slotInfo(to.date, col, to.hour).s !== 'available') throw new Error('That slot is no longer available. Pick another.');
-      var data = { date: to.date, venue: col.venue, court: col.name, hour: to.hour, by: x.by, byName: x.byName, ref: x.ref || x.id, price: slotPrice(to.hour), at: x.at || Date.now() };
-      var ref = await claimSlot(data, state.me + ':move');
-      if (!ref) throw new Error('Someone just booked that slot. Pick another.');
-      await state.db.doc('bookings/' + x.id).delete();
-    }, 'Booking moved.');
+  // Move one hour. The same price (or less) moves at once; a higher price asks for the difference by GCash first, and the booking stays as it is until that is verified.
+  function rescheduleSlot(x, to) {
+    var m = state.mb;
+    if (!m || m.busy) return;
+    var col = bookingColumns()[to.col];
+    if (!col || slotInfo(to.date, col, to.hour).s !== 'available') { m.error = 'That slot is no longer available. Pick another.'; renderManage(); return; }
+    var target = { date: to.date, venue: col.venue, court: col.name, hour: to.hour };
+    m.busy = true; m.error = ''; renderManage();
+    payCall({ action: 'reschedule', id: x.id, to: target }).then(function (res) {
+      if (!state.mb) return;
+      state.mb.busy = false; state.mb.move = null;
+      if (res.moved) { flash('Booking rescheduled.', 'ok'); }
+      else if (res.needPayment) {
+        openCheckout({ mode: 'reschedule', ref: x.ref || x.id, amount: res.amount, payload: { id: x.id, to: target },
+          summary: 'Move ' + slotLine(x) + ' to ' + courtText(target.court, target.venue) + ' · ' + fullFmt.format(parse(target.date, '00:00')) + ' · ' + hourText(target.hour) + ' – ' + hourText(target.hour + 1) + '. New price ' + peso(res.newPrice) + ', already paid ' + peso(res.paid) + '.' });
+      }
+      renderManage();
+    }).catch(function (e) { if (state.mb) { state.mb.busy = false; state.mb.error = (e && e.message) || 'That did not work. Nothing was changed.'; renderManage(); } });
   }
   function renderManage() {
     var box = $('#mbdlg'), m = state.mb;
-    if (!m || !can('managebookings') || gateState() !== 'ok') {
+    if (!m || gateState() !== 'ok') {
       state.mb = null; mbSig = '';
       box.hidden = true; box.replaceChildren();
       lockScroll();
@@ -1761,49 +2061,57 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var ob = mbOpener && document.getElementById(mbOpener); if (ob) ob.focus();
       return;
     }
-    var names = can('viewbookers'), cols = bookingColumns(), cfg = bcfg();
-    var sig = [m.group, slots.map(function (x) { return x.id + x.date + x.hour; }).join(','), JSON.stringify(m.move), m.confirm, m.busy, m.error, names, JSON.stringify(cols), JSON.stringify(cfg)].join('|');
+    var names = can('viewbookers'), staff = can('managebookings'), cols = bookingColumns(), cfg = bcfg(), nowMs = Date.now();
+    var sig = [m.group, slots.map(function (x) { return x.id + x.date + x.hour + (x.status || '') + (x.paid || 0); }).join(','), JSON.stringify(m.move), m.confirm, m.busy, m.error, names, staff, JSON.stringify(cols), JSON.stringify(cfg)].join('|');
     if (sig === mbSig && !box.hidden) return;
     mbSig = sig;
     var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '';
-    var total = slots.reduce(function (n, x) { return n + (typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0); }, 0);
+    var real = slots.filter(function (x) { return x.status !== 'resched'; });   // a hour waiting for a reschedule payment is not part of the booking yet
+    var total = real.reduce(function (n, x) { return n + (typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0); }, 0);
     var today = dkey(new Date()), max = dkey(new Date(Date.now() + 90 * 86400000));
 
     function picker(x) {
-      var mv = m.move;
+      var mv = m.move, mine = x.by === state.me;
       if (!mv.date || mv.date < today) mv.date = today;
       if (mv.col == null || !cols[mv.col]) { mv.col = 0; for (var i = 0; i < cols.length; i++) if (cols[i].name === x.court && cols[i].venue === (x.venue || '')) mv.col = i; }
       var avail = cfg.hours.filter(function (hr) { return slotInfo(mv.date, cols[mv.col], hr).s === 'available'; });
       if (avail.indexOf(mv.hour) < 0) mv.hour = avail[0];
-      var dateIn = h('input', { id: 'mv-date', type: 'date', min: today, max: max, value: mv.date, 'aria-label': 'Move to date',
+      var dateIn = h('input', { id: 'mv-date', type: 'date', min: today, max: max, value: mv.date, 'aria-label': 'Reschedule to date',
         onchange: function (e) { mv.date = e.target.value || today; mv.hour = undefined; renderManage(); } });
-      var colSel = h('select', { id: 'mv-col', 'aria-label': 'Move to court', onchange: function (e) { mv.col = parseInt(e.target.value, 10); mv.hour = undefined; renderManage(); } },
+      var colSel = h('select', { id: 'mv-col', 'aria-label': 'Reschedule to court', onchange: function (e) { mv.col = parseInt(e.target.value, 10); mv.hour = undefined; renderManage(); } },
         cols.map(function (c, i) { return h('option', { value: String(i) }, courtText(c.name, c.venue)); }));
       colSel.value = String(mv.col);
-      var hourSel = h('select', { id: 'mv-hour', 'aria-label': 'Move to hour', onchange: function (e) { mv.hour = parseInt(e.target.value, 10); renderManage(); } },
+      var hourSel = h('select', { id: 'mv-hour', 'aria-label': 'Reschedule to hour', onchange: function (e) { mv.hour = parseInt(e.target.value, 10); renderManage(); } },
         avail.length ? avail.map(function (hr) { return h('option', { value: String(hr) }, hourText(hr) + ' · ' + peso(slotPrice(hr))); }) : [h('option', { value: '' }, 'No free hours')]);
       if (avail.length) hourSel.value = String(mv.hour);
-      return h('div', { class: 'move-form' }, dateIn, colSel, hourSel,
-        h('button', { id: 'mv-go', class: 'btn small primary', type: 'button', disabled: !avail.length || m.busy,
-          onclick: function () { moveSlot(x, { date: mv.date, col: mv.col, hour: mv.hour }); } }, 'Move here'));
+      var newPrice = avail.length ? slotPrice(mv.hour) : 0, paid = Number(x.paid) || 0, diff = newPrice - paid;
+      var note = !avail.length ? '' : diff > 0 ? (mine ? 'New price ' + peso(newPrice) + ', already paid ' + peso(paid) + '. You will pay the difference of ' + peso(diff) + ' by GCash; your booking stays as it is until staff verify it.'
+        : 'This costs ' + peso(diff) + ' more than was paid, so the player has to reschedule it from their own account.')
+        : 'New price ' + peso(newPrice) + (diff < 0 ? ' (lower than the ' + peso(paid) + ' paid; no money is returned automatically).' : '. No extra payment is needed.');
+      return h('div', { class: 'move-form' }, dateIn, colSel, hourSel, note ? h('p', { class: 'note move-note' }, note) : null,
+        h('button', { id: 'mv-go', class: 'btn small primary', type: 'button', disabled: !avail.length || m.busy || (diff > 0 && !mine),
+          onclick: function () { rescheduleSlot(x, { date: mv.date, col: mv.col, hour: mv.hour }); } }, diff > 0 && mine ? 'Pay ' + peso(diff) + ' and reschedule' : 'Reschedule here'));
     }
 
     var items = slots.map(function (x) {
+      var st = x.status || 'confirmed', started = parse(x.date, pad(x.hour) + ':00').getTime() <= nowMs, canMove = st === 'confirmed' && !started && (x.by === state.me || staff);
+      var acts = [];
+      if (canMove) acts.push(h('button', { id: 'mb-mv-' + x.id, class: 'link', type: 'button', 'aria-expanded': String(!!(m.move && m.move.id === x.id)), disabled: m.busy,
+        onclick: function () { m.move = m.move && m.move.id === x.id ? null : { id: x.id, date: x.date, col: null, hour: x.hour }; m.confirm = ''; m.error = ''; renderManage(); } }, m.move && m.move.id === x.id ? 'Close' : 'Reschedule'));
+      if (staff && st !== 'pending' && st !== 'resched') acts.push(h('button', { id: 'mb-rm-' + x.id, class: 'link', type: 'button', disabled: m.busy,
+        onclick: function () { m.confirm = 'slot:' + x.id; m.move = null; m.error = ''; renderManage(); } }, 'Cancel hour'));
       var kids = [h('div', { class: 'p-row' },
-        h('span', null, slotLine(x), h('small', { class: 'sub-note' }, peso(typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0))),
-        h('span', { class: 'p-actions' },
-          h('button', { id: 'mb-mv-' + x.id, class: 'link', type: 'button', 'aria-expanded': String(!!(m.move && m.move.id === x.id)), disabled: m.busy,
-            onclick: function () { m.move = m.move && m.move.id === x.id ? null : { id: x.id, date: x.date, col: null, hour: x.hour }; m.confirm = ''; m.error = ''; renderManage(); } }, m.move && m.move.id === x.id ? 'Close' : 'Edit'),
-          h('button', { id: 'mb-rm-' + x.id, class: 'link', type: 'button', disabled: m.busy,
-            onclick: function () { m.confirm = 'slot:' + x.id; m.move = null; m.error = ''; renderManage(); } }, 'Cancel hour')))];
+        h('span', null, slotLine(x), h('small', { class: 'sub-note' }, peso(typeof x.price === 'number' ? x.price : slotPrice(x.hour) || 0) + ' · ' + statusWords(st) + (st === 'confirmed' && x.paid ? ' · paid ' + peso(x.paid) : ''))),
+        h('span', { class: 'p-actions' }, acts))];
       if (m.move && m.move.id === x.id) kids.push(picker(x));
       if (m.confirm === 'slot:' + x.id) kids.push(h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm cancelling this hour' },
-        h('p', null, 'Cancel this hour? It becomes free for others to book.'),
+        h('p', null, 'Cancel this hour? It becomes free for others to book.' + (Number(x.paid) ? ' A refund request for the amount allowed by the refund policy will be created.' : '')),
         h('div', { class: 'confirm-actions' },
           h('button', { id: 'mb-no', class: 'btn small', type: 'button', onclick: function () { m.confirm = ''; renderManage(); } }, 'No, keep it'),
-          h('button', { class: 'btn small danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots([x], 'That hour was cancelled.', slots.length === 1); } }, 'Yes, cancel hour'))));
+          h('button', { class: 'btn small danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots([x], slots.length === 1); } }, 'Yes, cancel hour'))));
       return h('li', null, kids);
     });
+    var cancellable = slots.filter(function (x) { return x.status !== 'pending' && x.status !== 'resched'; });
 
     box.replaceChildren(
       h('div', { class: 'modal-backdrop' }),
@@ -1812,17 +2120,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           h('div', null, h('h2', { id: 'mb-title' }, 'Manage booking'),
             h('p', { class: 'time' }, 'Reference ' + (slots[0].ref || slots[0].id) + (names && slots[0].byName ? ' · ' + slots[0].byName : ''))),
           h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeManage }, '×')),
-        h('p', { class: 'note' }, plural(slots.length, 'court hour') + ' · total ' + peso(total) + '. Edit moves one hour to another court, hour or day. Prices follow the current rates.'),
+        h('p', { class: 'note' }, plural(real.length, 'court hour') + ' · total ' + peso(total) + '. Reschedule moves one hour to another court, hour or day. ' + (staff ? 'Cancelling an hour makes a refund request when it was paid.' : 'To cancel or ask for a refund, please contact the admin or staff, or visit the venue.')),
         h('ul', { class: 'mb-list' }, items),
         m.error ? h('p', { class: 'form-error', role: 'alert' }, m.error) : null,
-        m.confirm === 'all'
+        staff && m.confirm === 'all'
           ? h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm cancelling the whole booking' },
-              h('p', null, 'Cancel this whole booking? ' + (slots.length === 1 ? 'The court hour becomes' : 'All ' + slots.length + ' court hours become') + ' free for others to book. This cannot be undone.'),
+              h('p', null, 'Cancel this whole booking? ' + (cancellable.length === 1 ? 'The court hour becomes' : 'All ' + cancellable.length + ' court hours become') + ' free for others to book. Paid hours get a refund request. This cannot be undone.'),
               h('div', { class: 'confirm-actions' },
                 h('button', { id: 'mb-no', class: 'btn', type: 'button', onclick: function () { m.confirm = ''; renderManage(); } }, 'No, keep it'),
-                h('button', { class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots(slots, 'Booking cancelled.', true); } }, 'Yes, cancel booking')))
+                h('button', { class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { cancelSlots(cancellable, cancellable.length === slots.length); } }, 'Yes, cancel booking')))
           : h('div', { class: 'confirm-actions' },
-              h('button', { id: 'mb-all', class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { m.confirm = 'all'; m.move = null; m.error = ''; renderManage(); var n = $('#mb-no'); if (n) n.focus(); } }, 'Cancel whole booking'),
+              staff && cancellable.length ? h('button', { id: 'mb-all', class: 'btn danger', type: 'button', disabled: m.busy, onclick: function () { m.confirm = 'all'; m.move = null; m.error = ''; renderManage(); var n = $('#mb-no'); if (n) n.focus(); } }, 'Cancel whole booking') : null,
               h('button', { class: 'btn', type: 'button', onclick: closeManage }, 'Close'))));
     box.hidden = false;
     lockScroll();
@@ -2214,6 +2522,356 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#pf-email').value = state.email;
     var sel = $('#pf-rating');
     if (document.activeElement !== sel) sel.value = a.rating ? Number(a.rating).toFixed(1) : '';
+    renderNotify();
+  }
+
+  /* ---------- notifications: pop-ups for you, quiet messages for staff, optional phone push ---------- */
+  // Staff-facing events show as a short message at the top; everything about your own booking or money opens a pop-up.
+  var STAFF_KINDS = ['payment-submitted', 'refund-requested', 'booking-confirmed'];
+  var seenNotice = {};
+  function notices() {
+    return Object.keys(state.notifs).map(function (id) { return Object.assign({ id: id }, state.notifs[id]); }).sort(function (a, c) { return c.at - a.at; });
+  }
+  function markRead(ids) { if (ids.length) payCall({ action: 'markread', ids: ids }).catch(function () {}); }
+  function renderNotice() {
+    var box = $('#notice');
+    if (gateState() !== 'ok') { state.notice = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    if (!state.notice && !state.checkout && !state.thanks) {
+      var unread = notices().filter(function (n) { return !n.read && !seenNotice[n.id]; }).reverse();
+      var quiet = unread.filter(function (n) { return STAFF_KINDS.indexOf(n.kind) >= 0; });
+      quiet.forEach(function (n) { seenNotice[n.id] = 1; flash(n.title + ': ' + n.body, 'ok'); });
+      markRead(quiet.map(function (n) { return n.id; }));
+      var next = unread.filter(function (n) { return STAFF_KINDS.indexOf(n.kind) < 0; })[0];
+      if (next) { seenNotice[next.id] = 1; state.notice = next; }
+    }
+    var n = state.notice;
+    if (!n) { box.hidden = true; box.replaceChildren(); box.removeAttribute('data-nid'); lockScroll(); return; }
+    if (!box.hidden && box.getAttribute('data-nid') === n.id) return;
+    box.setAttribute('data-nid', n.id);
+    var d = n.data || {}, good = n.kind === 'payment-approved' || n.kind === 'refund-done' || n.kind === 'rescheduled';
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel confirm-panel notice-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'nt-title', 'aria-describedby': 'nt-text' },
+        h('h2', { id: 'nt-title' }, (good && n.title.indexOf('✓') < 0 ? '✓ ' : '') + n.title),
+        h('div', { id: 'nt-text' },
+          h('p', null, n.body),
+          n.kind === 'payment-approved' && d.ref ? h('div', { class: 'notice-ref' }, h('span', null, 'Your reference number'), h('strong', null, d.ref), h('small', null, 'Show this to the venue staff before using the court.')) : null,
+          n.kind === 'payment-approved' && d.schedule ? h('ul', { class: 'sum-list' }, h('li', null, h('span', null, d.venue ? 'Venue: ' + d.venue : 'Venue'), h('small', null, d.schedule))) : null),
+        h('div', { class: 'confirm-actions' }, h('button', { id: 'nt-ok', class: 'btn primary', type: 'button', onclick: closeNotice }, 'OK'))));
+    box.hidden = false;
+    lockScroll();
+    var ok = $('#nt-ok'); if (ok) ok.focus();
+  }
+  function closeNotice() {
+    var n = state.notice;
+    state.notice = null;
+    if (n) markRead([n.id]);
+    renderNotice();
+  }
+
+  /* phone push (Firebase Cloud Messaging); only when the site has Firebase set up and the person turns it on */
+  var FB_VER = '10.12.2';
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { rej(new Error('Could not load Firebase. Check your connection.')); };
+      document.head.append(s);
+    });
+  }
+  function pushSupport() {
+    if (!state.fbCfg) return 'off-site';
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported';
+    if (Notification.permission === 'denied') return 'blocked';
+    var on = false; try { on = localStorage.getItem('kl-push') === '1'; } catch (e) {}
+    return on && Notification.permission === 'granted' ? 'on' : 'off';
+  }
+  async function pushToken() {
+    var fb = state.fbCfg;
+    await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-messaging-compat.js');
+    if (!window.firebase.apps.length) window.firebase.initializeApp(fb.config);
+    var reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    var token = await window.firebase.messaging().getToken({ vapidKey: fb.vapidKey, serviceWorkerRegistration: reg });
+    if (!token) throw new Error('This device could not be registered for notifications.');
+    return token;
+  }
+  async function enablePush() {
+    if (pushSupport() === 'off-site') throw new Error('Phone notifications are not set up on this site yet.');
+    if (pushSupport() === 'unsupported') throw new Error('This browser cannot receive push notifications. On an iPhone, add this site to your Home Screen first, then open it from there.');
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') throw new Error('Notifications are blocked. Allow them for this site in your browser settings, then try again.');
+    var token = await pushToken();
+    await payCall({ action: 'push', op: 'register', token: token, ua: navigator.userAgent });
+    try { localStorage.setItem('kl-push', '1'); localStorage.setItem('kl-push-token', token); } catch (e) {}
+  }
+  async function disablePush() {
+    var token = ''; try { token = localStorage.getItem('kl-push-token') || ''; localStorage.removeItem('kl-push'); localStorage.removeItem('kl-push-token'); } catch (e) {}
+    await payCall({ action: 'push', op: 'unregister', token: token });
+    try { if (window.firebase && window.firebase.apps.length) await window.firebase.messaging().deleteToken(); } catch (e) {}
+  }
+  // Tokens change now and then: if push is on for this device, quietly register the current one at each log in.
+  function refreshPush() {
+    if (pushSupport() !== 'on') return;
+    pushToken().then(function (t) { return payCall({ action: 'push', op: 'register', token: t, ua: navigator.userAgent }); }).catch(function () {});
+  }
+  var nfSig = '';
+  function renderNotify() {
+    var box = $('#pf-notify'), sup = pushSupport(), list = notices().slice(0, 12), busy = state.pushBusy;
+    var sig = [sup, busy, list.map(function (n) { return n.id + n.read; }).join(',')].join('|');
+    if (sig === nfSig) return;
+    nfSig = sig;
+    var words = { 'off-site': 'Phone notifications are not set up on this site yet.', unsupported: 'This browser cannot receive push notifications. On an iPhone or iPad, add this site to your Home Screen and open it from there.', blocked: 'Notifications are blocked for this site. Allow them in your browser settings to turn this on.', on: 'On for this device. You will get a notification for payments, bookings, reschedules and refunds, even when the site is closed.', off: 'Off for this device. Turn it on to get notifications on your phone, even when the site is closed.' }[sup];
+    fill(box,
+      h('h3', null, 'Notifications'),
+      h('p', { class: 'note' }, words),
+      sup === 'on' || sup === 'off' ? h('div', null, h('button', { id: 'pf-push', class: 'btn' + (sup === 'off' ? ' primary' : ''), type: 'button', disabled: !!busy,
+        onclick: function () {
+          state.pushBusy = true; nfSig = ''; renderNotify();
+          (sup === 'on' ? disablePush() : enablePush()).then(function () { flash(sup === 'on' ? 'Phone notifications are off for this device.' : 'Phone notifications are on for this device.', 'ok'); })
+            .catch(function (e) { flash(e.message || 'Could not change that.', 'err'); })
+            .then(function () { state.pushBusy = false; nfSig = ''; renderNotify(); });
+        } }, busy ? 'One moment…' : sup === 'on' ? 'Turn off phone notifications' : 'Turn on phone notifications')) : null,
+      list.length ? h('div', { class: 'nf-head' }, h('h4', null, 'Recent'), list.some(function (n) { return !n.read; }) ? h('button', { class: 'link', type: 'button', onclick: function () { markRead(list.filter(function (n) { return !n.read; }).map(function (n) { return n.id; })); } }, 'Mark all read') : null) : null,
+      list.length ? h('ul', { class: 'nf-list' }, list.map(function (n) { return h('li', { class: n.read ? '' : 'unread' }, h('strong', null, n.title), h('span', null, n.body), h('small', null, when(n.at))); })) : h('p', { class: 'note' }, 'Nothing yet. Payment, booking and refund updates will show up here.'));
+  }
+
+  /* ---------- Payments and Refunds (staff) ---------- */
+  // replaceChildren would print a literal 'null' for an empty slot, so empty ones are skipped
+  function fill(box) { box.replaceChildren(); for (var i = 1; i < arguments.length; i++) if (arguments[i] != null && arguments[i] !== false) box.append(arguments[i]); }
+  function when(ts) { return ts ? new Date(Number(ts)).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '-'; }
+  function slotRuns(list) {
+    var picks = (list || []).map(function (s) { return { court: s.court, venue: s.venue || '', hour: s.hour, date: s.date, price: s.price }; })
+      .sort(function (a, c) { return (a.date + '|' + a.venue + '|' + a.court + '|' + pad(a.hour)) < (c.date + '|' + c.venue + '|' + c.court + '|' + pad(c.hour)) ? -1 : 1; });
+    var runs = [];
+    picks.forEach(function (p) {
+      var l = runs[runs.length - 1];
+      if (l && l.date === p.date && l.court === p.court && l.venue === p.venue && l.to === p.hour) l.to = p.hour + 1;
+      else runs.push({ date: p.date, court: p.court, venue: p.venue, from: p.hour, to: p.hour + 1 });
+    });
+    return runs.map(function (r) { return courtText(r.court, r.venue) + ' · ' + fullFmt.format(parse(r.date, '00:00')) + ' · ' + hourText(r.from) + ' – ' + hourText(r.to); });
+  }
+  function draftOf(key) { state.drafts = state.drafts || {}; return state.drafts[key] || ''; }
+  function setDraft(key, v) { state.drafts = state.drafts || {}; state.drafts[key] = v; }
+  var STATUS_WORDS = { pending_verification: 'Pending Verification', paid: 'Paid', rejected: 'Rejected', requested: 'Requested', approved: 'Approved', refunded: 'Refunded', denied: 'Denied' };
+  function statusChip(s) { return h('span', { class: 'chip rs-' + s }, STATUS_WORDS[s] || s); }
+  function openImg(path) { state.imgView = path; renderImgView(); var c = $('#imgview .modal-close'); if (c) c.focus(); }
+  function closeImg() { state.imgView = null; renderImgView(); }
+  function renderImgView() {
+    var box = $('#imgview'), p = state.imgView;
+    if (!p || gateState() !== 'ok') { state.imgView = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    if (!box.hidden) return;
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop', onclick: closeImg }),
+      h('div', { class: 'modal-panel img-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Payment proof' },
+        h('div', { class: 'modal-head' }, h('h2', null, 'Payment proof'), h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeImg }, '×')),
+        fileImg(p, 'Payment proof', 'img-full')));
+    box.hidden = false; lockScroll();
+  }
+
+  var paySig = '';
+  function payAct(id, kind) { state.payAct = state.payAct && state.payAct.id === id && state.payAct.kind === kind ? null : { id: id, kind: kind, busy: false, error: '' }; paySig = ''; renderPayments(); }
+  function runPayAct(action, extra) {
+    var a = state.payAct; if (!a || a.busy) return;
+    a.busy = true; a.error = ''; paySig = ''; renderPayments();
+    payCall(Object.assign({ action: action, id: a.id }, extra || {})).then(function () {
+      flash(action === 'approve' ? 'Payment approved. The player and venue staff were notified.' : 'Payment denied. The player was told why.', 'ok');
+      state.payAct = null;
+    }).catch(function (e) { if (state.payAct) { state.payAct.busy = false; state.payAct.error = e.message; } })
+      .then(function () { paySig = ''; renderPayments(); });
+  }
+  function renderPayments() {
+    var box = $('#view-payments');
+    if (!can('payments') && !can('paysettings')) { paySig = ''; box.replaceChildren(h('p', { class: 'note' }, 'Your role does not include payments.')); return; }
+    var all = Object.keys(state.payments).map(function (id) { return Object.assign({ id: id }, state.payments[id]); }).sort(function (a, c) { return (c.submittedAt || 0) - (a.submittedAt || 0); });
+    var f = state.payFilter, q = draftOf('payq').trim().toLowerCase();
+    var counts = { pending_verification: 0, paid: 0, rejected: 0 };
+    all.forEach(function (p) { counts[p.status] = (counts[p.status] || 0) + 1; });
+    var list = all.filter(function (p) { return (f === 'all' || p.status === f) && (!q || (p.byName + ' ' + p.bookingRef + ' ' + p.gcashRef).toLowerCase().indexOf(q) >= 0); });
+    var a = state.payAct;
+    var sig = [f, q, can('payments'), can('paysettings'), a ? a.id + a.kind + a.busy + a.error : '', list.map(function (p) { return p.id + p.status + (p.reason || ''); }).join(','), Object.keys(state.accounts).length, JSON.stringify(state.payCfg)].join('|');
+    if (sig === paySig) return;
+    paySig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
+    var tabs = [['pending_verification', 'Pending'], ['paid', 'Paid'], ['rejected', 'Rejected'], ['all', 'All']].map(function (t) {
+      return h('button', { id: 'pf-' + t[0], class: 'btn small' + (f === t[0] ? ' primary' : ''), type: 'button', 'aria-pressed': String(f === t[0]),
+        onclick: function () { state.payFilter = t[0]; paySig = ''; renderPayments(); } }, t[1] + (t[0] === 'all' ? '' : ' (' + (counts[t[0]] || 0) + ')'));
+    });
+    var cards = list.map(function (p) {
+      var acct = state.accounts[p.by] || {}, role = roleLabel(roleOf(p.by));
+      var facts = [role, acct.createdAt ? 'member since ' + mfmt.format(new Date(Number(acct.createdAt))) : '', acct.rating ? 'rating ' + Number(acct.rating).toFixed(1) : '', p.email || 'email not shared'].filter(Boolean);
+      var lines = slotRuns(p.slots).map(function (l) { return h('li', null, l); });
+      var act = a && a.id === p.id ? a : null, pend = p.status === 'pending_verification' && can('payments');
+      var kids = [
+        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, p.byName || 'Player'), h('small', null, facts.join(' · '))), h('div', { class: 'pay-amt' }, statusChip(p.status), h('strong', null, peso(p.amount)))),
+        h('div', { class: 'pay-body' },
+          h('div', { class: 'pay-info' },
+            h('p', null, h('span', null, p.kind === 'reschedule' ? 'Reschedule balance for ' : 'Booking '), h('strong', null, p.bookingRef)),
+            h('ul', { class: 'pay-lines' }, p.kind === 'reschedule' && p.fromSlot ? [h('li', null, 'From ' + slotRuns([p.fromSlot])[0])].concat(lines.map(function (li) { return h('li', null, 'To ' + li.textContent); })) : lines),
+            h('p', null, h('span', null, 'GCash reference '), h('strong', null, p.gcashRef)),
+            h('p', { class: 'note' }, 'Submitted ' + when(p.submittedAt) + (p.reviewedAt ? ' · reviewed ' + when(p.reviewedAt) + (p.reviewedByName ? ' by ' + p.reviewedByName : '') : '')),
+            p.status === 'rejected' && p.reason ? h('p', { class: 'pay-reason' }, 'Reason: ' + p.reason) : null),
+          p.proofPath ? h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the payment proof full size', onclick: function () { openImg(p.proofPath); } }, fileImg(p.proofPath, 'Payment proof', 'pay-proof')) : null)];
+      if (pend && !act) kids.push(h('div', { class: 'confirm-actions' },
+        h('button', { id: 'pd-' + p.id, class: 'btn', type: 'button', onclick: function () { payAct(p.id, 'deny'); } }, 'Deny'),
+        h('button', { id: 'pa-' + p.id, class: 'btn primary', type: 'button', onclick: function () { payAct(p.id, 'approve'); } }, 'Approve')));
+      if (pend && act && act.kind === 'approve') kids.push(h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm approving this payment' },
+        h('p', null, 'Approve ' + peso(p.amount) + ' from ' + (p.byName || 'this player') + '? Their booking is confirmed, and they and the assigned venue staff are told.'),
+        act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.payAct = null; paySig = ''; renderPayments(); } }, 'No, go back'),
+          h('button', { id: 'pa-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runPayAct('approve'); } }, act.busy ? 'Approving…' : 'Yes, approve'))));
+      if (pend && act && act.kind === 'deny') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Deny this payment' },
+        h('label', { class: 'field', for: 'pr-' + p.id }, 'Reason (the player will see this)',
+          h('input', { id: 'pr-' + p.id, type: 'text', maxlength: '200', placeholder: 'e.g. The amount does not match', value: draftOf('deny' + p.id), oninput: function (e) { setDraft('deny' + p.id, e.target.value); } })),
+        act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.payAct = null; paySig = ''; renderPayments(); } }, 'No, go back'),
+          h('button', { id: 'pd-yes', class: 'btn small danger', type: 'button', disabled: act.busy, onclick: function () { runPayAct('deny', { reason: draftOf('deny' + p.id) }); } }, act.busy ? 'Denying…' : 'Deny payment'))));
+      return h('article', { class: 'pay-card' }, kids);
+    });
+    fill(box,
+      h('div', { class: 'book-head' }, h('h2', null, 'Payments'),
+        can('paysettings') ? h('button', { id: 'pay-settings', class: 'btn small', type: 'button', 'aria-haspopup': 'dialog', onclick: openPayDlg }, 'Payment settings') : null),
+      can('payments') ? h('p', { class: 'note' }, 'GCash payments sent by players. Check each receipt against your GCash app before approving: nothing is approved automatically.') : h('p', { class: 'note' }, 'Your role can change the payment settings but cannot review payments.'),
+      can('payments') ? h('div', { class: 'pay-filters' }, tabs, h('input', { id: 'pay-q', type: 'search', placeholder: 'Name, booking or GCash reference', 'aria-label': 'Search payments', value: draftOf('payq'), oninput: function (e) { setDraft('payq', e.target.value); renderPayments(); } })) : null,
+      can('payments') ? (cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, all.length ? 'No payments match.' : 'No payments yet.')) : null);
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
+  }
+
+  var rfSig = '';
+  function refAct(id, kind) { state.refAct = state.refAct && state.refAct.id === id && state.refAct.kind === kind ? null : { id: id, kind: kind, busy: false, error: '' }; rfSig = ''; renderRefunds(); }
+  function runRefAct(action, extra, okMsg) {
+    var a = state.refAct; if (!a || a.busy) return;
+    a.busy = true; a.error = ''; rfSig = ''; renderRefunds();
+    payCall(Object.assign({ action: action, id: a.id }, extra || {})).then(function () { flash(okMsg, 'ok'); state.refAct = null; })
+      .catch(function (e) { if (state.refAct) { state.refAct.busy = false; state.refAct.error = e.message; } })
+      .then(function () { rfSig = ''; renderRefunds(); });
+  }
+  function renderRefunds() {
+    var box = $('#view-refunds');
+    if (!can('refunds')) { rfSig = ''; box.replaceChildren(h('p', { class: 'note' }, 'Your role does not include refunds.')); return; }
+    var all = Object.keys(state.refunds).map(function (id) { return Object.assign({ id: id }, state.refunds[id]); }).sort(function (a, c) { return (c.requestedAt || 0) - (a.requestedAt || 0); });
+    var f = state.refundFilter, q = draftOf('rfq').trim().toLowerCase();
+    var open = function (r) { return r.status === 'requested' || r.status === 'approved'; };
+    var list = all.filter(function (r) { return (f === 'all' || (f === 'open' ? open(r) : r.status === f)) && (!q || (r.byName + ' ' + r.bookingRef).toLowerCase().indexOf(q) >= 0); });
+    var a = state.refAct;
+    var sig = [f, q, a ? a.id + a.kind + a.busy + a.error : '', list.map(function (r) { return r.id + r.status + r.refundable; }).join(',')].join('|');
+    if (sig === rfSig) return;
+    rfSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
+    var tabs = [['open', 'Open'], ['refunded', 'Refunded'], ['denied', 'Denied'], ['all', 'All']].map(function (t) {
+      var n = all.filter(function (r) { return t[0] === 'open' ? open(r) : t[0] === 'all' ? true : r.status === t[0]; }).length;
+      return h('button', { id: 'rf-' + t[0], class: 'btn small' + (f === t[0] ? ' primary' : ''), type: 'button', 'aria-pressed': String(f === t[0]),
+        onclick: function () { state.refundFilter = t[0]; rfSig = ''; renderRefunds(); } }, t[1] + ' (' + n + ')');
+    });
+    var cards = list.map(function (r) {
+      var acct = state.accounts[r.by] || {}, act = a && a.id === r.id ? a : null;
+      var pct = r.paid ? Math.round(r.refundable / r.paid * 100) : 0;
+      var kids = [
+        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, r.byName || 'Player'), h('small', null, roleLabel(roleOf(r.by)) + (acct.createdAt ? ' · member since ' + mfmt.format(new Date(Number(acct.createdAt))) : ''))), h('div', { class: 'pay-amt' }, statusChip(r.status), h('strong', null, peso(r.refundable)))),
+        h('div', { class: 'pay-info' },
+          h('p', null, h('span', null, 'Booking '), h('strong', null, r.bookingRef)),
+          h('ul', { class: 'pay-lines' }, (r.slots || []).map(function (s) { return h('li', null, slotRuns([s])[0] + ' · paid ' + peso(s.paid) + ' · ' + s.percent + '% refundable'); })),
+          h('p', null, 'Original payment ', h('strong', null, peso(r.paid)), ' · refundable ', h('strong', null, peso(r.refundable)), ' (' + pct + '%)'),
+          h('p', { class: 'note' }, 'Requested ' + when(r.requestedAt) + (r.requestedByName ? ' by ' + r.requestedByName : '') + (r.approvedAt ? ' · approved ' + when(r.approvedAt) + (r.approvedByName ? ' by ' + r.approvedByName : '') : '') + (r.refundedAt ? ' · refunded ' + when(r.refundedAt) + ' (GCash ref ' + r.refundRef + ')' : '') + (r.deniedAt ? ' · denied ' + when(r.deniedAt) : '')),
+          r.status === 'denied' && r.reason ? h('p', { class: 'pay-reason' }, 'Reason: ' + r.reason) : null)];
+      if (r.status === 'requested' && !act) kids.push(h('div', { class: 'confirm-actions' },
+        h('button', { id: 'rd-' + r.id, class: 'btn', type: 'button', onclick: function () { refAct(r.id, 'deny'); } }, 'Deny'),
+        h('button', { id: 'ra-' + r.id, class: 'btn primary', type: 'button', onclick: function () { refAct(r.id, 'approve'); } }, 'Review and approve')));
+      if (r.status === 'approved' && !act) kids.push(h('div', { class: 'confirm-actions' },
+        h('button', { id: 'rd-' + r.id, class: 'btn', type: 'button', onclick: function () { refAct(r.id, 'deny'); } }, 'Deny'),
+        h('button', { id: 'rc-' + r.id, class: 'btn primary', type: 'button', onclick: function () { refAct(r.id, 'complete'); } }, 'Record the refund')));
+      if (act && act.kind === 'approve') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Approve this refund' },
+        h('label', { class: 'field', for: 'rfa-' + r.id }, 'Amount to refund (up to ' + peso(r.paid) + ')',
+          h('input', { id: 'rfa-' + r.id, type: 'number', min: '0', max: String(r.paid), step: '1', value: draftOf('rfa' + r.id) || String(r.refundable), oninput: function (e) { setDraft('rfa' + r.id, e.target.value); } })),
+        act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
+          h('button', { id: 'rfa-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-approve', { amount: draftOf('rfa' + r.id) || r.refundable }, 'Refund approved. Now send it by GCash and record the reference.'); } }, act.busy ? 'Approving…' : 'Approve refund'))));
+      if (act && act.kind === 'complete') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Record the refund you sent' },
+        h('p', null, 'Send ' + peso(r.refundable) + ' to ' + (r.byName || 'the player') + ' from your GCash app, then enter the reference number of that transfer. The player is told only after you do this.'),
+        h('label', { class: 'field', for: 'rfc-' + r.id }, 'GCash reference of the refund',
+          h('input', { id: 'rfc-' + r.id, type: 'text', maxlength: '40', autocomplete: 'off', value: draftOf('rfc' + r.id), oninput: function (e) { setDraft('rfc' + r.id, e.target.value); } })),
+        act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
+          h('button', { id: 'rfc-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-complete', { gcashRef: draftOf('rfc' + r.id) }, 'Refund recorded. The player was told.'); } }, act.busy ? 'Saving…' : 'Mark as refunded'))));
+      if (act && act.kind === 'deny') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Deny this refund' },
+        h('label', { class: 'field', for: 'rfd-' + r.id }, 'Reason (the player will see this)',
+          h('input', { id: 'rfd-' + r.id, type: 'text', maxlength: '200', value: draftOf('rfd' + r.id), oninput: function (e) { setDraft('rfd' + r.id, e.target.value); } })),
+        act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
+        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
+          h('button', { id: 'rfd-yes', class: 'btn small danger', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-deny', { reason: draftOf('rfd' + r.id) }, 'Refund denied. The player was told.'); } }, act.busy ? 'Denying…' : 'Deny refund'))));
+      return h('article', { class: 'pay-card' }, kids);
+    });
+    fill(box,
+      h('div', { class: 'book-head' }, h('h2', null, 'Refunds')),
+      h('p', { class: 'note' }, 'Refund requests start when staff cancel a paid booking. Approve the amount, send it by GCash, then record the reference: only then is the player told. Policy: ' + policyText()),
+      h('div', { class: 'pay-filters' }, tabs, h('input', { id: 'rf-q', type: 'search', placeholder: 'Name or booking reference', 'aria-label': 'Search refunds', value: draftOf('rfq'), oninput: function (e) { setDraft('rfq', e.target.value); renderRefunds(); } })),
+      cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, all.length ? 'No refunds match.' : 'No refund requests yet.'));
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
+  }
+
+  /* ---------- Payment settings: GCash number, account name, QR code, refund policy ---------- */
+  var pdSig = '';
+  function openPayDlg() {
+    if (!can('paysettings')) return;
+    var c = state.payCfg || {};
+    state.payDlg = { number: c.gcashNumber || '', name: c.accountName || '', qr: '', removeQr: false, policy: refundPolicy().map(function (t) { return { hours: t.hours, percent: t.percent }; }), error: '', saving: false };
+    pdSig = '';
+    renderPayDlg();
+    var f = $('#pd-number'); if (f) f.focus();
+  }
+  function closePayDlg() { state.payDlg = null; renderPayDlg(); var b = $('#pay-settings'); if (b) b.focus(); }
+  function savePayDlg() {
+    var d = state.payDlg; if (!d || d.saving) return;
+    var body = { action: 'settings', gcashNumber: d.number, accountName: d.name, refundPolicy: d.policy.map(function (t) { return { hours: Number(t.hours), percent: Number(t.percent) }; }) };
+    if (d.qr) body.qr = d.qr; else if (d.removeQr) body.removeQr = true;
+    d.saving = true; d.error = ''; pdSig = ''; renderPayDlg();
+    payCall(body).then(function () { state.payDlg = null; flash('Payment settings saved. They apply to new payments straight away.', 'ok'); })
+      .catch(function (e) { if (state.payDlg) { state.payDlg.saving = false; state.payDlg.error = e.message; } })
+      .then(function () { pdSig = ''; renderPayDlg(); });
+  }
+  function renderPayDlg() {
+    var box = $('#paycfg'), d = state.payDlg;
+    if (!d || !can('paysettings') || gateState() !== 'ok') { state.payDlg = null; pdSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var sig = [d.saving, d.error, !!d.qr, d.removeQr, d.policy.length, (state.payCfg || {}).qrPath].join('|');
+    if (sig === pdSig && !box.hidden) return;
+    pdSig = sig;
+    var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '';
+    var qrShown = d.qr ? h('img', { class: 'co-qr', src: d.qr, alt: 'New QR code' }) : (!d.removeQr && state.payCfg && state.payCfg.qrPath ? fileImg(state.payCfg.qrPath, 'Current GCash QR code', 'co-qr') : null);
+    var rows = d.policy.map(function (t, i) {
+      return h('div', { class: 'pol-row' },
+        h('label', { class: 'field', for: 'pol-h-' + i }, 'Hours before', h('input', { id: 'pol-h-' + i, type: 'number', min: '0', max: '720', value: String(t.hours), oninput: function (e) { t.hours = e.target.value; } })),
+        h('label', { class: 'field', for: 'pol-p-' + i }, 'Refund %', h('input', { id: 'pol-p-' + i, type: 'number', min: '0', max: '100', value: String(t.percent), oninput: function (e) { t.percent = e.target.value; } })),
+        h('button', { class: 'link', type: 'button', disabled: d.policy.length <= 1, onclick: function () { d.policy.splice(i, 1); pdSig = ''; renderPayDlg(); } }, 'Remove'));
+    });
+    box.replaceChildren(
+      h('div', { class: 'modal-backdrop' }),
+      h('div', { class: 'modal-panel cfg-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pd-title' },
+        h('div', { class: 'modal-head' }, h('div', null, h('h2', { id: 'pd-title' }, 'Payment settings'), h('p', { class: 'note' }, 'Shown to players when they pay. Changes apply to new payments right away.')),
+          h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close without saving', onclick: closePayDlg }, '×')),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'GCash account'),
+          h('label', { class: 'field', for: 'pd-number' }, 'GCash number', h('input', { id: 'pd-number', type: 'tel', maxlength: '16', placeholder: '09171234567', value: d.number, oninput: function (e) { d.number = e.target.value; } })),
+          h('label', { class: 'field', for: 'pd-name' }, 'Account name', h('input', { id: 'pd-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', value: d.name, oninput: function (e) { d.name = e.target.value; } }))),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Static QR code'),
+          h('p', { class: 'note' }, 'Upload the QR code from your GCash app. Uploading a new one replaces the old one. It is stored privately and only shown to logged-in players.'),
+          qrShown ? h('div', { class: 'co-qrbox' }, qrShown) : h('p', { class: 'note' }, 'No QR code yet.'),
+          h('div', { class: 'submit-row' },
+            h('input', { id: 'pd-qr', type: 'file', accept: 'image/*', 'aria-label': 'Upload a QR code image', onchange: function (e) {
+              var f = e.target.files && e.target.files[0]; if (!f) return;
+              resizeImage(f).then(function (u) { d.qr = u; d.removeQr = false; d.error = ''; pdSig = ''; renderPayDlg(); }).catch(function (er) { d.error = er.message; pdSig = ''; renderPayDlg(); });
+            } }),
+            (state.payCfg && state.payCfg.qrPath) || d.qr ? h('button', { class: 'link', type: 'button', onclick: function () { d.qr = ''; d.removeQr = true; pdSig = ''; renderPayDlg(); } }, 'Remove QR code') : null)),
+        h('section', { class: 'cfg-block' }, h('h3', null, 'Refund policy'),
+          h('p', { class: 'note' }, 'The share of the amount paid that comes back, by how many hours before the hour starts. The highest matching row applies.'),
+          rows,
+          h('button', { class: 'btn small', type: 'button', onclick: function () { d.policy.push({ hours: 0, percent: 0 }); pdSig = ''; renderPayDlg(); } }, 'Add a row')),
+        d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn', type: 'button', onclick: closePayDlg }, 'Cancel'),
+          h('button', { id: 'pd-save', class: 'btn primary', type: 'button', disabled: d.saving, onclick: savePayDlg }, d.saving ? 'Saving…' : 'Save settings'))));
+    box.hidden = false;
+    lockScroll();
+    if (hadFocus && focusKey) { var el = document.getElementById(focusKey); if (el) el.focus(); }
   }
 
   /* ---------- role access view (super admin) ---------- */
@@ -2351,7 +3009,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
      (collection().onSnapshot / add, doc().get / set / update / delete / acquire / onSnapshot) and refreshes
      by asking the server whether anything changed. The server decides who may write what. */
   function makeDb(onUnauth) {
-    var snap = null, rev = -1, subs = [], timer = null, busy = null;
+    var snap = null, rev = -1, subs = [], timer = null, busy = null, live = false, sock = null, hb = null, retry = 1000, lastPing = 0, pingTimer = null, tick = 0;
     function call(method, url, body) {
       return fetch(url, {
         method: method, cache: 'no-store', body: body ? JSON.stringify(body) : undefined,
@@ -2389,14 +3047,44 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       p.then(function () { if (busy === p) busy = null; });
       return p;
     }
+    // Supabase Realtime Broadcast: the server pings { rev } after every change; the page then asks what it is allowed to see.
+    // While the socket is up the page only checks once a minute as a safety net; if it drops, it checks every 6 seconds and reconnects.
+    function schedulePing() {
+      if (pingTimer) return;
+      pingTimer = setTimeout(function () { pingTimer = null; lastPing = Date.now(); sync(); }, Math.max(0, 800 - (Date.now() - lastPing)));
+    }
+    function connect(cfg) {
+      if (!cfg || sock || typeof WebSocket === 'undefined') return;
+      var me, topic = 'realtime:' + cfg.topic, n = 0;
+      try { me = sock = new WebSocket(cfg.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(cfg.key) + '&vsn=1.0.0'); } catch (e) { sock = null; return; }
+      me.onopen = function () {
+        me.send(JSON.stringify({ topic: topic, event: 'phx_join', payload: { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, postgres_changes: [], private: false } }, ref: String(++n), join_ref: '1' }));
+        hb = setInterval(function () { if (me.readyState === 1) me.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++n) })); }, 25000);
+      };
+      me.onmessage = function (e) {
+        var m; try { m = JSON.parse(e.data); } catch (x) { return; }
+        if (m.event === 'phx_reply' && m.topic === topic) { if (m.payload && m.payload.status === 'ok') { live = true; retry = 1000; sync(); } }   // joined (or rejoined): catch up on anything missed
+        else if (m.event === 'broadcast' && m.topic === topic && m.payload && m.payload.event === 'rev') schedulePing();
+      };
+      var lost = function () {
+        if (sock !== me) return;
+        if (hb) { clearInterval(hb); hb = null; }
+        sock = null; live = false; try { me.close(); } catch (x) {}
+        setTimeout(function () { connect(cfg); }, retry); retry = Math.min(retry * 2, 30000);
+      };
+      me.onclose = lost; me.onerror = lost;
+    }
     function start() {
       if (timer) return;
-      timer = setInterval(function () { if (!document.hidden) sync(); }, 6000);
+      timer = setInterval(function () { tick++; if (!document.hidden && (!live || tick % 10 === 0)) sync(); }, 6000);
       document.addEventListener('visibilitychange', function () { if (!document.hidden) sync(); });
+      window.addEventListener('online', function () { sync(); });
     }
     function subscribe(s) { subs.push(s); start(); if (snap) notify(); else sync(); }
     function write(body) { return call('POST', '/api/data', body).then(function (j) { return sync(true).then(function () { return j; }); }); }
     return {
+      live: connect,
+      refresh: function () { return sync(true); },
       collection: function (name) {
         return {
           onSnapshot: function (cb, err) { subscribe({ col: name, cb: cb, err: err, sig: null }); },
@@ -2448,7 +3136,14 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $(focusId).focus();
   }
   function closeHost() { state.hostOpen = false; render(); }
-  function logOut() { forceLogout('You are logged out.'); }
+  function logOut() {
+    // a shared phone must not keep sending this person's notifications to the next person who logs in
+    var token = '';
+    try { token = localStorage.getItem('kl-push-token') || ''; localStorage.removeItem('kl-push'); localStorage.removeItem('kl-push-token'); } catch (e) {}
+    var done = function () { forceLogout('You are logged out.'); };
+    if (!token || !state.token) { done(); return; }
+    Promise.race([payCall({ action: 'push', op: 'unregister', token: token }), new Promise(function (r) { setTimeout(r, 2500); })]).catch(function () {}).then(done);
+  }
   function afterAuth(res, email) {
     state.token = res.token;
     try { localStorage.setItem('kl-token', res.token); } catch (e) {}
@@ -2497,6 +3192,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
     var views = [['schedule', 'Dashboard'], ['profile', 'Profile']];
     if (can('people')) views.push(['people', 'Users']);
+    if (can('payments') || can('paysettings')) views.push(['payments', 'Payments']);
+    if (can('refunds')) views.push(['refunds', 'Refunds']);
     if (isSuper()) views.push(['roles', 'Role access']);
     // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
     if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
@@ -2557,17 +3254,26 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       $('#view-book').hidden = state.view !== 'book';
       $('#view-people').hidden = state.view !== 'people';
       $('#view-roles').hidden = state.view !== 'roles';
+      $('#view-payments').hidden = state.view !== 'payments';
+      $('#view-refunds').hidden = state.view !== 'refunds';
       if (!can('host')) state.hostOpen = false;
       $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
       else if (state.view === 'profile') renderProfile();
       else if (state.view === 'book') renderBooking();
       else if (state.view === 'people') renderUsers();
+      else if (state.view === 'payments') renderPayments();
+      else if (state.view === 'refunds') renderRefunds();
       else renderRoles();
     }
     renderModal();
     renderConfirm();
     renderConfirmUser();
+    renderCheckout();
+    renderThanks();
+    renderNotice();
+    renderPayDlg();
+    renderImgView();
     renderEditDialog();
     renderBookCfg();
     renderSessCfg();
@@ -2600,6 +3306,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
+      var topDlg = state.imgView ? ['#imgview', closeImg] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
+      if (topDlg) {
+        if (e.key === 'Escape') { topDlg[1](); return; }
+        if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
+          var tf = [].slice.call(document.querySelectorAll(topDlg[0] + ' button:not(:disabled), ' + topDlg[0] + ' input:not(:disabled)'));
+          var ti = tf.indexOf(document.activeElement);
+          if (tf.length && e.shiftKey && ti <= 0) { e.preventDefault(); tf[tf.length - 1].focus(); }
+          else if (tf.length && !e.shiftKey && (ti === tf.length - 1 || ti < 0)) { e.preventDefault(); tf[0].focus(); }
+        }
+        return;
+      }
       if (state.confirmUser) {
         if (e.key === 'Escape') { cancelRemoveUser(); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
@@ -2826,6 +3543,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (!data.date || !data.start || !$('#h-end').value) { flash('Pick the day, start time and end time.', 'err'); return; }
       if (data.duration <= 0) { showHostError(END_MSG, ['#h-end'], '#h-end'); return; }
       if (isPast(data.date, data.start)) { showHostError(PAST_MSG, ['#h-date', '#h-start'], data.date < dkey(new Date()) ? '#h-date' : '#h-start'); return; }
+      var clash = bookingOnSession(data.date, data.venue, data.court, data.start, data.duration);
+      if (clash) { showHostError('That court is already booked at that time (booking ' + clash.ref + '). Pick another court or time.', ['#h-date', '#h-start'], '#h-court'); return; }
       $('#h-submit').disabled = true;
       state.db.collection('sessions').add(data).then(function () {
         flash('Added ' + data.title + ' to the schedule.', 'ok');
@@ -2911,6 +3630,23 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       state.options = snap.exists ? (snap.data() || {}) : {};
       render();
     }, function () {});
+    db.doc('config/payment').onSnapshot(function (snap) {
+      state.payCfg = snap.exists ? (snap.data() || {}) : {};
+      render();
+    }, function () {});
+    [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs']].forEach(function (c) {
+      db.collection(c[0]).onSnapshot(function (snap) {
+        var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
+        state[c[1]] = next; render();
+      }, function () {});
+    });
+    // public settings: the Realtime address and, if the site has Firebase, the phone-push keys (no secrets)
+    fetch('/api/pay?cfg=1', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (c) {
+      state.fbCfg = c.firebase || null;
+      if (c.realtime) db.live(c.realtime);
+      refreshPush();
+      render();
+    }).catch(function () {});
   }
 
   // A reset link looks like /#reset=<token>. The token stays in the address fragment (never sent to the server until it is used).
