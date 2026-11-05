@@ -321,6 +321,62 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .nf-list li.unread { border-color: var(--accent); background: var(--paper); }
 .nf-list span { color: var(--muted); font-size: var(--fs-s); overflow-wrap: anywhere; }
 .nf-list small { color: var(--muted); font: 500 0.72rem/1.2 var(--mono); }
+.req { font-style: normal; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 4px; }
+.pay-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pay-opt { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 8px; background: var(--paper); cursor: pointer; }
+.pay-opt.on { border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 1px var(--accent) inset; }
+.pay-opt input { margin-top: 3px; accent-color: var(--accent); }
+.pay-opt span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pay-opt small { color: var(--muted); font-size: 0.74rem; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: var(--fs-s); }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.kv.split { padding: 8px 10px; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; }
+.co-fields { display: flex; flex-direction: column; gap: 8px; }
+.co-amount small { flex-basis: 100%; color: var(--muted); }
+.rf-bal { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; padding: 10px 12px; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--paper); }
+.rf-bal div { display: flex; flex-direction: column; }
+.rf-bal strong { font: 800 1.6rem/1.1 var(--display); color: var(--accent); }
+.rf-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.rf-form .wide { grid-column: 1 / -1; }
+.co-qr.sm { width: 96px; height: 96px; margin-top: 6px; }
+.rf-acct { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px dashed var(--accent); border-radius: 8px; }
+.lock-note { padding: 8px 10px; border: 1px dashed var(--rule); border-radius: 8px; }
+.book-side { display: flex; flex-direction: column; gap: 8px; position: sticky; top: 12px; }
+.book-side .book-summary { position: static; }
+.book-side .refund-pill { align-self: flex-start; margin-right: 0; flex-wrap: wrap; gap: 2px 10px; padding: 6px 12px; border-radius: 10px; }
+.book-side .refund-pill small { flex-basis: 100%; color: var(--ok); font-size: 0.72rem; }
+.dlg { align-items: center; text-align: center; gap: 8px; padding: 20px 18px 16px; width: min(380px, 100%); }
+.dlg-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--accent); background: var(--paper); color: var(--accent); font: 800 1.35rem/1 var(--display); }
+.dlg-ok .dlg-icon { border-color: var(--ok); color: var(--ok); }
+.dlg-warn .dlg-icon { border-color: var(--warn); color: var(--warn); }
+.dlg-title { font: 700 1.2rem/1.2 var(--display); text-transform: none; letter-spacing: 0; }
+.dlg-body { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+.dlg-lead { color: var(--muted); font-size: var(--fs-s); max-width: none; }
+.dlg-rows { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; padding: 10px 12px; text-align: left; font-size: var(--fs-s); background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; }
+.dlg-rows dt { color: var(--muted); }
+.dlg-rows dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.dlg-ref { font: 800 1.1rem/1.1 var(--mono); letter-spacing: 0.04em; color: var(--accent); }
+.dlg-note { color: var(--muted); font-size: 0.74rem; max-width: none; }
+.dlg-actions { display: flex; gap: 8px; width: 100%; margin-top: 4px; }
+.dlg-actions .btn { flex: 1; }
+.dlg-thumbbtn { align-self: center; }
+.dlg-thumb { display: block; max-width: 100%; max-height: 130px; border-radius: 8px; }
+.modal { padding: 12px; }
+.modal-panel { padding: 16px; gap: 8px; }
+.modal-head h2 { font-size: 1.2rem; }
+.panel { padding: 16px; gap: 10px; }
+.field input, .field select, select.plain { padding: 8px 10px; }
+.btn { padding: 8px 14px; }
+.confirm-actions { gap: 8px; margin-top: 4px; }
+.cfg-block { gap: 6px; padding-top: 8px; }
+.co-panel { gap: 8px; }
+.co-gcash { gap: 10px; padding: 10px; }
+.co-qr { width: 128px; height: 128px; }
+.sum-list { gap: 6px; }
+.sum-list li { padding-bottom: 6px; }
+.pay-card { padding: 12px; gap: 10px; }
+@media (max-width: 480px) { .pay-opts { grid-template-columns: 1fr; } .rf-form { grid-template-columns: 1fr; } .dlg-actions { flex-direction: column-reverse; } }
 .pol-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
 .pol-row .field { flex: 1 1 110px; }
 .slot.un, .sw.un { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(120, 135, 170, 0.28) 5px 7px), var(--slot-un-bg); color: var(--slot-un-ink); }
@@ -584,12 +640,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           <div class="submit-row"><button id="pf-save" class="btn primary" type="submit">Save new password</button> <button id="pf-cancel" class="btn" type="button">Cancel</button></div>
         </form>
       </div>
+      <div id="pf-refund" class="panel"></div>
       <div id="pf-notify" class="panel"></div>
     </section>
     <section id="view-book" class="view-stack" aria-label="Book a court" hidden>
       <div class="book-head">
         <h2>Book a court</h2>
-        <div id="bk-refund" class="refund-pill" hidden></div>
         <div class="dash-actions">
         <button id="bk-manage" class="btn small" type="button" hidden aria-haspopup="dialog">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -621,7 +677,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       </ul>
       <div class="book-layout">
         <div class="slot-scroll"><div id="bk-grid"></div></div>
-        <aside id="bk-summary" class="panel book-summary" aria-live="polite"></aside>
+        <div class="book-side">
+          <div id="bk-refund" class="refund-pill" hidden></div>
+          <aside id="bk-summary" class="panel book-summary" aria-live="polite"></aside>
+        </div>
       </div>
       <div id="bk-mine"></div>
     </section>
@@ -689,19 +748,20 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     { key: 'viewbookers', label: 'View Bookers', hint: 'See the names of players who booked each court' },
     { key: 'payments', label: 'Payments', hint: 'Review GCash payments: see the receipts, approve or deny them' },
     { key: 'refunds', label: 'Refunds', hint: 'Review refund requests and record refunds sent by GCash' },
-    { key: 'paysettings', label: 'Payment settings', hint: 'GCash number, account name, QR code and refund policy' }
+    { key: 'paysettings', label: 'Payment settings', hint: 'GCash number, account name, QR code and refund policy' },
+    { key: 'roleaccess', label: 'Role Access', hint: 'Open this table and change what other roles can do. Only a Super Admin can change what Admins can do or make someone a Super Admin' }
   ];
   var DEFAULTS = {
-    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true } },
-    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false } },
-    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false } }
+    admin: { label: 'Admin', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true, roleaccess: true } },
+    staff: { label: 'Staff', perms: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false } },
+    player: { label: 'Player', perms: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false } }
   };
   var state = {
     sessions: [], players: {}, accounts: {}, roles: {}, cfg: {}, options: {}, optDraft: {},
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -1719,6 +1779,13 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     });
     return total;
   }
+  // how a booking was paid, for the booking history: refund balance, GCash, or both
+  function bookingPayNote(ref) {
+    var ps = Object.keys(state.payments).map(function (k) { return state.payments[k]; }).filter(function (p) { return p.bookingRef === ref && p.status === 'paid'; });
+    if (!ps.length) return null;
+    var bal = ps.reduce(function (n, p) { return n + (Number(p.balanceUsed) || 0); }, 0), gc = ps.reduce(function (n, p) { return n + (Number(p.amount) || 0); }, 0);
+    return h('span', null, 'Paid ' + peso(bal + gc) + (bal ? ' · ' + peso(bal) + ' refund balance' + (gc ? ' + ' + peso(gc) + ' GCash' : '') : ' by GCash'));
+  }
   function statusWords(st) {
     return { hold: 'Awaiting payment', pending: 'Pending verification', resched: 'Reschedule pending verification', confirmed: 'Confirmed' }[st || 'confirmed'] || 'Confirmed';
   }
@@ -1748,7 +1815,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   /* ---------- checkout: pay with GCash, send the receipt ---------- */
   var coSig = '', coTimer = null;
   function openCheckout(c) {
-    state.checkout = Object.assign({ gcashRef: '', proof: '', proofName: '', busy: false, error: '', expired: false }, c);
+    state.checkout = Object.assign({ gcashRef: '', proof: '', proofName: '', busy: false, error: '', expired: false, method: 'gcash' }, c);
     coSig = '';
     renderCheckout();
     var f = $('#co-ref'); if (f) f.focus();
@@ -1774,16 +1841,26 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     c.busy = true; renderCheckout();
     payCall({ action: 'release', ref: c.ref }).then(function () { flash('Your hold was released.', 'ok'); }).catch(fail('Could not release the hold.')).then(function () { closeCheckout(); });
   }
+  // what a checkout will charge: refund balance first (if the player picked it), the rest by GCash
+  function checkoutPlan(c) {
+    var avail = c.mode === 'booking' ? myBalance().available : 0, useBal = c.method === 'balance' && avail > 0, use = useBal ? Math.min(avail, c.amount) : 0;
+    return { avail: avail, useBal: useBal, use: use, rest: c.amount - use };
+  }
   function submitCheckout() {
     var c = state.checkout; if (!c || c.busy) return;
+    var plan = checkoutPlan(c);
     if (c.expired) { c.error = 'Your hold ran out. Please pick the hours again.'; renderCheckout(); return; }
-    if (c.gcashRef.replace(/[^A-Za-z0-9]/g, '').length < 8) { c.error = 'Enter the GCash reference number from your receipt (at least 8 letters or numbers).'; renderCheckout(); var f = $('#co-ref'); if (f) f.focus(); return; }
-    if (!c.proof) { c.error = 'Upload a screenshot or photo of your GCash receipt.'; renderCheckout(); return; }
+    if (plan.rest > 0) {   // anything paid by GCash needs BOTH the reference number and the receipt
+      if (c.gcashRef.replace(/[^A-Za-z0-9]/g, '').length < 8) { c.error = 'Enter the GCash reference number from your receipt (at least 8 letters or numbers).'; renderCheckout(); var f = $('#co-ref'); if (f) f.focus(); return; }
+      if (!c.proof) { c.error = 'Upload a screenshot or photo of your GCash receipt.'; renderCheckout(); return; }
+    }
     c.busy = true; c.error = ''; renderCheckout();
     var body = c.mode === 'reschedule' ? { action: 'reschedule', id: c.payload.id, to: c.payload.to } : { action: 'pay', ref: c.ref };
-    body.gcashRef = c.gcashRef; body.proof = c.proof; body.email = state.email;
-    payCall(body).then(function () {
-      var t = { mode: c.mode, ref: c.ref, amount: c.amount };
+    if (plan.useBal) body.useBalance = true;
+    if (plan.rest > 0) { body.gcashRef = c.gcashRef; body.proof = c.proof; }
+    body.email = state.email;
+    payCall(body).then(function (res) {
+      var t = { mode: c.mode, ref: c.ref, amount: c.amount, rest: plan.rest, use: res.balanceUsed != null ? res.balanceUsed : plan.use, confirmed: !!res.confirmed };
       state.checkout = null; stopCheckoutTimer();
       state.thanks = t;
       render();
@@ -1792,7 +1869,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.checkout) { state.checkout.busy = false; state.checkout.error = (e && e.message) || 'That did not go through.'; renderCheckout(); }
     });
   }
-  function copyText(text, label) {
+    function copyText(text, label) {
     var done = function () { flash(label + ' copied.', 'ok'); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { flash('Copy it by hand: ' + text, 'ok'); });
     else flash('Copy it by hand: ' + text, 'ok');
@@ -1800,64 +1877,91 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function renderCheckout() {
     var box = $('#checkout'), c = state.checkout, pc = state.payCfg || {};
     if (!c || gateState() !== 'ok') { state.checkout = null; coSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
-    var sig = [c.mode, c.ref, c.amount, c.busy, c.error, !!c.proof, c.proofName, c.expired, pc.gcashNumber, pc.accountName, pc.qrPath].join('|');
+    var plan = checkoutPlan(c);
+    var sig = [c.mode, c.ref, c.amount, c.busy, c.error, !!c.proof, c.proofName, c.expired, c.method, plan.avail, pc.gcashNumber, pc.accountName, pc.qrPath].join('|');
     if (sig === coSig && !box.hidden) return;
     coSig = sig;
     var hadFocus = box.contains(document.activeElement), focusKey = hadFocus ? document.activeElement.id : '';
-    var ready = !!pc.gcashNumber, isBooking = c.mode === 'booking';
-    var lines = (c.slots || c.lines || []).length ? runsOf((c.slots || []).map(function (s) { return { court: s.court, venue: s.venue || '', hour: s.hour, date: s.date, price: s.price }; }), function (p) { return p.price; }) : [];
-    var summary = c.mode === 'booking'
-      ? h('ul', { class: 'sum-list' }, lines.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, fullFmt.format(parse(r.slots[0].date, '00:00')))), h('strong', null, peso(r.price))); }))
-      : h('p', null, c.summary || 'Reschedule payment');
+    var ready = !!pc.gcashNumber, isBooking = c.mode === 'booking', needGcash = plan.rest > 0;
+    var lines = (c.slots || []).length ? runsOf((c.slots || []).map(function (s) { return { court: s.court, venue: s.venue || '', hour: s.hour, date: s.date, price: s.price }; }), function (p) { return p.price; }) : [];
+    var summary = isBooking
+      ? h('ul', { class: 'sum-list tight' }, lines.map(function (r) { return h('li', null, h('span', null, runLine(r), h('small', null, fullFmt.format(parse(r.slots[0].date, '00:00')))), h('strong', null, peso(r.price))); }))
+      : h('p', { class: 'note' }, c.summary || 'Reschedule payment');
+    // how to pay: only offered when the player has refund balance to use
+    var options = isBooking && plan.avail > 0 ? h('div', { class: 'pay-opts', role: 'radiogroup', 'aria-label': 'How would you like to pay?' },
+      [['gcash', 'Pay with GCash', 'Send the full ' + peso(c.amount) + ' and upload your receipt.'], ['balance', 'Use Refund Balance', peso(plan.avail) + ' available' + (plan.avail >= c.amount ? ': covers this booking.' : ': pay the rest by GCash.')]].map(function (o) {
+        return h('label', { class: 'pay-opt' + ((c.method || 'gcash') === o[0] ? ' on' : '') },
+          h('input', { type: 'radio', name: 'pm', value: o[0], checked: (c.method || 'gcash') === o[0], disabled: c.busy, onchange: function () { c.method = o[0]; c.error = ''; coSig = ''; renderCheckout(); } }),
+          h('span', null, h('strong', null, o[1]), h('small', null, o[2])));
+      })) : null;
+    var split = plan.useBal ? h('dl', { class: 'kv split' }, h('dt', null, 'Refund balance'), h('dd', null, '− ' + peso(plan.use)), h('dt', null, needGcash ? 'To pay by GCash' : 'Left to pay'), h('dd', null, peso(plan.rest))) : null;
     box.replaceChildren(
       h('div', { class: 'modal-backdrop' }),
       h('div', { class: 'modal-panel co-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'co-title' },
         h('div', { class: 'modal-head' },
-          h('div', null, h('h2', { id: 'co-title' }, isBooking ? 'Pay with GCash' : 'Pay the difference'), h('p', { class: 'time' }, 'Reference ' + c.ref)),
+          h('div', null, h('h2', { id: 'co-title' }, isBooking ? 'Pay for your booking' : 'Pay the difference'), h('p', { class: 'time' }, 'Reference ' + c.ref)),
           h('button', { class: 'modal-close', type: 'button', 'aria-label': 'Close', onclick: closeCheckout }, '×')),
         summary,
-        h('div', { class: 'co-amount' }, h('span', null, 'Send exactly'), h('strong', null, peso(c.amount))),
-        c.holdUntil ? h('p', { id: 'co-timer', class: 'note' }, c.expired ? 'Your hold ran out.' : 'Your hours are held for 15:00. Send your payment before the time runs out.') : h('p', { class: 'note' }, 'Your current booking stays as it is until this payment is verified.'),
-        ready
+        options,
+        split,
+        h('div', { class: 'co-amount' }, h('span', null, needGcash ? 'Send exactly' : 'Total'), h('strong', null, needGcash ? peso(plan.rest) : peso(c.amount)), !needGcash ? h('small', null, 'covered by your refund balance') : null),
+        c.holdUntil ? h('p', { id: 'co-timer', class: 'note' }, c.expired ? 'Your hold ran out.' : 'Your hours are held for 15:00. Pay before the time runs out.') : h('p', { class: 'note' }, 'Your current booking stays as it is until this payment is verified.'),
+        needGcash ? (ready
           ? h('div', { class: 'co-gcash' },
               h('div', { class: 'co-gcash-text' },
-                h('p', { class: 'note' }, '1. Open GCash and send the amount to:'),
+                h('p', { class: 'note' }, 'Send it by GCash to:'),
                 h('div', { class: 'co-line' }, h('span', null, 'GCash number'), h('strong', null, pc.gcashNumber), h('button', { class: 'btn small', type: 'button', onclick: function () { copyText(pc.gcashNumber, 'GCash number'); } }, 'Copy')),
                 h('div', { class: 'co-line' }, h('span', null, 'Account name'), h('strong', null, pc.accountName || '-'))),
-              pc.qrPath ? h('div', { class: 'co-qrbox' }, fileImg(pc.qrPath, 'GCash QR code', 'co-qr'), h('small', null, 'or scan this QR code')) : null)
-          : h('p', { class: 'form-error', role: 'alert' }, 'Payments are not set up yet. Please ask an admin to add the GCash details, then try again.'),
-        h('p', { class: 'note' }, '2. Enter the reference number from your GCash receipt and upload a screenshot of it. Staff will check it and confirm your booking. This can take a little while.'),
-        h('label', { class: 'field', for: 'co-ref' }, 'GCash reference number',
-          h('input', { id: 'co-ref', type: 'text', maxlength: '40', autocomplete: 'off', inputmode: 'text', placeholder: 'e.g. 1234 567 890123', value: c.gcashRef, disabled: c.busy || !ready, oninput: function (e) { c.gcashRef = e.target.value; } })),
-        h('div', { class: 'field' }, 'Receipt screenshot',
-          h('input', { id: 'co-file', type: 'file', accept: 'image/*', disabled: c.busy || !ready, 'aria-label': 'Receipt screenshot', onchange: function (e) {
-            var f = e.target.files && e.target.files[0]; if (!f) return;
-            resizeImage(f).then(function (d) { c.proof = d; c.proofName = f.name; c.error = ''; renderCheckout(); }).catch(function (er) { c.error = er.message; renderCheckout(); });
-          } }),
-          c.proof ? h('img', { class: 'co-proof', src: c.proof, alt: 'Your receipt screenshot' }) : null),
+              pc.qrPath ? h('div', { class: 'co-qrbox' }, fileImg(pc.qrPath, 'GCash QR code', 'co-qr'), h('small', null, 'or scan this QR')) : null)
+          : h('p', { class: 'form-error', role: 'alert' }, 'Payments are not set up yet. Please ask an admin to add the GCash details, then try again.')) : null,
+        needGcash ? h('div', { class: 'co-fields' },
+          h('label', { class: 'field', for: 'co-ref' }, 'GCash reference number ', h('em', { class: 'req' }, 'required'),
+            h('input', { id: 'co-ref', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: 'e.g. 1234 567 890123', value: c.gcashRef, required: true, disabled: c.busy || !ready, oninput: function (e) { c.gcashRef = e.target.value; } })),
+          h('div', { class: 'field' }, h('span', null, 'Receipt screenshot ', h('em', { class: 'req' }, 'required')),
+            h('input', { id: 'co-file', type: 'file', accept: 'image/*', required: true, disabled: c.busy || !ready, 'aria-label': 'Receipt screenshot (required)', onchange: function (e) {
+              var f = e.target.files && e.target.files[0]; if (!f) return;
+              resizeImage(f).then(function (d) { c.proof = d; c.proofName = f.name; c.error = ''; renderCheckout(); }).catch(function (er) { c.error = er.message; renderCheckout(); });
+            } }),
+            c.proof ? h('img', { class: 'co-proof', src: c.proof, alt: 'Your receipt screenshot' }) : null),
+          h('p', { class: 'note' }, 'Both are needed. Staff check your payment before the booking is confirmed; screenshots are never approved automatically.')) : null,
         c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
         h('div', { class: 'confirm-actions' },
           isBooking ? h('button', { class: 'btn', type: 'button', disabled: c.busy, onclick: cancelHold }, 'Cancel booking') : h('button', { class: 'btn', type: 'button', disabled: c.busy, onclick: closeCheckout }, 'Cancel'),
-          h('button', { id: 'co-submit', class: 'btn primary', type: 'button', disabled: c.busy || !ready || c.expired, onclick: submitCheckout }, c.busy ? 'Sending…' : 'I have paid · send for verification')),
+          h('button', { id: 'co-submit', class: 'btn primary', type: 'button', disabled: c.busy || (needGcash && !ready) || c.expired, onclick: submitCheckout }, c.busy ? 'Sending…' : needGcash ? 'I have paid · send for verification' : 'Confirm with refund balance')),
         isBooking ? h('p', { class: 'note' }, 'You can close this window and finish later: your hours stay held until the timer runs out.') : null));
     box.hidden = false;
     lockScroll();
     if (hadFocus && focusKey) { var el = document.getElementById(focusKey); if (el) el.focus(); }
   }
 
-  /* ---------- thank-you after a booking or reschedule is sent ---------- */
+  /* ---------- pop-ups: one compact, consistent layout (icon, title, short lead, a details card, buttons) ---------- */
+  function dlgStatus(o) {
+    var rows = (o.rows || []).filter(Boolean).reduce(function (acc, r) { acc.push(h('dt', null, r[0]), h('dd', { class: r[2] || '' }, r[1])); return acc; }, []);
+    return h('div', { class: 'modal-panel dlg dlg-' + (o.tone || 'info'), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': o.id + '-t', 'aria-describedby': o.id + '-d' },
+      h('div', { class: 'dlg-icon', 'aria-hidden': 'true' }, o.icon || '✓'),
+      h('h2', { id: o.id + '-t', class: 'dlg-title' }, o.title),
+      h('div', { id: o.id + '-d', class: 'dlg-body' },
+        o.lead ? h('p', { class: 'dlg-lead' }, o.lead) : null,
+        rows.length ? h('dl', { class: 'dlg-rows' }, rows) : null,
+        o.extra || null,
+        o.note ? h('p', { class: 'dlg-note' }, o.note) : null),
+      h('div', { class: 'dlg-actions' }, (o.actions || []).map(function (a) { return h('button', { id: a.id, class: 'btn' + (a.primary ? ' primary ' + (a.cls || '') : ''), type: 'button', onclick: a.onclick }, a.label); })));
+  }
   function renderThanks() {
     var box = $('#thanks'), t = state.thanks;
     if (!t || gateState() !== 'ok') { state.thanks = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
     if (!box.hidden) return;
+    var re = t.mode === 'reschedule', paidBy = t.use > 0 && t.rest > 0 ? peso(t.use) + ' refund balance + ' + peso(t.rest) + ' GCash' : t.use > 0 ? 'Refund balance' : 'GCash';
     box.replaceChildren(
       h('div', { class: 'modal-backdrop', onclick: closeThanks }),
-      h('div', { class: 'modal-panel confirm-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'th-title', 'aria-describedby': 'th-text' },
-        h('h2', { id: 'th-title' }, 'Thank you! 🎾'),
-        h('div', { id: 'th-text' },
-          h('p', null, (t.mode === 'reschedule' ? 'Your reschedule request ' : 'Your booking ') + t.ref + ' was received with your payment of ' + peso(t.amount) + '. It is now pending verification, and we will tell you as soon as it is approved.'),
-          h('p', { class: 'note' }, 'Please note: cancellations, refund requests and rescheduling must be coordinated directly with the admin or staff, or handled in person.')),
-        h('div', { class: 'confirm-actions' }, h('button', { class: 'btn primary thanks-ok', type: 'button', onclick: closeThanks }, 'OK, got it'))));
+      dlgStatus({
+        id: 'th', tone: 'ok', icon: t.confirmed ? '✓' : '⏳', title: t.confirmed ? 'Booking confirmed!' : 'Thank you!',
+        lead: t.confirmed ? 'Your booking is confirmed and paid with your refund balance. See you on court! 🎾'
+          : (re ? 'Your reschedule request was received.' : 'Your booking was received.') + ' We will tell you as soon as staff approve your payment.',
+        rows: [['Reference', h('span', { class: 'dlg-ref' }, t.ref)], ['Amount', peso(t.amount)], ['Paid with', paidBy], ['Status', t.confirmed ? 'Confirmed' : 'Pending Verification']],
+        note: 'Cancellations, refund requests and rescheduling must be coordinated directly with the admin or staff, or handled in person.',
+        actions: [{ label: 'OK, got it', primary: true, cls: 'thanks-ok', onclick: closeThanks }]
+      }));
     box.hidden = false;
     lockScroll();
   }
@@ -1874,8 +1978,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#bk-manage').hidden = !can('managebookings');
     var rp = $('#bk-refund'), rb = refundableBalance();
     rp.hidden = !can('book');
-    rp.replaceChildren(h('span', null, 'Refundable balance'), h('strong', null, peso(rb)));
-    rp.title = 'What you would get back if your paid, upcoming bookings were cancelled right now. ' + policyText();
+    var credit = myBalance().available;
+    fill(rp, h('span', null, 'Refundable balance'), h('strong', null, peso(rb)), credit > 0 ? h('small', null, 'Refund balance ' + peso(credit) + ' to use') : null);
+    rp.title = 'What you would get back if your paid, upcoming bookings were cancelled right now. ' + policyText() + (credit > 0 ? ' Your refund balance (' + peso(credit) + ') can pay for bookings.' : '');
     var cols = bookingColumns(), cfg = bcfg();
     var canManage = can('managebookings') && state.canWrite, canNames = can('viewbookers');
 
@@ -1967,7 +2072,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         var x = groups[a][0], y = groups[c][0];
         return (x.date + pad(x.hour)) < (y.date + pad(y.hour)) ? -1 : 1;
       });
-      mineBox.append(h('h3', { class: 'sub-h' }, 'Your upcoming bookings'));
+      mineBox.append(h('div', { class: 'nf-head' }, h('h3', { class: 'sub-h' }, 'Your upcoming bookings'), myBalance().amount > 0 ? h('span', { class: 'chip role' }, 'Refund balance ' + peso(myBalance().available)) : null));
       mineBox.append(h('div', { class: 'mine-list' }, refs.map(function (ref) {
         var slots = groups[ref].slice().sort(function (a, c) { return a.date < c.date ? -1 : a.date > c.date ? 1 : (a.venue || '') < (c.venue || '') ? -1 : (a.venue || '') > (c.venue || '') ? 1 : a.court < c.court ? -1 : a.court > c.court ? 1 : a.hour - c.hour; });
         var runs = runsOf(slots, function (p) { return typeof p.price === 'number' ? p.price : slotPrice(p.hour); });
@@ -1977,7 +2082,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         var btn = st === 'hold' ? h('button', { class: 'btn small primary', type: 'button', onclick: function () { resumeCheckout(ref); } }, rej ? 'Send a new receipt' : 'Pay now')
           : h('button', { id: 'mine-' + ref, class: 'btn small', type: 'button', onclick: function () { openManage(ref, 'mine-' + ref); } }, st === 'confirmed' ? 'Reschedule' : 'Details');
         return h('div', { class: 'row' },
-          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref),
+          h('div', { class: 'meta' }, h('strong', null, fullFmt.format(parse(slots[0].date, '00:00'))), h('span', null, runs.map(runLine).join(' · ')), h('span', null, ref), bookingPayNote(ref),
             rej ? h('span', { class: 'pay-reason' }, 'Payment not approved' + (rej.reason ? ': ' + rej.reason : '') + '.') : null),
           h('div', { class: 'ctl' }, h('span', { class: 'chip st-' + st }, statusWords(st)), h('strong', null, peso(total)), btn));
       })));
@@ -2522,6 +2627,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#pf-email').value = state.email;
     var sel = $('#pf-rating');
     if (document.activeElement !== sel) sel.value = a.rating ? Number(a.rating).toFixed(1) : '';
+    renderProfileRefunds();
     renderNotify();
   }
 
@@ -2533,6 +2639,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     return Object.keys(state.notifs).map(function (id) { return Object.assign({ id: id }, state.notifs[id]); }).sort(function (a, c) { return c.at - a.at; });
   }
   function markRead(ids) { if (ids.length) payCall({ action: 'markread', ids: ids }).catch(function () {}); }
+  function goChooseRefund() { closeNotice(); state.view = 'profile'; state.menuOpen = false; render(); var el = $('#pf-refund'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
   function renderNotice() {
     var box = $('#notice');
     if (gateState() !== 'ok') { state.notice = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
@@ -2548,16 +2655,23 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (!n) { box.hidden = true; box.replaceChildren(); box.removeAttribute('data-nid'); lockScroll(); return; }
     if (!box.hidden && box.getAttribute('data-nid') === n.id) return;
     box.setAttribute('data-nid', n.id);
-    var d = n.data || {}, good = n.kind === 'payment-approved' || n.kind === 'refund-done' || n.kind === 'rescheduled';
-    box.replaceChildren(
-      h('div', { class: 'modal-backdrop' }),
-      h('div', { class: 'modal-panel confirm-panel notice-panel', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'nt-title', 'aria-describedby': 'nt-text' },
-        h('h2', { id: 'nt-title' }, (good && n.title.indexOf('✓') < 0 ? '✓ ' : '') + n.title),
-        h('div', { id: 'nt-text' },
-          h('p', null, n.body),
-          n.kind === 'payment-approved' && d.ref ? h('div', { class: 'notice-ref' }, h('span', null, 'Your reference number'), h('strong', null, d.ref), h('small', null, 'Show this to the venue staff before using the court.')) : null,
-          n.kind === 'payment-approved' && d.schedule ? h('ul', { class: 'sum-list' }, h('li', null, h('span', null, d.venue ? 'Venue: ' + d.venue : 'Venue'), h('small', null, d.schedule))) : null),
-        h('div', { class: 'confirm-actions' }, h('button', { id: 'nt-ok', class: 'btn primary', type: 'button', onclick: closeNotice }, 'OK'))));
+    var d = n.data || {}, o = { id: 'nt', title: n.title.replace(/\s*✓\s*$/, ''), lead: n.body, actions: [{ id: 'nt-ok', label: 'OK', primary: true, onclick: closeNotice }] };
+    if (n.kind === 'payment-approved' || n.kind === 'rescheduled') {
+      o.tone = 'ok'; o.icon = '✓';
+      o.lead = 'Please go to ' + (d.venue || 'the venue') + '. Show your reference number to the venue staff before using the court.';
+      o.rows = [d.venue ? ['Venue', d.venue] : null, ['When', d.schedule || n.body], ['Reference', h('span', { class: 'dlg-ref' }, d.ref || '')]];
+    } else if (n.kind === 'refund-done') {
+      var rf = state.refunds[d.refundId] || {}, isBal = d.method === 'balance';
+      o.tone = 'ok'; o.icon = '₱'; o.title = isBal ? 'Added to your refund balance' : 'Payment Refunded';
+      o.lead = isBal ? 'Your refund was added to your balance. Use it when you pay for your next booking.' : 'Your refund was sent to your GCash.';
+      o.rows = [['Booking', d.ref], [isBal ? 'Added' : 'Amount refunded', peso(d.amount)], ['Method', isBal ? 'Refund balance' : 'GCash'], isBal ? ['New balance', peso(d.balance != null ? d.balance : myBalance().available)] : ['GCash reference', d.refundRef]];
+      if (!isBal && rf.receiptPath) o.extra = h('button', { class: 'proof-btn dlg-thumbbtn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(rf.receiptPath); } }, fileImg(rf.receiptPath, 'Refund receipt', 'dlg-thumb'));
+    } else if (n.kind === 'booking-cancelled' && d.refundId) {
+      o.tone = 'warn'; o.icon = '!';
+      o.actions = [{ id: 'nt-later', label: 'Later', onclick: closeNotice }, { id: 'nt-ok', label: 'Choose now', primary: true, onclick: goChooseRefund }];
+    } else if (n.kind === 'payment-rejected' || n.kind === 'refund-denied') { o.tone = 'warn'; o.icon = '!'; }
+    else o.icon = 'i';
+    box.replaceChildren(h('div', { class: 'modal-backdrop' }), dlgStatus(o));
     box.hidden = false;
     lockScroll();
     var ok = $('#nt-ok'); if (ok) ok.focus();
@@ -2635,6 +2749,92 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       list.length ? h('ul', { class: 'nf-list' }, list.map(function (n) { return h('li', { class: n.read ? '' : 'unread' }, h('strong', null, n.title), h('span', null, n.body), h('small', null, when(n.at))); })) : h('p', { class: 'note' }, 'Nothing yet. Payment, booking and refund updates will show up here.'));
   }
 
+  /* ---------- Profile: GCash refund details, refund balance and refund history ---------- */
+  function myBalance() {
+    var b = state.balances[state.me] || {}, amount = Number(b.amount) || 0, reserved = Number(b.reserved) || 0;
+    return { amount: amount, reserved: reserved, available: Math.max(0, amount - reserved) };
+  }
+  function myRefundAcct() { var a = state.refundaccts[state.me]; return a && a.number && a.name && a.qrPath ? a : null; }
+  var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking' };
+  var rpSig = '';
+  function refundChoose(id, method) {
+    var a = state.rfAct; if (!a || a.busy) return;
+    a.busy = true; a.error = ''; rpSig = ''; renderProfileRefunds();
+    payCall({ action: 'refund-choose', id: id, method: method }).then(function () {
+      flash(method === 'gcash' ? 'Refund requested. Staff will send it to your GCash and tell you.' : 'Refund requested. Staff will add it to your refund balance.', 'ok');
+      state.rfAct = null;
+    }).catch(function (e) { if (state.rfAct) { state.rfAct.busy = false; state.rfAct.error = e.message; } })
+      .then(function () { rpSig = ''; renderProfileRefunds(); });
+  }
+  function saveRefundAcct() {
+    var d = state.rfDraft; if (!d || d.saving) return;
+    var body = { action: 'refund-account', number: d.number, name: d.name };
+    if (d.qr) body.qr = d.qr;
+    d.saving = true; d.error = ''; rpSig = ''; renderProfileRefunds();
+    payCall(body).then(function () { state.rfDraft = null; flash('Your GCash refund details were saved.', 'ok'); })
+      .catch(function (e) { if (state.rfDraft) { state.rfDraft.saving = false; state.rfDraft.error = e.message; } })
+      .then(function () { rpSig = ''; renderProfileRefunds(); });
+  }
+  function renderProfileRefunds() {
+    var box = $('#pf-refund');
+    if (!box) return;
+    var acct = myRefundAcct(), raw = state.refundaccts[state.me] || {}, bal = myBalance();
+    if (!state.rfDraft) state.rfDraft = { number: raw.number || '', name: raw.name || '', qr: '', error: '', saving: false };
+    var d = state.rfDraft, act = state.rfAct;
+    var refunds = Object.keys(state.refunds).map(function (id) { return Object.assign({ id: id }, state.refunds[id]); }).filter(function (r) { return r.by === state.me; }).sort(function (a, c) { return (c.requestedAt || 0) - (a.requestedAt || 0); });
+    var ledgerList = Object.keys(state.ledger).map(function (id) { return Object.assign({ id: id }, state.ledger[id]); }).filter(function (x) { return x.uid === state.me; }).sort(function (a, c) { return c.at - a.at; }).slice(0, 6);
+    var sig = [d.saving, d.error, !!d.qr, raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(','), ledgerList.length].join('|');
+    if (sig === rpSig) return;
+    rpSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
+    var cards = refunds.map(function (r) {
+      var sub = [r.bookingRef, slotRuns(r.slots).join('; ')].join(' · '), a = act && act.id === r.id ? act : null;
+      var rows = [['Paid', peso(r.paid)], ['Refundable', peso(r.refundable)]];
+      if (r.method) rows.push(['Method', r.method === 'balance' ? 'Refund balance' : 'GCash']);
+      if (r.status === 'refunded') { rows.push(['Refunded', peso(r.actualAmount != null ? r.actualAmount : r.refundable)]); if (r.method === 'gcash') rows.push(['GCash reference', r.refundRef]); rows.push(['Date', when(r.refundedAt)]); }
+      if (r.status === 'denied' && r.reason) rows.push(['Reason', r.reason]);
+      var kids = [
+        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, 'Booking ' + r.bookingRef), h('small', null, slotRuns(r.slots).join('; '))), h('div', { class: 'pay-amt' }, h('span', { class: 'chip rs-' + (r.status === 'awaiting_user' ? 'requested' : r.status) }, r.status === 'awaiting_user' ? 'Choose how to receive' : (STATUS_WORDS[r.status] || r.status)))),
+        h('dl', { class: 'kv' }, rows.reduce(function (acc, x) { acc.push(h('dt', null, x[0]), h('dd', null, x[1])); return acc; }, []))];
+      if (r.status === 'refunded' && r.receiptPath) kids.push(h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(r.receiptPath); } }, fileImg(r.receiptPath, 'Refund receipt', 'pay-proof')));
+      if (r.status === 'awaiting_user' && !a) {
+        kids.push(h('p', { class: 'note' }, 'You can get back ' + peso(r.refundable) + ' of ' + peso(r.paid) + '. Choose how you would like to receive it.'));
+        if (!acct) kids.push(h('p', { class: 'pay-reason' }, 'To receive it by GCash, fill in your GCash refund details above first.'));
+        kids.push(h('div', { class: 'confirm-actions' },
+          h('button', { id: 'rfc-bal-' + r.id, class: 'btn', type: 'button', onclick: function () { state.rfAct = { id: r.id, method: 'balance', busy: false, error: '' }; rpSig = ''; renderProfileRefunds(); } }, 'Keep as refund balance'),
+          h('button', { id: 'rfc-gc-' + r.id, class: 'btn primary', type: 'button', disabled: !acct, title: acct ? '' : 'Add your GCash refund details first', onclick: function () { state.rfAct = { id: r.id, method: 'gcash', busy: false, error: '' }; rpSig = ''; renderProfileRefunds(); } }, 'Send to my GCash')));
+      }
+      if (a) kids.push(h('div', { class: 'confirm-inline', role: 'alertdialog', 'aria-label': 'Confirm how to receive this refund' },
+        h('p', null, a.method === 'gcash' ? 'Send ' + peso(r.refundable) + ' to GCash ' + (acct ? acct.number + ' (' + acct.name + ')' : '') + '? Staff will review and send it, and you will be told.' : 'Keep ' + peso(r.refundable) + ' as refund balance? You can use it to pay for future bookings. Staff approve it first.'),
+        a.error ? h('p', { class: 'form-error', role: 'alert' }, a.error) : null,
+        h('div', { class: 'confirm-actions' },
+          h('button', { class: 'btn small', type: 'button', disabled: a.busy, onclick: function () { state.rfAct = null; rpSig = ''; renderProfileRefunds(); } }, 'No, go back'),
+          h('button', { id: 'rfc-yes', class: 'btn small primary', type: 'button', disabled: a.busy, onclick: function () { refundChoose(r.id, a.method); } }, a.busy ? 'Sending…' : 'Yes, request refund'))));
+      return h('article', { class: 'pay-card compact' }, kids);
+    });
+    var qrNow = d.qr ? h('img', { class: 'co-qr sm', src: d.qr, alt: 'New GCash QR code' }) : (raw.qrPath ? fileImg(raw.qrPath, 'Your GCash QR code', 'co-qr sm') : null);
+    fill(box,
+      h('div', { class: 'rf-bal' }, h('div', null, h('span', { class: 'note' }, 'Refund balance'), h('strong', null, peso(bal.available))), bal.reserved ? h('span', { class: 'note' }, peso(bal.reserved) + ' is set aside for a booking waiting for payment verification.') : h('span', { class: 'note' }, 'Use it when you pay for a booking.')),
+      h('h3', null, 'GCash refund details'),
+      h('p', { class: 'note' }, 'Needed to receive a refund by GCash. ' + (acct ? 'Complete ✓' : 'Not complete yet: add all three.')),
+      h('div', { class: 'rf-form' },
+        h('label', { class: 'field', for: 'rf-number' }, 'GCash number', h('input', { id: 'rf-number', type: 'tel', maxlength: '16', placeholder: '09171234567', autocomplete: 'tel', value: d.number, oninput: function (e) { d.number = e.target.value; } })),
+        h('label', { class: 'field', for: 'rf-name' }, 'Account name', h('input', { id: 'rf-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', value: d.name, oninput: function (e) { d.name = e.target.value; } })),
+        h('div', { class: 'field wide' }, 'Static GCash QR code',
+          h('input', { id: 'rf-qr', type: 'file', accept: 'image/*', 'aria-label': 'Upload your GCash QR code', onchange: function (e) {
+            var f = e.target.files && e.target.files[0]; if (!f) return;
+            resizeImage(f).then(function (u) { d.qr = u; d.error = ''; rpSig = ''; renderProfileRefunds(); }).catch(function (er) { d.error = er.message; rpSig = ''; renderProfileRefunds(); });
+          } }), qrNow)),
+      d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
+      h('div', null, h('button', { id: 'rf-save', class: 'btn primary', type: 'button', disabled: d.saving, onclick: saveRefundAcct }, d.saving ? 'Saving…' : 'Save refund details')),
+      h('div', { class: 'nf-head' }, h('h3', null, 'Refund history')),
+      cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, 'No refunds yet. If staff cancel a booking you paid for, the refund shows up here.'),
+      ledgerList.length ? h('div', { class: 'nf-head' }, h('h3', null, 'Balance history')) : null,
+      ledgerList.length ? h('ul', { class: 'nf-list' }, ledgerList.map(function (x) { return h('li', null, h('strong', null, (x.amount > 0 ? '+' : '−') + peso(Math.abs(x.amount)) + ' · ' + (LEDGER_WORDS[x.type] || x.type)), h('span', null, (x.ref ? x.ref + ' · ' : '') + 'balance after ' + peso(x.balanceAfter)), h('small', null, when(x.at))); })) : null);
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
+  }
+
   /* ---------- Payments and Refunds (staff) ---------- */
   // replaceChildren would print a literal 'null' for an empty slot, so empty ones are skipped
   function fill(box) { box.replaceChildren(); for (var i = 1; i < arguments.length; i++) if (arguments[i] != null && arguments[i] !== false) box.append(arguments[i]); }
@@ -2708,6 +2908,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           h('div', { class: 'pay-info' },
             h('p', null, h('span', null, p.kind === 'reschedule' ? 'Reschedule balance for ' : 'Booking '), h('strong', null, p.bookingRef)),
             h('ul', { class: 'pay-lines' }, p.kind === 'reschedule' && p.fromSlot ? [h('li', null, 'From ' + slotRuns([p.fromSlot])[0])].concat(lines.map(function (li) { return h('li', null, 'To ' + li.textContent); })) : lines),
+            p.balanceUsed ? h('p', null, 'Total ', h('strong', null, peso(p.total)), ' = ', h('strong', null, peso(p.balanceUsed)), ' refund balance + ', h('strong', null, peso(p.amount)), ' by GCash') : null,
             h('p', null, h('span', null, 'GCash reference '), h('strong', null, p.gcashRef)),
             h('p', { class: 'note' }, 'Submitted ' + when(p.submittedAt) + (p.reviewedAt ? ' · reviewed ' + when(p.reviewedAt) + (p.reviewedByName ? ' by ' + p.reviewedByName : '') : '')),
             p.status === 'rejected' && p.reason ? h('p', { class: 'pay-reason' }, 'Reason: ' + p.reason) : null),
@@ -2751,49 +2952,72 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (!can('refunds')) { rfSig = ''; box.replaceChildren(h('p', { class: 'note' }, 'Your role does not include refunds.')); return; }
     var all = Object.keys(state.refunds).map(function (id) { return Object.assign({ id: id }, state.refunds[id]); }).sort(function (a, c) { return (c.requestedAt || 0) - (a.requestedAt || 0); });
     var f = state.refundFilter, q = draftOf('rfq').trim().toLowerCase();
-    var open = function (r) { return r.status === 'requested' || r.status === 'approved'; };
-    var list = all.filter(function (r) { return (f === 'all' || (f === 'open' ? open(r) : r.status === f)) && (!q || (r.byName + ' ' + r.bookingRef).toLowerCase().indexOf(q) >= 0); });
-    var a = state.refAct;
-    var sig = [f, q, a ? a.id + a.kind + a.busy + a.error : '', list.map(function (r) { return r.id + r.status + r.refundable; }).join(',')].join('|');
+    var matches = function (r, t) { return t === 'all' || (t === 'open' ? (r.status === 'requested' || r.status === 'approved') : r.status === t); };
+    var list = all.filter(function (r) { return matches(r, f) && (!q || (r.byName + ' ' + r.bookingRef).toLowerCase().indexOf(q) >= 0); });
+    var a = state.refAct, proofKey = a ? 'rfproof' + a.id : '';
+    var sig = [f, q, a ? a.id + a.kind + a.busy + a.error + !!draftOf(proofKey) : '', list.map(function (r) { return r.id + r.status + r.refundable + (r.actualAmount || ''); }).join(',')].join('|');
     if (sig === rfSig) return;
     rfSig = sig;
     var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
     if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
-    var tabs = [['open', 'Open'], ['refunded', 'Refunded'], ['denied', 'Denied'], ['all', 'All']].map(function (t) {
-      var n = all.filter(function (r) { return t[0] === 'open' ? open(r) : t[0] === 'all' ? true : r.status === t[0]; }).length;
+    var tabs = [['open', 'To process'], ['awaiting_user', 'Awaiting player'], ['refunded', 'Refunded'], ['denied', 'Denied'], ['all', 'All']].map(function (t) {
+      var n = all.filter(function (r) { return matches(r, t[0]); }).length;
       return h('button', { id: 'rf-' + t[0], class: 'btn small' + (f === t[0] ? ' primary' : ''), type: 'button', 'aria-pressed': String(f === t[0]),
         onclick: function () { state.refundFilter = t[0]; rfSig = ''; renderRefunds(); } }, t[1] + ' (' + n + ')');
     });
     var cards = list.map(function (r) {
-      var acct = state.accounts[r.by] || {}, act = a && a.id === r.id ? a : null;
-      var pct = r.paid ? Math.round(r.refundable / r.paid * 100) : 0;
+      var acct = state.accounts[r.by] || {}, act = a && a.id === r.id ? a : null, isBal = r.method === 'balance';
+      var rows = [['Original payment', peso(r.paid)], ['Refundable', peso(r.refundable) + ' (' + (r.paid ? Math.round(r.refundable / r.paid * 100) : 0) + '%)'], ['Method', r.method ? (isBal ? 'Refund balance' : 'GCash') : 'Not chosen yet']];
+      if (r.status === 'refunded') { rows.push(['Refunded', peso(r.actualAmount != null ? r.actualAmount : r.refundable)]); if (!isBal) rows.push(['Refund reference', r.refundRef]); rows.push(['Refunded on', when(r.refundedAt) + (r.refundedByName ? ' by ' + r.refundedByName : '')]); }
+      if (r.status === 'denied' && r.reason) rows.push(['Reason', r.reason]);
       var kids = [
-        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, r.byName || 'Player'), h('small', null, roleLabel(roleOf(r.by)) + (acct.createdAt ? ' · member since ' + mfmt.format(new Date(Number(acct.createdAt))) : ''))), h('div', { class: 'pay-amt' }, statusChip(r.status), h('strong', null, peso(r.refundable)))),
-        h('div', { class: 'pay-info' },
-          h('p', null, h('span', null, 'Booking '), h('strong', null, r.bookingRef)),
-          h('ul', { class: 'pay-lines' }, (r.slots || []).map(function (s) { return h('li', null, slotRuns([s])[0] + ' · paid ' + peso(s.paid) + ' · ' + s.percent + '% refundable'); })),
-          h('p', null, 'Original payment ', h('strong', null, peso(r.paid)), ' · refundable ', h('strong', null, peso(r.refundable)), ' (' + pct + '%)'),
-          h('p', { class: 'note' }, 'Requested ' + when(r.requestedAt) + (r.requestedByName ? ' by ' + r.requestedByName : '') + (r.approvedAt ? ' · approved ' + when(r.approvedAt) + (r.approvedByName ? ' by ' + r.approvedByName : '') : '') + (r.refundedAt ? ' · refunded ' + when(r.refundedAt) + ' (GCash ref ' + r.refundRef + ')' : '') + (r.deniedAt ? ' · denied ' + when(r.deniedAt) : '')),
-          r.status === 'denied' && r.reason ? h('p', { class: 'pay-reason' }, 'Reason: ' + r.reason) : null)];
+        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, r.byName || 'Player'), h('small', null, roleLabel(roleOf(r.by)) + (acct.createdAt ? ' · member since ' + mfmt.format(new Date(Number(acct.createdAt))) : ''))), h('div', { class: 'pay-amt' }, h('span', { class: 'chip rs-' + (r.status === 'awaiting_user' ? 'requested' : r.status) }, r.status === 'awaiting_user' ? 'Awaiting player' : (STATUS_WORDS[r.status] || r.status)), h('strong', null, peso(r.actualAmount != null && r.status === 'refunded' ? r.actualAmount : r.refundable)))),
+        h('div', { class: 'pay-body' },
+          h('div', { class: 'pay-info' },
+            h('p', null, h('span', null, 'Booking '), h('strong', null, r.bookingRef)),
+            h('ul', { class: 'pay-lines' }, (r.slots || []).map(function (s) { return h('li', null, slotRuns([s])[0] + ' · paid ' + peso(s.paid) + ' · ' + s.percent + '% refundable'); })),
+            h('dl', { class: 'kv' }, rows.reduce(function (acc, x) { acc.push(h('dt', null, x[0]), h('dd', null, x[1])); return acc; }, [])),
+            h('p', { class: 'note' }, 'Cancelled ' + when(r.requestedAt) + (r.requestedByName ? ' by ' + r.requestedByName : '') + (r.chosenAt ? ' · player chose ' + when(r.chosenAt) : '') + (r.approvedAt ? ' · approved ' + when(r.approvedAt) + (r.approvedByName ? ' by ' + r.approvedByName : '') : '')),
+            r.status === 'awaiting_user' ? h('p', { class: 'note' }, 'The player has been asked to choose GCash or refund balance. Nothing to do until they do.') : null,
+            r.method === 'gcash' && r.acct && (r.status === 'requested' || r.status === 'approved') ? h('div', { class: 'rf-acct' },
+              h('strong', null, 'Send the refund to this GCash'),
+              h('div', { class: 'co-line' }, h('span', null, 'Number'), h('strong', null, r.acct.number), h('button', { class: 'btn small', type: 'button', onclick: function () { copyText(r.acct.number, 'GCash number'); } }, 'Copy')),
+              h('div', { class: 'co-line' }, h('span', null, 'Account name'), h('strong', null, r.acct.name))) : null,
+            r.status === 'denied' && r.reason ? h('p', { class: 'pay-reason' }, 'Reason: ' + r.reason) : null),
+          r.method === 'gcash' && r.acct && r.acct.qrPath && (r.status === 'requested' || r.status === 'approved') ? h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the player GCash QR code full size', onclick: function () { openImg(r.acct.qrPath); } }, fileImg(r.acct.qrPath, 'Player GCash QR code', 'pay-proof')) : null,
+          r.status === 'refunded' && r.receiptPath ? h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(r.receiptPath); } }, fileImg(r.receiptPath, 'Refund receipt', 'pay-proof')) : null)];
+      if (r.status === 'awaiting_user' && !act) kids.push(h('div', { class: 'confirm-actions' }, h('button', { id: 'rd-' + r.id, class: 'btn', type: 'button', onclick: function () { refAct(r.id, 'deny'); } }, 'Deny')));
       if (r.status === 'requested' && !act) kids.push(h('div', { class: 'confirm-actions' },
         h('button', { id: 'rd-' + r.id, class: 'btn', type: 'button', onclick: function () { refAct(r.id, 'deny'); } }, 'Deny'),
-        h('button', { id: 'ra-' + r.id, class: 'btn primary', type: 'button', onclick: function () { refAct(r.id, 'approve'); } }, 'Review and approve')));
+        h('button', { id: 'ra-' + r.id, class: 'btn primary', type: 'button', onclick: function () { refAct(r.id, 'approve'); } }, isBal ? 'Approve and add to balance' : 'Review and approve')));
       if (r.status === 'approved' && !act) kids.push(h('div', { class: 'confirm-actions' },
         h('button', { id: 'rd-' + r.id, class: 'btn', type: 'button', onclick: function () { refAct(r.id, 'deny'); } }, 'Deny'),
         h('button', { id: 'rc-' + r.id, class: 'btn primary', type: 'button', onclick: function () { refAct(r.id, 'complete'); } }, 'Record the refund')));
       if (act && act.kind === 'approve') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Approve this refund' },
         h('label', { class: 'field', for: 'rfa-' + r.id }, 'Amount to refund (up to ' + peso(r.paid) + ')',
           h('input', { id: 'rfa-' + r.id, type: 'number', min: '0', max: String(r.paid), step: '1', value: draftOf('rfa' + r.id) || String(r.refundable), oninput: function (e) { setDraft('rfa' + r.id, e.target.value); } })),
+        isBal ? h('p', { class: 'note' }, 'This is added to ' + (r.byName || 'the player') + '’s refund balance straight away, and they are told.') : null,
         act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
         h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
-          h('button', { id: 'rfa-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-approve', { amount: draftOf('rfa' + r.id) || r.refundable }, 'Refund approved. Now send it by GCash and record the reference.'); } }, act.busy ? 'Approving…' : 'Approve refund'))));
+          h('button', { id: 'rfa-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-approve', { amount: draftOf('rfa' + r.id) || r.refundable }, isBal ? 'Refund added to the player’s balance. They were told.' : 'Refund approved. Now send it by GCash and record it.'); } }, act.busy ? 'Approving…' : (isBal ? 'Add to balance' : 'Approve refund')))));
       if (act && act.kind === 'complete') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Record the refund you sent' },
-        h('p', null, 'Send ' + peso(r.refundable) + ' to ' + (r.byName || 'the player') + ' from your GCash app, then enter the reference number of that transfer. The player is told only after you do this.'),
+        h('p', null, 'Send the refund from your GCash app to ' + (r.acct ? r.acct.number + ' (' + r.acct.name + ')' : 'the player') + ', then record exactly what you sent. The player is told only after you save this.'),
+        h('label', { class: 'field', for: 'rfm-' + r.id }, 'Amount actually refunded',
+          h('input', { id: 'rfm-' + r.id, type: 'number', min: '1', max: String(r.paid), step: '1', value: draftOf('rfm' + r.id) || String(r.refundable), oninput: function (e) { setDraft('rfm' + r.id, e.target.value); } })),
         h('label', { class: 'field', for: 'rfc-' + r.id }, 'GCash reference of the refund',
           h('input', { id: 'rfc-' + r.id, type: 'text', maxlength: '40', autocomplete: 'off', value: draftOf('rfc' + r.id), oninput: function (e) { setDraft('rfc' + r.id, e.target.value); } })),
+        h('div', { class: 'field' }, 'Refund receipt (screenshot)',
+          h('input', { id: 'rfp-' + r.id, type: 'file', accept: 'image/*', onchange: function (e) {
+            var fl = e.target.files && e.target.files[0]; if (!fl) return;
+            resizeImage(fl).then(function (u) { setDraft('rfproof' + r.id, u); rfSig = ''; renderRefunds(); }).catch(function (er) { if (state.refAct) state.refAct.error = er.message; rfSig = ''; renderRefunds(); });
+          } }),
+          draftOf('rfproof' + r.id) ? h('img', { class: 'co-proof', src: draftOf('rfproof' + r.id), alt: 'Refund receipt preview' }) : null),
         act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
         h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
-          h('button', { id: 'rfc-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () { runRefAct('refund-complete', { gcashRef: draftOf('rfc' + r.id) }, 'Refund recorded. The player was told.'); } }, act.busy ? 'Saving…' : 'Mark as refunded'))));
+          h('button', { id: 'rfc-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () {
+            if (!draftOf('rfproof' + r.id)) { act.error = 'Upload the receipt of the refund you sent.'; rfSig = ''; renderRefunds(); return; }
+            runRefAct('refund-complete', { gcashRef: draftOf('rfc' + r.id), amount: draftOf('rfm' + r.id) || r.refundable, proof: draftOf('rfproof' + r.id) }, 'Refund recorded. The player was told.');
+          } }, act.busy ? 'Saving…' : 'Mark as refunded'))));
       if (act && act.kind === 'deny') kids.push(h('div', { class: 'confirm-inline', role: 'group', 'aria-label': 'Deny this refund' },
         h('label', { class: 'field', for: 'rfd-' + r.id }, 'Reason (the player will see this)',
           h('input', { id: 'rfd-' + r.id, type: 'text', maxlength: '200', value: draftOf('rfd' + r.id), oninput: function (e) { setDraft('rfd' + r.id, e.target.value); } })),
@@ -2804,9 +3028,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     });
     fill(box,
       h('div', { class: 'book-head' }, h('h2', null, 'Refunds')),
-      h('p', { class: 'note' }, 'Refund requests start when staff cancel a paid booking. Approve the amount, send it by GCash, then record the reference: only then is the player told. Policy: ' + policyText()),
+      h('p', { class: 'note' }, 'When staff cancel a paid booking, the player chooses GCash or refund balance. Balance refunds are added when you approve. For GCash, send the money yourself, then record the amount, reference and receipt: only then is the player told. Policy: ' + policyText()),
       h('div', { class: 'pay-filters' }, tabs, h('input', { id: 'rf-q', type: 'search', placeholder: 'Name or booking reference', 'aria-label': 'Search refunds', value: draftOf('rfq'), oninput: function (e) { setDraft('rfq', e.target.value); renderRefunds(); } })),
-      cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, all.length ? 'No refunds match.' : 'No refund requests yet.'));
+      cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, all.length ? 'No refunds match.' : 'No refunds yet.'));
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
   }
 
@@ -2878,11 +3102,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function renderRoles() {
     var box = $('#view-roles');
     box.replaceChildren();
-    if (!isSuper()) { box.append(h('p', { class: 'note' }, 'Only a super admin can change role access.')); return; }
+    if (!can('roleaccess')) { box.append(h('p', { class: 'note' }, 'Your role cannot change role access.')); return; }
     var defs = roleDefs();
     var order = roleOrder(defs);
     box.append(h('h2', null, 'Role access'));
     box.append(h('p', { class: 'note' }, 'Choose what each role can see and do. Changes apply the next time that person’s page updates. Super admin always has every feature and can’t be turned down.'));
+    if (!isSuper()) box.append(h('p', { class: 'note lock-note' }, '🔒 The Admin column is locked: only a Super Admin can change what Admins can do, and only a Super Admin can make someone a Super Admin.'));
 
     var head = h('tr', null, h('th', { scope: 'col' }, 'Feature'));
     order.forEach(function (k) {
@@ -2896,7 +3121,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var tr = h('tr', null, h('td', null, f.label, h('small', null, f.hint)));
       order.forEach(function (k) {
         if (k === 'super_admin') { tr.append(h('td', null, h('input', { type: 'checkbox', checked: true, disabled: true, 'aria-label': f.label + ' for Super admin' }))); return; }
-        tr.append(h('td', null, h('input', { type: 'checkbox', checked: defs[k].perms[f.key] === true, 'aria-label': f.label + ' for ' + roleLabel(k),
+        tr.append(h('td', null, h('input', { type: 'checkbox', checked: defs[k].perms[f.key] === true, disabled: k === 'admin' && !isSuper(), 'aria-label': f.label + ' for ' + roleLabel(k),
           onchange: function (e) {
             var val = e.target.checked;
             saveCfg(function (dd) { dd[k].perms[f.key] = val; });
@@ -3194,7 +3419,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (can('people')) views.push(['people', 'Users']);
     if (can('payments') || can('paysettings')) views.push(['payments', 'Payments']);
     if (can('refunds')) views.push(['refunds', 'Refunds']);
-    if (isSuper()) views.push(['roles', 'Role access']);
+    if (can('roleaccess')) views.push(['roles', 'Role access']);
     // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
     if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
     $('#book-btn').hidden = !can('book');
@@ -3634,7 +3859,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       state.payCfg = snap.exists ? (snap.data() || {}) : {};
       render();
     }, function () {});
-    [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs']].forEach(function (c) {
+    [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs'], ['refundaccts', 'refundaccts'], ['balances', 'balances'], ['ledger', 'ledger']].forEach(function (c) {
       db.collection(c[0]).onSnapshot(function (snap) {
         var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
         state[c[1]] = next; render();

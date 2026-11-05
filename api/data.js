@@ -22,7 +22,7 @@ async function read(req, res) {
   const want = Number(req.query && req.query.rev);
   const rev = await L.getRev();
   if (want === rev) return res.status(200).json({ rev, same: true });
-  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'config']);
+  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'refundaccts', 'balances', 'ledger', 'config']);
   const r = await L.redis(names.map(c => ['HGETALL', L.K(c)]));
   const cols = {};
   names.slice(0, -1).forEach((c, i) => { cols[c] = mapOf(r[i]); });
@@ -38,7 +38,9 @@ async function read(req, res) {
     if (perm && w.can(perm)) return;
     Object.keys(cols[col]).forEach(id => { if (cols[col][id][ownerField] !== w.uid) delete cols[col][id]; });
   };
-  onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to');
+  const onlyMineKeyed = (col, perm) => { if (perm && w.can(perm)) return; Object.keys(cols[col]).forEach(id => { if (id !== w.uid) delete cols[col][id]; }); };   // documents named after the person
+  onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to'); onlyMine('ledger', 'refunds', 'uid');
+  onlyMineKeyed('refundaccts', 'refunds'); onlyMineKeyed('balances', 'refunds');
   res.status(200).json({ rev, cols, config });
 }
 
@@ -107,9 +109,13 @@ const rules = {
     if (next === null) throw forbid();
     if (!isObj(next)) throw L.httpErr(400, 'Bad settings.');
     if (id === 'roles') {
-      if (!w.isSuper) throw forbid('Only a super admin can change role access.');
+      if (!w.can('roleaccess')) throw forbid('Your role cannot change role access.');
       const defs = isObj(next.defs) ? Object.assign({}, next.defs) : {};
-      delete defs.super_admin;
+      delete defs.super_admin;   // nobody can write a "super admin" role here: that role only comes from a super admin assigning it
+      if (!w.isSuper) {          // admins manage the other roles, but only a super admin changes what Admins themselves can do
+        const eff = d => JSON.stringify([((d && d.admin && d.admin.label) || 'Admin'), L.permsFor('admin', d)]);
+        if (eff(defs) !== eff((cur && cur.defs) || {})) throw forbid('Only a super admin can change what Admins can do.');
+      }
       return { defs };
     }
     if (id === 'options') {
@@ -140,7 +146,7 @@ async function write(req, res) {
   const col = parts[0];
   let id = parts[1];
   const op = b.op;
-  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
+  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
   if (op === 'add') {
     if (col !== 'sessions' || parts.length !== 1) throw forbid();
     id = crypto.randomBytes(10).toString('hex');

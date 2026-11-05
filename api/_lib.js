@@ -75,7 +75,7 @@ async function redis(cmds) {
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
-const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens'];
+const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
 
@@ -227,12 +227,12 @@ const clearThrottle = key => clearHit('rl:' + key);
 const clientIp = req => String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || 'ip').split(',')[0].trim();
 
 /* ---------- roles and permissions (same table as the page) ---------- */
-const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers', 'payments', 'refunds', 'paysettings'];
+const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers', 'payments', 'refunds', 'paysettings', 'roleaccess'];
 const ALL_ON = {}; FEATURE_KEYS.forEach(k => { ALL_ON[k] = true; });
 const DEFAULTS = {
-  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true },
-  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false },
-  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false }
+  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true, roleaccess: true },
+  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false },
+  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false }
 };
 function permsFor(role, cfgDefs) {
   if (role === 'super_admin') return ALL_ON;
@@ -283,5 +283,5 @@ function bookingEnded(b) {
 module.exports = {
   redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, SB_URL, configured,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
-  throttle, clearThrottle, clientIp, whoIs, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
+  throttle, clearThrottle, clientIp, whoIs, permsFor, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

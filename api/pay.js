@@ -20,6 +20,35 @@ const putNew = (col, id, doc) => L.one(['HSETNX', L.K(col), id, JSON.stringify(d
 const lockOnce = async (key, val) => !!(await L.one(['HSETNX', L.K('locks'), key, JSON.stringify(val || 1)]));
 const unlock = key => del('locks', key);
 const sum = (list, f) => list.reduce((n, x) => n + (Number(f(x)) || 0), 0);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ----- refund balance: one person's balance is changed by one request at a time ----- */
+async function withBalance(uid, fn) {
+  const key = 'bal:' + uid;
+  for (let i = 0; i < 50; i++) {
+    if (await lockOnce(key, { t: Date.now() })) { try { return await fn(); } finally { await unlock(key); } }
+    const cur = await L.getDoc('locks', key);
+    if (cur && Date.now() - Number(cur.t || 0) > 15000) await unlock(key);   // a crashed request left it behind
+    await sleep(60 + Math.random() * 80);
+  }
+  throw err(503, 'Your balance is being updated. Please try again in a moment.');
+}
+const getBal = async uid => Object.assign({ amount: 0, reserved: 0 }, await L.getDoc('balances', uid));
+const putBal = (uid, bal) => put('balances', uid, Object.assign({}, bal, { updatedAt: Date.now() }));
+const ledger = (uid, type, amount, after, extra) => put('ledger', newId('lg_'), Object.assign({ uid, type, amount, balanceAfter: after, at: Date.now() }, extra || {}));
+// Both the reference number and the receipt are required for any GCash payment.
+function gcashInput(b) {
+  const gref = normRef(b.gcashRef);
+  need(gref.length >= 8 && gref.length <= 30, 400, 'Enter the GCash reference number from your receipt (8 to 30 letters and numbers).');
+  need(b.proof, 400, 'Upload a screenshot or photo of your GCash receipt.');
+  return { gref, img: parseImage(b.proof) };
+}
+async function tellBookingConfirmed(uid, name, payId, ref, slots, total, how) {
+  const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when };
+  await B.notify([uid], { event: 'payment-approved', refId: payId, kind: 'payment-approved', data, title: 'Booking confirmed ✓', body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + ref + '. Show it to the venue staff before using the court.' });
+  const staff = (await B.venueStaff(first.venue)).filter(u => u !== uid);
+  await B.notify(staff, { event: 'booking-confirmed', refId: payId, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: name + ' · ' + ref + ' · ' + when + ' · Payment: ' + how + ' ' + B.money(total) + '.' });
+}
 
 function parseImage(dataUrl) {
   const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
@@ -87,9 +116,7 @@ async function payerEmail(w, email) {
 }
 async function submitPayment(w, b, spec) {
   need(w.can('book'), 403, 'Your role cannot book courts.');
-  const gref = normRef(b.gcashRef);
-  need(gref.length >= 8 && gref.length <= 30, 400, 'Enter the GCash reference number from your receipt (8 to 30 letters and numbers).');
-  const img = parseImage(b.proof);
+  const { gref, img } = gcashInput(b);
   const pc = await B.payCfg();
   need(pc.gcashNumber, 503, 'Payments are not set up yet. Ask an admin to add the GCash details.');
   const payId = newId('p_');
@@ -129,7 +156,7 @@ const actions = {
     return { ok: true };
   },
 
-  /* ----- GCash proof for a new booking ----- */
+  /* ----- paying for a new booking: GCash (reference number and receipt are both required), the refund balance, or both ----- */
   async pay(w, b) {
     const ref = String(b.ref || '');
     need(await lockOnce('payref:' + ref, w.uid), 409, 'This booking was already submitted for payment.');
@@ -138,14 +165,42 @@ const actions = {
       need(slots.length, 404, 'We could not find that booking.');
       need(slots.every(x => x.status === 'hold'), 409, 'This booking was already submitted for payment verification.');
       need(slots.every(x => B.occupies(x)), 409, 'Your hold on these hours ran out. Please pick the hours again.');
-      const amount = sum(slots, x => x.price);
-      const { payId, doc } = await submitPayment(w, b, {
-        kind: 'booking', ref, amount, slots: slots.map(x => ({ date: x.date, venue: x.venue, court: x.court, hour: x.hour, price: x.price })),
-        apply: async payId => { for (const x of slots) { const nx = Object.assign({}, x, { status: 'pending', payId }); delete nx.id; delete nx.holdUntil; await put('bookings', x.id, nx); } }
+      const total = sum(slots, x => x.price);
+      const lines = slots.map(x => ({ date: x.date, venue: x.venue, court: x.court, hour: x.hour, price: x.price }));
+      const toPending = payId => async () => { for (const x of slots) { const nx = Object.assign({}, x, { status: 'pending', payId }); delete nx.id; delete nx.holdUntil; await put('bookings', x.id, nx); } };
+      if (!b.useBalance) {
+        const { payId, doc } = await submitPayment(w, b, { kind: 'booking', ref, amount: total, slots: lines, extra: { total, balanceUsed: 0 }, apply: async id => toPending(id)() });
+        await L.bump();
+        await tellReviewers(w, payId, doc);
+        return { ok: true, paymentId: payId, status: 'pending_verification', amount: total, total, balanceUsed: 0 };
+      }
+      return await withBalance(w.uid, async () => {
+        const bal = await getBal(w.uid), avail = bal.amount - bal.reserved;
+        need(avail > 0, 400, 'You have no refund balance to use.');
+        const use = Math.min(avail, total), rest = total - use;
+        if (rest === 0) {   // the balance covers everything: nothing for staff to verify, so the booking is confirmed now and the balance is deducted
+          const payId = newId('p_'), now = Date.now();
+          for (const x of slots) { const nx = Object.assign({}, x, { status: 'confirmed', paid: x.price, payId }); delete nx.id; delete nx.holdUntil; await put('bookings', x.id, nx); }
+          await put('payments', payId, { kind: 'booking', bookingRef: ref, by: w.uid, byName: w.member.name, email: await payerEmail(w, b.email), amount: 0, total, balanceUsed: total, method: 'balance', status: 'paid', slots: lines, submittedAt: now, reviewedAt: now, reviewedByName: 'Refund balance' });
+          await putBal(w.uid, Object.assign({}, bal, { amount: bal.amount - total }));
+          await ledger(w.uid, 'booking-use', -total, bal.amount - total, { ref, payId });
+          await L.bump();
+          await tellBookingConfirmed(w.uid, w.member.name, payId, ref, slots, total, 'Paid with refund balance');
+          return { ok: true, paymentId: payId, status: 'paid', confirmed: true, amount: 0, total, balanceUsed: total };
+        }
+        // part balance, part GCash: check the GCash fields first, then set the balance part aside so it cannot be spent twice while staff verify
+        gcashInput(b);
+        await putBal(w.uid, Object.assign({}, bal, { reserved: bal.reserved + use }));
+        try {
+          const { payId, doc } = await submitPayment(w, b, { kind: 'booking', ref, amount: rest, slots: lines, extra: { total, balanceUsed: use }, apply: async id => toPending(id)() });
+          await L.bump();
+          await tellReviewers(w, payId, doc);
+          return { ok: true, paymentId: payId, status: 'pending_verification', amount: rest, total, balanceUsed: use };
+        } catch (e) {
+          const cur = await getBal(w.uid); await putBal(w.uid, Object.assign({}, cur, { reserved: Math.max(0, cur.reserved - use) }));
+          throw e;
+        }
       });
-      await L.bump();
-      await tellReviewers(w, payId, doc);
-      return { ok: true, paymentId: payId, status: 'pending_verification', amount };
     } catch (e) { await unlock('payref:' + ref); throw e; }
   },
 
@@ -206,6 +261,11 @@ const actions = {
       slots = mine;
     }
     await put('payments', id, Object.assign({}, pay, { status: 'paid', reviewedBy: w.uid, reviewedByName: w.member.name, reviewedAt: Date.now() }));
+    if (pay.kind === 'booking' && Number(pay.balanceUsed) > 0) await withBalance(pay.by, async () => {
+      const bal = await getBal(pay.by), after = Math.max(0, bal.amount - pay.balanceUsed);
+      await putBal(pay.by, Object.assign({}, bal, { amount: after, reserved: Math.max(0, bal.reserved - pay.balanceUsed) }));
+      await ledger(pay.by, 'booking-use', -pay.balanceUsed, after, { ref: pay.bookingRef, payId: id });
+    });
     committed = true;
     } catch (e) { if (!committed) await unlock('ev:approve:' + id); throw e; }
     await L.bump();
@@ -218,7 +278,7 @@ const actions = {
       body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + pay.bookingRef + '. Show it to the venue staff before using the court.'
     });
     const staff = (await B.venueStaff(first.venue)).filter(u => u !== pay.by);
-    await B.notify(staff, { event: 'booking-confirmed', refId: id, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: pay.byName + ' · ' + pay.bookingRef + ' · ' + when + ' · Payment: Paid ' + B.money(pay.amount) + '.' });
+    await B.notify(staff, { event: 'booking-confirmed', refId: id, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: pay.byName + ' · ' + pay.bookingRef + ' · ' + when + ' · Payment: Paid ' + B.money(pay.total || pay.amount) + '.' });
     return { ok: true };
   },
 
@@ -234,13 +294,14 @@ const actions = {
     }
     await unlock('gcash:' + pay.gcashRef);
     if (pay.kind === 'booking') await unlock('payref:' + pay.bookingRef);
+    if (pay.kind === 'booking' && Number(pay.balanceUsed) > 0) await withBalance(pay.by, async () => { const bal = await getBal(pay.by); await putBal(pay.by, Object.assign({}, bal, { reserved: Math.max(0, bal.reserved - pay.balanceUsed) })); });
     await put('payments', id, Object.assign({}, pay, { status: 'rejected', reason, reviewedBy: w.uid, reviewedByName: w.member.name, reviewedAt: Date.now() }));
     await L.bump();
     await B.notify([pay.by], { event: 'payment-rejected', refId: id, kind: 'payment-rejected', data: { ref: pay.bookingRef, reason }, title: 'Payment not approved', body: 'We could not verify your GCash payment for ' + pay.bookingRef + '.' + (reason ? ' Reason: ' + reason : '') + (pay.kind === 'reschedule' ? ' Your original booking is unchanged.' : ' Your hours are held for 30 minutes so you can send a corrected receipt.') });
     return { ok: true };
   },
 
-  /* ----- staff: cancel hours (this is what creates refund requests) ----- */
+  /* ----- staff: cancel hours. A paid hour opens a refund for the PLAYER to choose how to receive (GCash or account balance) ----- */
   async cancel(w, b) {
     need(w.can('managebookings'), 403, 'Your role cannot cancel bookings.');
     const ids = Array.isArray(b.ids) ? b.ids.map(String).slice(0, 48) : [];
@@ -253,42 +314,94 @@ const actions = {
       need(s.status !== 'pending' && s.status !== 'resched', 409, 'This booking is waiting for payment verification. Approve or deny the payment first.');
       need(!Object.keys(pays).some(k => pays[k].status === 'pending_verification' && pays[k].move && pays[k].move.from === s.id), 409, 'A reschedule for this hour is waiting for payment verification. Approve or deny it first.');
     }
-    const policy = (await B.payCfg()).refundPolicy, byPlayer = {};
+    const policy = (await B.payCfg()).refundPolicy, byPlayer = {}, noRefund = {};
     for (const s of slots) {
       await del('bookings', s.id);
       const paid = Number(s.paid) || 0;
       if (s.status === 'hold' || !paid) continue;
-      if (!(await lockOnce('ev:refundslot:' + s.id + ':' + s.at, 1))) continue;   // this paid hour already produced a refund request
+      if (!(await lockOnce('ev:refundslot:' + s.id + ':' + s.at, 1))) continue;   // this paid hour already produced a refund
       const hoursUntil = (B.startMs(s.date, s.hour) - Date.now()) / 3600000, pct = B.refundPercent(policy, hoursUntil);
-      (byPlayer[s.by + '|' + s.ref] = byPlayer[s.by + '|' + s.ref] || []).push({ s, paid, pct, refundable: Math.round(paid * pct / 100) });
+      const k = s.by + '|' + s.ref;
+      (byPlayer[k] = byPlayer[k] || []).push({ s, paid, pct, refundable: Math.round(paid * pct / 100) });
     }
     const made = [];
     for (const key of Object.keys(byPlayer)) {
-      const g = byPlayer[key], first = g[0].s, id = newId('rf_');
+      const g = byPlayer[key], first = g[0].s, id = newId('rf_'), paidSum = sum(g, x => x.paid), refundable = sum(g, x => x.refundable);
+      if (!refundable) {   // the policy gives nothing back: no request is opened
+        await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', data: { ref: first.ref }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled. No refund applies under the refund policy.' });
+        continue;
+      }
       const doc = {
-        bookingRef: first.ref, by: first.by, byName: first.byName, status: 'requested', requestedBy: w.uid, requestedByName: w.member.name, requestedAt: Date.now(),
+        bookingRef: first.ref, by: first.by, byName: first.byName, status: 'awaiting_user', method: null, requestedBy: w.uid, requestedByName: w.member.name, requestedAt: Date.now(),
         slots: g.map(x => ({ date: x.s.date, venue: x.s.venue, court: x.s.court, hour: x.s.hour, paid: x.paid, percent: x.pct })),
-        paid: sum(g, x => x.paid), refundable: sum(g, x => x.refundable), policy
+        paid: paidSum, refundable, policy
       };
       await put('refunds', id, doc); made.push(id);
-      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', data: { ref: first.ref, refundId: id }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled. ' + (doc.refundable ? 'A refund of ' + B.money(doc.refundable) + ' was requested; you will be told when it is sent.' : 'No refund applies under the refund policy.') });
-      const staff = await B.usersWith('refunds');
-      await B.notify(staff.filter(u => u !== w.uid), { event: 'refund-requested', refId: id, kind: 'refund-requested', data: { refundId: id }, title: 'New refund request', body: first.byName + ' · ' + first.ref + ' · refundable ' + B.money(doc.refundable) + ' of ' + B.money(doc.paid) + '.' });
+      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: choose your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled. You can get back ' + B.money(refundable) + '. Open Profile, then Refunds, to receive it by GCash or keep it as balance for future bookings.' });
     }
     await L.bump();
     return { ok: true, refunds: made };
   },
 
-  /* ----- staff: refunds (the GCash transfer itself is made by hand, then recorded here) ----- */
+  /* ----- the player: GCash details for refunds ----- */
+  async 'refund-account'(w, b) {
+    const n = String(b.number || '').replace(/[\s-]/g, ''), name = String(b.name || '').trim();
+    need(/^(\+?63|0)9\d{9}$/.test(n), 400, 'Enter a valid GCash number, like 09171234567.');
+    need(name.length >= 2 && name.length <= 60, 400, 'Enter the account name shown in your GCash.');
+    const cur = (await L.getDoc('refundaccts', w.uid)) || {};
+    let qrPath = cur.qrPath || '';
+    if (b.qr) { const img = parseImage(b.qr); qrPath = 'refundqr/' + w.uid + '-' + Date.now() + '.' + img.ext; await L.putFile(qrPath, img.buf, img.type); }
+    need(qrPath, 400, 'Upload your GCash QR code.');
+    await put('refundaccts', w.uid, { number: n, name, qrPath, updatedAt: Date.now() });
+    await L.bump();
+    return { ok: true };
+  },
+
+  /* ----- the player: how to receive a refund (the request staff then process) ----- */
+  async 'refund-choose'(w, b) {
+    const id = String(b.id || ''), r = await L.getDoc('refunds', id), method = b.method;
+    need(r && r.by === w.uid, 404, 'Refund not found.');
+    need(method === 'gcash' || method === 'balance', 400, 'Choose GCash or refund balance.');
+    need(r.status === 'awaiting_user', 409, 'This refund was already requested.');
+    let acct = null;
+    if (method === 'gcash') {
+      const a = await L.getDoc('refundaccts', w.uid);
+      need(a && a.number && a.name && a.qrPath, 400, 'Add your GCash number, account name and QR code in Profile before requesting a GCash refund.');
+      acct = { number: a.number, name: a.name, qrPath: a.qrPath };
+    }
+    need(await lockOnce('ev:rfchoose:' + id, w.uid), 409, 'This refund was already requested.');
+    await put('refunds', id, Object.assign({}, r, { status: 'requested', method, acct, chosenAt: Date.now() }));
+    await L.bump();
+    const staff = await B.usersWith('refunds');
+    await B.notify(staff.filter(u => u !== w.uid), { event: 'refund-requested', refId: id, kind: 'refund-requested', data: { refundId: id }, title: 'New refund request', body: r.byName + ' · ' + r.bookingRef + ' · ' + B.money(r.refundable) + (method === 'balance' ? ' as refund balance' : ' by GCash') + '.' });
+    return { ok: true };
+  },
+
+  /* ----- staff: refunds. Refund balance is credited on approval; a GCash refund is sent by hand, then recorded with its reference and receipt ----- */
   async 'refund-approve'(w, b) {
     need(w.can('refunds'), 403, 'Your role cannot process refunds.');
     const id = String(b.id || ''), r = await L.getDoc('refunds', id);
     need(r, 404, 'Refund not found.');
-    need(r.status === 'requested', 409, 'This refund was already reviewed.');
+    need(r.status === 'requested', 409, r.status === 'awaiting_user' ? 'The player has not chosen how to receive this refund yet.' : 'This refund was already reviewed.');
     let amount = r.refundable;
     if (b.amount !== undefined && b.amount !== '') { amount = Math.round(Number(b.amount)); need(amount >= 0 && amount <= r.paid, 400, 'The refund cannot be more than was paid (' + B.money(r.paid) + ').'); }
     need(await lockOnce('ev:rfapprove:' + id, w.uid), 409, 'This refund is already being approved.');
-    await put('refunds', id, Object.assign({}, r, { status: 'approved', refundable: amount, approvedBy: w.uid, approvedByName: w.member.name, approvedAt: Date.now() }));
+    try {
+      if (r.method === 'balance') {
+        let newBalance = 0;
+        await withBalance(r.by, async () => {
+          const bal = await getBal(r.by);
+          newBalance = bal.amount + amount;
+          if (!(await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: bal.amount + amount, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited.');
+          await putBal(r.by, Object.assign({}, bal, { amount: bal.amount + amount }));
+        });
+        await put('refunds', id, Object.assign({}, r, { status: 'refunded', refundable: amount, actualAmount: amount, refundRef: 'REFUND BALANCE', approvedBy: w.uid, approvedByName: w.member.name, approvedAt: Date.now(), refundedBy: w.uid, refundedByName: w.member.name, refundedAt: Date.now() }));
+        await L.bump();
+        await B.notify([r.by], { event: 'refund-done', refId: id, kind: 'refund-done', data: { ref: r.bookingRef, amount, method: 'balance', balance: newBalance }, title: 'Refund added to your balance', body: B.money(amount) + ' from booking ' + r.bookingRef + ' was added to your refund balance. You can use it to pay for your next booking.' });
+        return { ok: true };
+      }
+      await put('refunds', id, Object.assign({}, r, { status: 'approved', refundable: amount, approvedBy: w.uid, approvedByName: w.member.name, approvedAt: Date.now() }));
+    } catch (e) { await unlock('ev:rfapprove:' + id); throw e; }
     await L.bump();
     return { ok: true };
   },
@@ -296,21 +409,29 @@ const actions = {
     need(w.can('refunds'), 403, 'Your role cannot process refunds.');
     const id = String(b.id || ''), r = await L.getDoc('refunds', id), gref = normRef(b.gcashRef);
     need(r, 404, 'Refund not found.');
+    need(r.method === 'gcash', 400, 'This refund is kept as balance, so there is nothing to send.');
     need(r.status === 'approved', 409, r.status === 'refunded' ? 'This refund was already completed.' : 'Approve the refund first.');
     need(gref.length >= 6 && gref.length <= 30, 400, 'Enter the GCash reference number of the refund you sent.');
+    const actual = b.amount === undefined || b.amount === '' ? r.refundable : Math.round(Number(b.amount));
+    need(actual > 0 && actual <= r.paid, 400, 'Enter the amount you actually sent (more than 0 and not more than ' + B.money(r.paid) + ').');
+    const img = parseImage(b.proof);   // the receipt of the refund is required
     need(await lockOnce('gcash:' + gref, id), 409, 'That GCash reference number was already used.');
     if (!(await lockOnce('ev:rfdone:' + id, w.uid))) { await unlock('gcash:' + gref); throw err(409, 'This refund is already being completed.'); }
-    await put('refunds', id, Object.assign({}, r, { status: 'refunded', refundRef: gref, refundedBy: w.uid, refundedByName: w.member.name, refundedAt: Date.now() }));
+    try {
+      const path = 'refundproofs/' + id + '.' + img.ext;
+      await L.putFile(path, img.buf, img.type);
+      await put('refunds', id, Object.assign({}, r, { status: 'refunded', actualAmount: actual, refundRef: gref, receiptPath: path, refundedBy: w.uid, refundedByName: w.member.name, refundedAt: Date.now() }));
+    } catch (e) { await unlock('gcash:' + gref); await unlock('ev:rfdone:' + id); throw e; }
     await L.bump();
     // told only now that the money has actually been sent
-    await B.notify([r.by], { event: 'refund-done', refId: id, kind: 'refund-done', data: { ref: r.bookingRef, amount: r.refundable, refundRef: gref }, title: 'Payment Refunded', body: B.money(r.refundable) + ' for booking ' + r.bookingRef + ' was refunded to your GCash. Reference ' + gref + '.' });
+    await B.notify([r.by], { event: 'refund-done', refId: id, kind: 'refund-done', data: { ref: r.bookingRef, amount: actual, refundRef: gref, method: 'gcash', refundId: id }, title: 'Payment Refunded', body: B.money(actual) + ' for booking ' + r.bookingRef + ' was refunded to your GCash. Reference ' + gref + '.' });
     return { ok: true };
   },
   async 'refund-deny'(w, b) {
     need(w.can('refunds'), 403, 'Your role cannot process refunds.');
     const id = String(b.id || ''), r = await L.getDoc('refunds', id), reason = String(b.reason || '').trim().slice(0, 200);
     need(r, 404, 'Refund not found.');
-    need(r.status === 'requested' || r.status === 'approved', 409, 'This refund was already completed or denied.');
+    need(r.status === 'awaiting_user' || r.status === 'requested' || r.status === 'approved', 409, 'This refund was already completed or denied.');
     need(await lockOnce('ev:rfdeny:' + id, w.uid), 409, 'This refund is already being reviewed.');
     await put('refunds', id, Object.assign({}, r, { status: 'denied', reason, deniedBy: w.uid, deniedByName: w.member.name, deniedAt: Date.now() }));
     await L.bump();
@@ -391,10 +512,15 @@ function publicConfig() {
 
 async function sendFile(req, res) {
   const w = await L.whoIs(req), path = String(req.query.file || '');
-  need(/^(qr|proofs)\/[\w.\-]+$/.test(path), 400, 'Bad file.');
+  need(/^(qr|proofs|refundqr|refundproofs)\/[\w.\-]+$/.test(path), 400, 'Bad file.');
   if (path.startsWith('proofs/')) {
     const pay = await L.getDoc('payments', path.slice(7).replace(/\.\w+$/, ''));
     need(pay && (pay.by === w.uid || w.can('payments')), 403, 'You cannot view this file.');
+  }
+  if (path.startsWith('refundqr/')) need(path.slice(9).startsWith(w.uid + '-') || w.can('refunds'), 403, 'You cannot view this file.');
+  if (path.startsWith('refundproofs/')) {
+    const rf = await L.getDoc('refunds', path.slice(13).replace(/\.\w+$/, ''));
+    need(rf && (rf.by === w.uid || w.can('refunds')), 403, 'You cannot view this file.');
   }
   const f = await L.getFile(path);
   need(f, 404, 'File not found.');
