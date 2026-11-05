@@ -420,8 +420,52 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .dlg-actions .link { align-self: center; padding: 4px 8px; }
 .pay-actions { display: flex; flex-direction: column; gap: 6px; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
-@media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-chip { margin-right: auto; } }
+@media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
+.av { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--accent); color: var(--on-accent); font: 700 0.9rem/1 var(--display); }
+.av img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.av.xs { width: 24px; height: 24px; font-size: 0.72rem; }
+.av.sm { width: 32px; height: 32px; }
+.av.md { width: 34px; height: 34px; font-size: 1rem; }
+.av.xl { width: 76px; height: 76px; font-size: 1.9rem; }
+.who .av { background: var(--ball); color: var(--on-ball); }
+.with-av { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.av-box { display: flex; align-items: center; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+.av-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.av-side small { color: var(--muted); font-size: 0.76rem; }
+.av-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 2px; }
+.note.warn { color: var(--warn); font-weight: 600; }
+.re-panel { gap: 12px; align-items: stretch; text-align: left; width: min(420px, 100%); position: relative; }
+.re-title { font: 800 1.15rem/1.2 var(--display); }
+.re-form { display: flex; flex-direction: column; gap: 10px; }
+.re-form .field > span { color: var(--muted); }
+.field-err { color: var(--warn); font-weight: 600; font-size: 0.78rem; }
+.re-qr.bad .re-qrprev { border-color: var(--warn); }
+.re-qrrow { display: flex; align-items: center; gap: 12px; }
+.re-qrprev { flex: none; display: grid; place-items: center; width: 108px; height: 108px; border: 1.5px dashed var(--rule); border-radius: 10px; background: #fff; overflow: hidden; }
+.re-qrimg { display: block; width: 100%; height: 100%; object-fit: contain; }
+.re-qrnone { padding: 6px; color: #666; font-size: 0.74rem; text-align: center; }
+.re-qrside { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.re-qrside small { color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.re-qrside .re-ok { color: var(--ok); font-weight: 600; }
+.bl-sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.bl-sides > *, .bl-form > * { min-width: 0; }
+.bl-side, .bl-confirm { display: flex; flex-direction: column; gap: 8px; }
+.bl-search { display: flex; gap: 8px; }
+.bl-search input { flex: 1; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.bl-results { display: flex; flex-direction: column; gap: 6px; }
+.bl-acct { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 10px; background: var(--paper); flex-wrap: wrap; }
+.bl-meta { flex: 1 1 120px; min-width: 0; display: flex; flex-direction: column; }
+.bl-meta strong { overflow-wrap: anywhere; }
+.bl-meta small, .bl-bal small { color: var(--muted); font-size: 0.72rem; }
+.bl-bal { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.bl-bal strong { font: 800 1.05rem/1.1 var(--display); }
+.bl-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px 12px; }
+.bl-form .field small { color: var(--muted); font-size: 0.74rem; }
+.bl-done { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 10px 12px; border: 1.5px solid var(--ok); border-radius: 10px; background: color-mix(in srgb, var(--ok) 10%, var(--card)); font-size: var(--fs-s); }
+.bl-hist li { gap: 2px; }
+@media (max-width: 720px) { .bl-sides, .bl-form { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .re-qrrow { flex-direction: column; align-items: stretch; } .re-qrprev { width: 100%; height: 150px; } .re-qrside { align-items: stretch; } }
 .rf-chip { align-items: flex-start; text-align: left; }
 .mono { font-family: var(--mono); }
 .rf-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -440,7 +484,6 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .rf-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .rf-who strong { display: block; overflow-wrap: anywhere; }
 .rf-who small { color: var(--muted); font-size: 0.74rem; }
-.rf-avatar { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 700 1rem/1 var(--display); }
 .rf-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .rf-amt { margin-left: 4px; font: 800 1.15rem/1 var(--display); }
 .rf-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 12px; margin: 0; padding: 8px 10px; background: var(--paper); border-radius: 10px; font-size: var(--fs-s); }
@@ -545,11 +588,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       </button>
       <nav id="menu" class="menu" aria-label="Main menu" hidden></nav>
     </div>
-    <span id="rf-slot" class="rf-slot"></span>
     <button id="book-btn" class="menu-btn book-btn" type="button" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>
       <span>Book<span class="long"> a Court</span></span>
     </button>
+    <span id="rf-slot" class="rf-slot"></span>
     </div>
     <div class="who" id="who"></div>
   </div>
@@ -709,16 +752,17 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     <section id="view-profile" class="view-stack" aria-label="Profile" hidden>
       <h2>Profile</h2>
       <div class="panel profile">
+        <div id="pf-avatar" class="av-box"></div>
         <label class="field" for="pf-name">Full name
           <input id="pf-name" type="text" readonly>
         </label>
         <label class="field" for="pf-email">Email
           <input id="pf-email" type="email" readonly placeholder="Log out and log in again to show your email">
         </label>
-        <label class="field" for="pf-rating">Level rating (optional)
+        <label class="field" for="pf-rating">Level (optional)
           <select id="pf-rating"></select>
         </label>
-        <p class="note">Your own estimate of how you play, from 2.0 (beginner) to 5.0+ (advanced). Admins can see it on the Users page. Change or clear it any time.</p>
+        <p id="pf-level-note" class="note">The levels are the ones set up for sessions, so your level always matches what the club offers. Admins can see it on the Users page. Change or clear it any time.</p>
       </div>
       <div class="panel profile">
         <h3>Password</h3>
@@ -784,6 +828,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     <section id="view-roles" class="view-stack" aria-label="Role access" hidden></section>
     <section id="view-payments" class="view-stack" aria-label="Payments" hidden></section>
     <section id="view-refunds" class="view-stack" aria-label="Refunds" hidden></section>
+    <section id="view-balink" class="view-stack" aria-label="Refund balance linking" hidden></section>
   </div>
 
   <footer>Copyright © 2026. KitCraft All Rights Reserved.</footer>
@@ -803,6 +848,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 <div id="paycfg" class="modal" hidden></div>
 <div id="cancelflow" class="modal" hidden></div>
 <div id="rfinfo" class="modal" hidden></div>
+<div id="rfedit" class="modal" hidden></div>
 <div id="imgview" class="modal" hidden></div>
 
 <script>
@@ -859,7 +905,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEditing: false, rfRepair: null, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -1065,7 +1111,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.checkout || state.cancelFlow || state.rfInfo || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1324,7 +1370,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var t = times(s);
     function li(r) {
       var mine = r.uid === state.me;
-      var row = h('div', { class: 'p-row' }, h('span', null, mine ? 'You' : r.name));
+      var row = h('div', { class: 'p-row' }, h('span', { class: 'with-av' }, avatarEl(r.uid, r.name, 'xs'), mine ? 'You' : r.name));
       if (canManage) {
         var confirming = pendingRemovePlayer === sid + '|' + r.uid, moving = !!(state.moving && state.moving.uid === r.uid);
         row.append(h('span', { class: 'p-actions' },
@@ -1652,7 +1698,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var n = upcomingFor(u);
       var facts = [(isOwnerAccount(u) ? 'Owner · ' : '') + roleLabel(cur)];
       if (created) facts.push('joined ' + mfmt.format(new Date(created)));
-      if (state.accounts[u].rating) facts.push('rating ' + Number(state.accounts[u].rating).toFixed(1));
+      if (state.accounts[u].level) facts.push('level ' + state.accounts[u].level);
       facts.push(n + (n === 1 ? ' upcoming session' : ' upcoming sessions'));
       var acct = state.accounts[u];
       if (Number(r.pwReset) > Number(acct.pwSetAt || 0)) facts.push('password reset pending');
@@ -1665,7 +1711,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         })) : null;
       return h('div', { class: 'row' },
         h('div', { class: 'meta' },
-          h('strong', null, personName(u) + (u === state.me ? ' (you)' : '')),
+          h('strong', { class: 'with-av' }, avatarEl(u, personName(u), 'xs'), personName(u) + (u === state.me ? ' (you)' : '')),
           h('span', null, facts.join(' · ') + ((r.venues || []).length ? ' · ' + r.venues.join(', ') : ''))),
         h('div', { class: 'ctl' }, ctl), picker);
     });
@@ -2246,12 +2292,12 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         lead: 'You can get back ' + peso(cf.refundable) + ' for booking ' + cf.ref + '. Choose what you would like to do. Nothing happens until you pick one.',
         rows: [['Booking', cf.ref], ['Refundable', peso(cf.refundable)]],
         extra: h('div', { class: 'cf-choices' },
-          h('div', { class: 'cf-choice' }, h('strong', null, 'Request GCash Refund'), h('small', null, acct ? 'Staff send ' + peso(cf.refundable) + ' to GCash ' + acct.number + ' (' + acct.name + ') and record the transfer.' : 'You need your GCash number, account name and QR code saved in Profile first.')),
+          h('div', { class: 'cf-choice' }, h('strong', null, 'Request GCash Refund'), h('small', null, acct ? 'Staff send ' + peso(cf.refundable) + ' to GCash ' + acct.number + ' (' + acct.name + ') and record the transfer.' : 'You need your GCash number, account name and QR code saved first (all three are required).')),
           h('div', { class: 'cf-choice' }, h('strong', null, 'Keep as Refund Balance'), h('small', null, 'Added to your balance right away, to pay for future bookings. It is not sent to GCash afterwards.')),
           cf.error ? err : null),
         actions: [
           { id: 'cx-gcash', label: 'Request GCash Refund', disabled: cf.busy || !acct, onclick: function () { chooseRefund('gcash'); } },
-          !acct ? { id: 'cx-profile', label: 'Add my GCash refund details', onclick: goProfile } : null,
+          !acct ? { id: 'cx-profile', label: 'Add my GCash refund details', onclick: openRfEdit } : null,
           { id: 'cx-bal', label: 'Keep as Refund Balance', disabled: cf.busy, onclick: function () { chooseRefund('balance'); } },
           { id: 'cx-later', label: 'Decide later', link: true, disabled: cf.busy, onclick: closeCancelFlow }].filter(Boolean) };
     } else {
@@ -2838,13 +2884,21 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
 
   /* ---------- profile: name and email (read-only), level rating, change password ---------- */
-  var RATINGS = [['2.0', '2.0 · Beginner'], ['2.5', '2.5 · Beginner'], ['3.0', '3.0 · Intermediate'], ['3.5', '3.5 · Intermediate'], ['4.0', '4.0 · Advanced'], ['4.5', '4.5 · Advanced'], ['5.0', '5.0+ · Advanced']];
   function renderProfile() {
     var a = myAccount() || {};
     $('#pf-name').value = myName();
     $('#pf-email').value = state.email;
-    var sel = $('#pf-rating');
-    if (document.activeElement !== sel) sel.value = a.rating ? Number(a.rating).toFixed(1) : '';
+    var sel = $('#pf-rating'), levels = opts().levels, lsig = levels.join('\n');
+    if (sel.getAttribute('data-sig') !== lsig) {   // the choices are the levels from Session Configurations
+      sel.replaceChildren(h('option', { value: '' }, 'Not set'));
+      levels.forEach(function (l) { sel.append(h('option', { value: l }, l)); });
+      sel.setAttribute('data-sig', lsig);
+    }
+    if (document.activeElement !== sel) sel.value = a.level && levels.indexOf(a.level) >= 0 ? a.level : '';
+    var ln = $('#pf-level-note');
+    ln.textContent = a.levelRemoved ? 'Your previous level (' + a.levelRemoved + ') is no longer offered. Pick one of the current levels, or leave it not set.' : 'The levels are the ones set up for sessions, so your level always matches what the club offers. Admins can see it on the Users page. Change or clear it any time.';
+    ln.classList.toggle('warn', !!a.levelRemoved);
+    renderAvatarBox();
     renderProfileRefunds();
     renderNotify();
   }
@@ -2887,7 +2941,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     } else if (n.kind === 'booking-cancelled' && d.refundId) {
       o.tone = 'warn'; o.icon = '!';
       o.actions = [{ id: 'nt-later', label: 'Later', onclick: closeNotice }, { id: 'nt-ok', label: 'Choose now', primary: true, onclick: goChooseRefund }];
-    } else if (n.kind === 'payment-rejected' || n.kind === 'refund-denied') { o.tone = 'warn'; o.icon = '!'; }
+    } else if (n.kind === 'balance-linked') { o.tone = 'ok'; o.icon = '₱'; }
+    else if (n.kind === 'payment-rejected' || n.kind === 'refund-denied') { o.tone = 'warn'; o.icon = '!'; }
     else o.icon = 'i';
     box.replaceChildren(h('div', { class: 'modal-backdrop' }), dlgStatus(o));
     box.hidden = false;
@@ -2973,27 +3028,16 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     return { amount: amount, reserved: reserved, available: Math.max(0, amount - reserved) };
   }
   function myRefundAcct() { var a = state.refundaccts[state.me]; return a && a.number && a.name && a.qrPath ? a : null; }
-  var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking' };
+  var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking', 'link-in': 'Moved in from another account', 'link-out': 'Moved to another account' };
   var rpSig = '';
-  function saveRefundAcct() {
-    var d = state.rfDraft; if (!d || d.saving) return;
-    var body = { action: 'refund-account', number: d.number, name: d.name };
-    if (d.qr) body.qr = d.qr;
-    d.saving = true; d.error = ''; rpSig = ''; renderProfileRefunds();
-    payCall(body).then(function () { state.rfDraft = null; state.rfEditing = false; flash('Your GCash refund details were saved.', 'ok'); })
-      .catch(function (e) { if (state.rfDraft) { state.rfDraft.saving = false; state.rfDraft.error = e.message; } })
-      .then(function () { rpSig = ''; renderProfileRefunds(); });
-  }
   function renderProfileRefunds() {
     var box = $('#pf-refund');
     if (!box) return;
     var acct = myRefundAcct(), raw = state.refundaccts[state.me] || {}, bal = myBalance();
-    var rawSig = [raw.number, raw.name, raw.qrPath].join('|');   // the form follows what is saved, unless the person is in the middle of typing
-    if (!state.rfDraft || (state.rfDraft.base !== rawSig && !state.rfDraft.dirty)) state.rfDraft = { number: raw.number || '', name: raw.name || '', qr: '', error: '', saving: false, base: rawSig, dirty: false };
-    var d = state.rfDraft, act = state.rfAct;
+    var act = state.rfAct;
     var refunds = Object.keys(state.refunds).map(function (id) { return Object.assign({ id: id }, state.refunds[id]); }).filter(function (r) { return r.by === state.me; }).sort(function (a, c) { return (c.requestedAt || 0) - (a.requestedAt || 0); });
     var ledgerList = Object.keys(state.ledger).map(function (id) { return Object.assign({ id: id }, state.ledger[id]); }).filter(function (x) { return x.uid === state.me; }).sort(function (a, c) { return c.at - a.at; }).slice(0, 6);
-    var sig = [state.rfEditing, d.saving, d.error, !!d.qr, raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(','), ledgerList.length].join('|');
+    var sig = [raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(','), ledgerList.length].join('|');
     if (sig === rpSig) return;
     rpSig = sig;
     var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
@@ -3010,31 +3054,15 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (r.status === 'refunded' && r.receiptPath) kids.push(h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(r.receiptPath); } }, fileImg(r.receiptPath, 'Refund receipt', 'pay-proof')));
       if (r.status === 'awaiting_user') {
         kids.push(h('p', { class: 'note' }, 'You can get back ' + peso(r.refundable) + ' of ' + peso(r.paid) + '. Nothing happens until you choose: request it by GCash, or keep it as refund balance.'));
-        if (!acct) kids.push(h('p', { class: 'pay-reason' }, 'To request a GCash refund, fill in your GCash refund details above first.'));
+        if (!acct) kids.push(h('p', { class: 'pay-reason' }, 'To request a GCash refund, add your GCash number, account name and QR code first (Edit GCash Details above).'));
         kids.push(h('div', { class: 'confirm-actions' }, h('button', { id: 'rfc-open-' + r.id, class: 'btn primary', type: 'button', onclick: function () { openRefundChoice(r.id); } }, 'Choose how to receive it')));
       }
       return h('article', { class: 'pay-card compact' }, kids);
     });
-    var qrNow = d.qr ? h('img', { class: 'co-qr sm', src: d.qr, alt: 'New GCash QR code' }) : (raw.qrPath ? fileImg(raw.qrPath, 'Your GCash QR code', 'co-qr sm') : null);
-    // the details are shown (in the Refundable Balance pop-up) and edited (here) separately: this form only appears while editing
-    var detailsBlock = state.rfEditing ? [
+    var detailsBlock = [
       h('h3', null, 'GCash refund details'),
-      h('p', { class: 'note' }, 'Needed to receive a refund by GCash. ' + (acct ? 'Complete ✓' : 'Not complete yet: add all three.')),
-      h('div', { class: 'rf-form' },
-        h('label', { class: 'field', for: 'rf-number' }, 'GCash number', h('input', { id: 'rf-number', type: 'tel', maxlength: '16', placeholder: '09171234567', autocomplete: 'tel', value: d.number, oninput: function (e) { d.number = e.target.value; d.dirty = true; } })),
-        h('label', { class: 'field', for: 'rf-name' }, 'Account name', h('input', { id: 'rf-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', value: d.name, oninput: function (e) { d.name = e.target.value; d.dirty = true; } })),
-        h('div', { class: 'field wide' }, 'Static GCash QR code',
-          h('input', { id: 'rf-qr', type: 'file', accept: 'image/*', 'aria-label': 'Upload your GCash QR code', onchange: function (e) {
-            var f = e.target.files && e.target.files[0]; if (!f) return;
-            resizeImage(f).then(function (u) { d.qr = u; d.dirty = true; d.error = ''; rpSig = ''; renderProfileRefunds(); }).catch(function (er) { d.error = er.message; rpSig = ''; renderProfileRefunds(); });
-          } }), qrNow)),
-      d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
-      h('div', null, h('button', { id: 'rf-save', class: 'btn primary', type: 'button', disabled: d.saving, onclick: saveRefundAcct }, d.saving ? 'Saving…' : 'Save refund details')),
-      h('div', { class: 'confirm-actions rf-formactions' }, h('button', { id: 'rf-cancel', class: 'btn', type: 'button', disabled: d.saving, onclick: function () { state.rfEditing = false; state.rfDraft = null; rpSig = ''; renderProfileRefunds(); } }, 'Cancel'))
-    ] : [
-      h('h3', null, 'GCash refund details'),
-      h('p', { class: 'note' }, acct ? 'Saved. Tap Refundable Balance at the top to see them.' : 'Not set up yet. You need them to request a refund by GCash.'),
-      h('div', null, h('button', { id: 'rf-edit', class: 'btn', type: 'button', onclick: function () { state.rfEditing = true; rpSig = ''; renderProfileRefunds(); var f = $('#rf-number'); if (f) f.focus(); } }, acct ? 'Edit details' : 'Add details'))
+      h('p', { class: 'note' }, acct ? 'Saved: ' + acct.name + ' · ' + acct.number + '. Tap Refundable Balance at the top to see them with your QR code.' : 'Not set up yet. Your GCash number, account name and QR code are all needed to request a refund by GCash.'),
+      h('div', null, h('button', { id: 'rf-edit', class: 'btn', type: 'button', 'aria-haspopup': 'dialog', onclick: openRfEdit }, 'Edit GCash Details'))
     ];
     fill(box,
       h('div', { class: 'rf-bal' }, h('div', null, h('span', { class: 'note' }, 'Refund balance'), h('strong', null, peso(bal.available))), bal.reserved ? h('span', { class: 'note' }, peso(bal.reserved) + ' is set aside for a booking waiting for payment verification.') : h('span', { class: 'note' }, 'Use it when you pay for a booking.')),
@@ -3050,8 +3078,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   var riSig = '';
   function openRfInfo() { state.rfInfo = true; riSig = ''; renderRfInfo(); var c = $('#ri-close'); if (c) c.focus(); }
   function closeRfInfo() { state.rfInfo = false; renderRfInfo(); var b = $('#rf-chip'); if (b) b.focus(); }
-  // opens Profile with the GCash refund details form open: the only place those details are edited
-  function editRefundDetails() { state.rfInfo = false; state.rfEditing = true; rpSig = ''; state.view = 'profile'; state.menuOpen = false; render(); var el = $('#pf-refund'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70); }
   function renderRfInfo() {
     var box = $('#rfinfo');
     if (!state.rfInfo || gateState() !== 'ok') { state.rfInfo = false; riSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
@@ -3073,10 +3099,252 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         details,
         h('p', { class: 'dlg-note' }, 'Refund policy: ' + policyText()),
         h('div', { class: 'dlg-actions' },
-          h('button', { id: 'ri-edit', class: 'btn', type: 'button', onclick: editRefundDetails }, acct ? 'Edit details' : 'Add GCash details'),
+          h('button', { id: 'ri-edit', class: 'btn', type: 'button', 'aria-haspopup': 'dialog', onclick: openRfEdit }, 'Edit GCash Details'),
           h('button', { id: 'ri-close', class: 'btn primary', type: 'button', onclick: closeRfInfo }, 'Close'))));
     box.hidden = false;
     lockScroll();
+  }
+
+  /* ---------- profile pictures: a square crop, the same round shape everywhere ---------- */
+  function avatarEl(uid, name, size) {
+    var a = state.accounts[uid] || {}, el = h('span', { class: 'av' + (size ? ' ' + size : ''), 'aria-hidden': 'true' }, String(name || personName(uid) || '?').charAt(0).toUpperCase());
+    if (a.avatar) fileUrl(a.avatar).then(function (u) { if (u) el.replaceChildren(h('img', { alt: '', src: u })); });
+    return el;
+  }
+  function cropAvatar(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\//.test(file.type)) { reject(new Error('Choose a photo (JPG, PNG or WebP).')); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var side = Math.min(img.width, img.height), cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+        cv.width = cv.height = 256;
+        ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
+        URL.revokeObjectURL(url);
+        resolve(cv.toDataURL('image/jpeg', 0.86));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That picture could not be read. Try another one.')); };
+      img.src = url;
+    });
+  }
+  var avSig = '';
+  function renderAvatarBox() {
+    var box = $('#pf-avatar'); if (!box) return;
+    var a = myAccount() || {}, d = state.avDraft || {};
+    var sig = [a.avatar || '', d.img ? d.img.length : 0, d.busy, d.error || '', myName()].join('|');
+    if (sig === avSig) return;
+    avSig = sig;
+    var preview = d.img ? h('span', { class: 'av xl' }, h('img', { alt: 'Preview of your new profile picture', src: d.img })) : avatarEl(state.me, myName(), 'xl');
+    var pick = h('input', { id: 'av-file', type: 'file', accept: 'image/*', hidden: true, 'aria-label': 'Choose a profile picture', onchange: function (e) {
+      var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+      cropAvatar(f).then(function (u) { state.avDraft = { img: u, busy: false, error: '' }; }).catch(function (er) { state.avDraft = { img: '', busy: false, error: er.message }; }).then(function () { avSig = ''; renderAvatarBox(); });
+    } });
+    function setDraft(p) { state.avDraft = Object.assign({}, state.avDraft || {}, p); avSig = ''; renderAvatarBox(); }
+    var btns = d.img ? [
+      h('button', { id: 'av-save', class: 'btn primary small', type: 'button', disabled: d.busy, onclick: function () {
+        setDraft({ busy: true, error: '' });
+        payCall({ action: 'avatar-set', image: state.avDraft.img }).then(function () { state.avDraft = null; flash('Your profile picture was saved.', 'ok'); }).catch(function (e) { setDraft({ busy: false, error: e.message }); }).then(function () { avSig = ''; renderAvatarBox(); });
+      } }, d.busy ? 'Saving…' : 'Save photo'),
+      h('button', { id: 'av-cancel', class: 'btn small', type: 'button', disabled: d.busy, onclick: function () { state.avDraft = null; avSig = ''; renderAvatarBox(); } }, 'Cancel')
+    ] : [
+      h('button', { id: 'av-choose', class: 'btn small', type: 'button', onclick: function () { pick.click(); } }, a.avatar ? 'Change photo' : 'Upload photo'),
+      a.avatar ? h('button', { id: 'av-remove', class: 'link danger', type: 'button', disabled: d.busy, onclick: function () {
+        setDraft({ busy: true, error: '' });
+        payCall({ action: 'avatar-remove' }).then(function () { state.avDraft = null; flash('Your profile picture was removed.', 'ok'); }).catch(function (e) { setDraft({ busy: false, error: e.message }); }).then(function () { avSig = ''; renderAvatarBox(); });
+      } }, 'Remove') : null
+    ];
+    fill(box, preview,
+      h('div', { class: 'av-side' }, h('strong', null, 'Profile picture'),
+        h('small', null, d.img ? 'Preview: this is how it will look. Save it, or cancel.' : 'Shown next to your name around the app. It is cropped to a square and stored privately.'),
+        h('div', { class: 'av-btns' }, btns), d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null), pick);
+  }
+
+  /* ---------- GCash refund details: their own pop-up (opened from the Refundable Balance pop-up, Profile and the refund choice) ---------- */
+  var reSig = '';
+  function rfDraftNow() {
+    var raw = state.refundaccts[state.me] || {}, base = [raw.number, raw.name, raw.qrPath].join('|');
+    if (!state.rfDraft || (state.rfDraft.base !== base && !state.rfDraft.dirty)) state.rfDraft = { number: raw.number || '', name: raw.name || '', qr: '', errs: {}, error: '', saving: false, base: base, dirty: false };
+    return state.rfDraft;
+  }
+  function rfValidate(d, raw) {
+    var e = {}, n = String(d.number || '').replace(/[\s-]/g, ''), nm = String(d.name || '').trim();
+    if (!n) e.number = 'Enter your GCash number.'; else if (!/^(\+?63|0)9\d{9}$/.test(n)) e.number = 'Enter a valid GCash number, like 09171234567.';
+    if (!nm) e.name = 'Enter the account name shown in your GCash.'; else if (nm.length < 2 || nm.length > 60) e.name = 'The account name must be 2 to 60 characters.';
+    if (!d.qr && !raw.qrPath) e.qr = 'Upload your static GCash QR code.';
+    return e;
+  }
+  function openRfEdit() { state.rfDraft = null; state.rfEdit = true; reSig = ''; renderRfEdit(); var f = $('#rf-number'); if (f) f.focus(); }
+  function closeRfEdit() {
+    state.rfEdit = false; state.rfDraft = null; reSig = ''; renderRfEdit(); rpSig = ''; riSig = '';
+    if (state.view === 'profile') renderProfileRefunds();
+    renderRfInfo();
+    var b = $('#ri-edit') || $('#rf-edit') || $('#cx-profile'); if (b) b.focus();
+  }
+  function saveRefundAcct() {
+    var d = rfDraftNow(), raw = state.refundaccts[state.me] || {};
+    if (d.saving) return;
+    d.errs = rfValidate(d, raw);
+    var bad = Object.keys(d.errs);
+    if (bad.length) { d.error = 'Please fix the highlighted fields before saving.'; reSig = ''; renderRfEdit(); var f = $(bad[0] === 'number' ? '#rf-number' : bad[0] === 'name' ? '#rf-name' : '#rf-qr-btn'); if (f) f.focus(); return; }
+    var body = { action: 'refund-account', number: d.number, name: d.name };
+    if (d.qr) body.qr = d.qr;
+    d.saving = true; d.error = ''; reSig = ''; renderRfEdit();
+    payCall(body).then(function () { closeRfEdit(); flash('Your GCash refund details were saved.', 'ok'); })
+      .catch(function (e) { var cur = state.rfDraft; if (cur) { cur.saving = false; cur.error = e.message; } reSig = ''; renderRfEdit(); });
+  }
+  function renderRfEdit() {
+    var box = $('#rfedit');
+    if (!state.rfEdit || gateState() !== 'ok') { state.rfEdit = false; reSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var raw = state.refundaccts[state.me] || {}, d = rfDraftNow(), e = d.errs || {};
+    var sig = [d.saving, d.error, JSON.stringify(e), !!d.qr, d.base].join('|');
+    if (sig === reSig && !box.hidden) return;
+    reSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (x) {} }
+    function clearErr(key, inputId) { return function () { d.dirty = true; if (d.errs && d.errs[key]) { delete d.errs[key]; var i = document.getElementById(inputId), m = document.getElementById(inputId + '-err'); if (i) i.removeAttribute('aria-invalid'); if (m) m.remove(); } }; }
+    var hasQr = !!(d.qr || raw.qrPath);
+    var prev = d.qr ? h('img', { class: 're-qrimg', src: d.qr, alt: 'Your new GCash QR code' }) : raw.qrPath ? fileImg(raw.qrPath, 'Your saved GCash QR code', 're-qrimg', function () { openImg(raw.qrPath); }) : h('span', { class: 're-qrnone' }, 'No QR code yet');
+    box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: function () { if (!d.saving) closeRfEdit(); } }),
+      h('div', { class: 'modal-panel dlg re-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 're-t' },
+        h('button', { class: 'modal-close ri-x', type: 'button', 'aria-label': 'Close without saving', disabled: d.saving, onclick: closeRfEdit }, '×'),
+        h('div', { class: 'ri-top' }, h('strong', { id: 're-t', class: 're-title' }, 'GCash refund details'), h('small', null, 'All three are required to receive a refund by GCash.')),
+        h('div', { class: 're-form' },
+          h('label', { class: 'field', for: 'rf-number' }, 'GCash number',
+            h('input', { id: 'rf-number', type: 'tel', maxlength: '16', placeholder: '09171234567', autocomplete: 'tel', 'aria-invalid': e.number ? 'true' : null, 'aria-describedby': e.number ? 'rf-number-err' : null, value: d.number, oninput: function (ev) { d.number = ev.target.value; clearErr('number', 'rf-number')(); } }),
+            e.number ? h('small', { id: 'rf-number-err', class: 'field-err', role: 'alert' }, e.number) : null),
+          h('label', { class: 'field', for: 'rf-name' }, 'Account name',
+            h('input', { id: 'rf-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', 'aria-invalid': e.name ? 'true' : null, 'aria-describedby': e.name ? 'rf-name-err' : null, value: d.name, oninput: function (ev) { d.name = ev.target.value; clearErr('name', 'rf-name')(); } }),
+            e.name ? h('small', { id: 'rf-name-err', class: 'field-err', role: 'alert' }, e.name) : null),
+          h('div', { class: 'field re-qr' + (e.qr ? ' bad' : '') }, h('span', null, 'Static GCash QR code'),
+            h('div', { class: 're-qrrow' },
+              h('div', { class: 're-qrprev' }, prev),
+              h('div', { class: 're-qrside' },
+                h('small', null, 'A screenshot of the Receive Money QR in your GCash app (JPG, PNG or WebP).'),
+                h('button', { id: 'rf-qr-btn', class: 'btn small', type: 'button', 'aria-describedby': e.qr ? 'rf-qr-err' : null, onclick: function () { $('#rf-qr').click(); } }, hasQr ? 'Replace QR code' : 'Upload QR code'),
+                d.qr ? h('small', { class: 're-ok' }, 'New QR ready. Press Save to keep it.') : null)),
+            h('input', { id: 'rf-qr', type: 'file', accept: 'image/*', hidden: true, 'aria-label': 'Upload your GCash QR code', onchange: function (ev) {
+              var f = ev.target.files && ev.target.files[0]; ev.target.value = ''; if (!f) return;
+              resizeImage(f).then(function (u) { d.qr = u; d.dirty = true; if (d.errs) delete d.errs.qr; d.error = ''; }).catch(function (er) { d.errs = Object.assign({}, d.errs, { qr: er.message }); })
+                .then(function () { reSig = ''; renderRfEdit(); });
+            } }),
+            e.qr ? h('small', { id: 'rf-qr-err', class: 'field-err', role: 'alert' }, e.qr) : null)),
+        d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
+        h('div', { class: 'dlg-actions' },
+          h('button', { id: 'rf-cancel', class: 'btn', type: 'button', disabled: d.saving, onclick: closeRfEdit }, 'Cancel'),
+          h('button', { id: 'rf-save', class: 'btn primary', type: 'button', disabled: d.saving, onclick: saveRefundAcct }, d.saving ? 'Saving…' : 'Save details'))));
+    box.hidden = false;
+    lockScroll();
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
+  }
+
+  /* ---------- Refund balance linking (Super Admin and Admin only) ---------- */
+  function canLinkBalances() { var r = myRole(); return r === 'super_admin' || r === 'admin'; }
+  function newKey() { var a = new Uint8Array(12); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  function blNow() {
+    if (!state.bl) state.bl = { from: null, to: null, q: { from: '', to: '' }, res: { from: null, to: null }, busy: { from: false, to: false }, err: { from: '', to: '' }, amount: '', reason: '', step: 'pick', key: newKey(), working: false, error: '', done: null };
+    return state.bl;
+  }
+  var blSig = '';
+  function blSearch(side) {
+    var s = blNow(), q = String(s.q[side] || '').trim();
+    s.err[side] = '';
+    if (q.length < 2) { s.err[side] = 'Type at least 2 letters of the name, or the full email address.'; blRender(true); return; }
+    s.busy[side] = true; blRender(true);
+    payCall({ action: 'balance-search', q: q }).then(function (r) { s.res[side] = r.results; if (!r.results.length) s.err[side] = 'No account found. Check the spelling, or type the full email address.'; })
+      .catch(function (e) { s.err[side] = e.message; }).then(function () { s.busy[side] = false; blRender(true); });
+  }
+  function blPick(side, a) {
+    var s = blNow(); s[side] = a; s.res[side] = null; s.q[side] = ''; s.step = 'pick'; s.error = ''; s.done = null;
+    if (side === 'from') s.amount = String(a.available);
+    blRender(true);
+  }
+  function blReview() {
+    var s = blNow(), amt = Math.round(Number(s.amount) * 100) / 100;
+    if (!(amt > 0)) s.error = 'Enter an amount greater than zero.';
+    else if (amt > s.from.available) s.error = 'The old account only has ' + peso(s.from.available) + ' available to transfer.';
+    else if (String(s.reason || '').trim().length < 3) s.error = 'Write a short reason for the transfer (at least 3 characters).';
+    else { s.error = ''; s.amount = String(amt); s.step = 'confirm'; }
+    blRender(true);
+  }
+  function blConfirm() {
+    var s = blNow(); if (s.working) return;
+    s.working = true; s.error = ''; blRender(true);
+    payCall({ action: 'balance-link', from: s.from.id, to: s.to.id, amount: Number(s.amount), expected: s.from.available, reason: String(s.reason).trim(), confirm: true, key: s.key })
+      .then(function (r) {
+        s.done = { amount: r.amount, from: s.from.name, to: s.to.name, fromAfter: r.fromAfter, toAfter: r.toAfter };
+        s.from = null; s.to = null; s.res = { from: null, to: null }; s.amount = ''; s.reason = ''; s.step = 'pick'; s.key = newKey();
+      })
+      .catch(function (e) { s.error = e.message; if (/changed|no refund balance/.test(e.message)) { s.step = 'pick'; } })
+      .then(function () { s.working = false; blRender(true); });
+  }
+  function blAcctRow(a, action) {
+    return h('div', { class: 'bl-acct' }, avatarEl(a.id, a.name, 'sm'),
+      h('div', { class: 'bl-meta' }, h('strong', null, a.name), h('small', null, roleLabel(a.role) + (a.since ? ' · joined ' + mfmt.format(new Date(Number(a.since))) : '') + (a.suspended ? ' · access paused' : ''))),
+      h('div', { class: 'bl-bal' }, h('small', null, 'Refund balance'), h('strong', null, peso(a.available)), a.reserved ? h('small', null, peso(a.reserved) + ' set aside') : null),
+      action || null);
+  }
+  function blSide(side, title, hint) {
+    var s = blNow(), sel = s[side], other = s[side === 'from' ? 'to' : 'from'], locked = s.step === 'confirm' || s.working;
+    if (sel) return h('section', { class: 'panel bl-side' }, h('h3', null, title), blAcctRow(sel, locked ? null : h('button', { id: 'bl-change-' + side, class: 'link', type: 'button', onclick: function () { s[side] = null; s.step = 'pick'; s.error = ''; blRender(true); } }, 'Change')));
+    return h('section', { class: 'panel bl-side' }, h('h3', null, title), h('p', { class: 'note' }, hint),
+      h('form', { class: 'bl-search', novalidate: true, onsubmit: function (ev) { ev.preventDefault(); blSearch(side); } },
+        h('input', { id: 'bl-q-' + side, type: 'search', maxlength: '80', placeholder: 'Name or full email', autocomplete: 'off', 'aria-label': title + ': search by name or email', value: s.q[side], oninput: function (ev) { s.q[side] = ev.target.value; } }),
+        h('button', { id: 'bl-go-' + side, class: 'btn', type: 'submit', disabled: s.busy[side] }, s.busy[side] ? 'Searching…' : 'Search')),
+      s.err[side] ? h('p', { class: 'form-error', role: 'alert' }, s.err[side]) : null,
+      s.res[side] ? h('div', { class: 'bl-results' }, s.res[side].map(function (a) {
+        var same = other && other.id === a.id, none = side === 'from' && !(a.available > 0);
+        return blAcctRow(a, h('button', { class: 'btn small', type: 'button', disabled: same || none, onclick: function () { blPick(side, a); } }, same ? 'Already chosen' : none ? 'No balance' : 'Select'));
+      })) : null);
+  }
+  function renderBalink() { blRender(false); }
+  function blRender(force) {
+    var box = $('#view-balink');
+    if (!box || state.view !== 'balink') return;
+    if (!canLinkBalances()) { state.view = 'schedule'; render(); return; }
+    var s = blNow(), hist = Object.keys(state.balancelinks).map(function (id) { return Object.assign({ id: id }, state.balancelinks[id]); }).sort(function (a, c) { return c.at - a.at; });
+    var sig = [s.from && s.from.id, s.from && s.from.available, s.to && s.to.id, s.to && s.to.available, (s.res.from || []).map(function (a) { return a.id + a.available; }).join(','), (s.res.to || []).map(function (a) { return a.id + a.available; }).join(','), s.busy.from, s.busy.to, s.err.from, s.err.to, s.step, s.working, s.error, s.done && s.done.amount, hist.map(function (x) { return x.id + x.status; }).join(',')].join('|');
+    if (!force && sig === blSig) return;
+    blSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (x) {} }
+    var panel = null;
+    if (s.from && s.to) {
+      var amt = Math.round(Number(s.amount) * 100) / 100;
+      if (s.step === 'confirm') {
+        panel = h('section', { class: 'panel bl-confirm', role: 'group', 'aria-label': 'Confirm the transfer' },
+          h('h3', null, 'Confirm the transfer'),
+          h('p', null, 'Move ', h('strong', null, peso(amt)), ' from ', h('strong', null, s.from.name), ' to ', h('strong', null, s.to.name), '. Both accounts and the transfer are recorded in the history.'),
+          h('dl', { class: 'dlg-rows' },
+            h('dt', null, s.from.name + ' (old)'), h('dd', null, peso(s.from.available) + ' → ' + peso(s.from.available - amt)),
+            h('dt', null, s.to.name + ' (new)'), h('dd', null, peso(s.to.available) + ' → ' + peso(s.to.available + amt)),
+            h('dt', null, 'Reason'), h('dd', null, s.reason)),
+          s.error ? h('p', { class: 'form-error', role: 'alert' }, s.error) : null,
+          h('div', { class: 'confirm-actions' },
+            h('button', { id: 'bl-back', class: 'btn', type: 'button', disabled: s.working, onclick: function () { s.step = 'pick'; s.error = ''; blRender(true); } }, 'Back'),
+            h('button', { id: 'bl-confirm', class: 'btn primary', type: 'button', disabled: s.working, onclick: blConfirm }, s.working ? 'Moving…' : 'Confirm transfer')));
+      } else {
+        panel = h('section', { class: 'panel bl-confirm' },
+          h('h3', null, 'Transfer details'),
+          h('div', { class: 'bl-form' },
+            h('label', { class: 'field', for: 'bl-amount' }, 'Amount to move (₱)', h('input', { id: 'bl-amount', type: 'number', min: '0.01', max: String(s.from.available), step: '0.01', inputmode: 'decimal', value: s.amount, oninput: function (ev) { s.amount = ev.target.value; } }),
+              h('small', null, 'Available on the old account: ' + peso(s.from.available) + (s.from.reserved ? ' (' + peso(s.from.reserved) + ' is set aside for a booking and stays there)' : '') + '. ', h('button', { class: 'link', type: 'button', onclick: function () { s.amount = String(s.from.available); blRender(true); } }, 'Use full balance'))),
+            h('label', { class: 'field', for: 'bl-reason' }, 'Reason (kept in the history)', h('input', { id: 'bl-reason', type: 'text', maxlength: '200', placeholder: 'e.g. Player changed email address', value: s.reason, oninput: function (ev) { s.reason = ev.target.value; } }))),
+          s.error ? h('p', { class: 'form-error', role: 'alert' }, s.error) : null,
+          h('div', null, h('button', { id: 'bl-review', class: 'btn primary', type: 'button', disabled: !(s.from.available > 0), onclick: blReview }, 'Review transfer')));
+      }
+    }
+    fill(box,
+      h('h2', null, 'Refund balance linking'),
+      h('p', { class: 'note' }, 'Move an existing refund balance from an old account to the new account of the same person. You will see both accounts and the balance before anything moves, and every transfer is kept in the history below.'),
+      s.done ? h('div', { class: 'bl-done', role: 'status' }, h('strong', null, '✓ ' + peso(s.done.amount) + ' moved'), h('span', null, s.done.from + ' now has ' + peso(s.done.fromAfter) + '. ' + s.done.to + ' now has ' + peso(s.done.toAfter) + '.'), h('button', { class: 'link', type: 'button', onclick: function () { s.done = null; blRender(true); } }, 'Dismiss')) : null,
+      h('div', { class: 'bl-sides' }, blSide('from', 'Old account', 'The account that holds the balance now.'), blSide('to', 'New account', 'The account that should receive it.')),
+      panel,
+      h('section', { class: 'panel' }, h('h3', null, 'Transfer history'),
+        hist.length ? h('ul', { class: 'nf-list bl-hist' }, hist.slice(0, 25).map(function (x) {
+          return h('li', null, h('strong', null, peso(x.amount) + ' · ' + x.fromName + ' → ' + x.toName + (x.status !== 'done' ? ' (' + (x.status === 'failed' ? 'failed, nothing moved' : x.status) + ')' : '')),
+            h('span', null, x.reason + ' · by ' + x.byName + ' (' + roleLabel(x.byRole) + ')'),
+            h('small', null, when(x.at) + ' · old balance ' + peso(x.fromBefore) + ' → ' + peso(x.fromAfter) + ', new balance ' + peso(x.toBefore) + ' → ' + peso(x.toAfter)));
+        })) : h('p', { class: 'note' }, 'No transfers yet.')));
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
   }
 
   /* ---------- Payments and Refunds (staff) ---------- */
@@ -3152,11 +3420,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     });
     var cards = list.map(function (p) {
       var acct = state.accounts[p.by] || {}, role = roleLabel(roleOf(p.by));
-      var facts = [role, acct.createdAt ? 'member since ' + mfmt.format(new Date(Number(acct.createdAt))) : '', acct.rating ? 'rating ' + Number(acct.rating).toFixed(1) : '', p.email || 'email not shared'].filter(Boolean);
+      var facts = [role, acct.createdAt ? 'member since ' + mfmt.format(new Date(Number(acct.createdAt))) : '', acct.level ? 'level ' + acct.level : '', p.email || 'email not shared'].filter(Boolean);
       var lines = slotRuns(p.slots).map(function (l) { return h('li', null, l); });
       var act = a && a.id === p.id ? a : null, pend = p.status === 'pending_verification' && can('payments');
       var kids = [
-        h('div', { class: 'pay-top' }, h('div', null, h('strong', null, p.byName || 'Player'), h('small', null, facts.join(' · '))), h('div', { class: 'pay-amt' }, statusChip(p.status), h('strong', null, peso(p.amount)))),
+        h('div', { class: 'pay-top' }, h('div', null, h('strong', { class: 'with-av' }, avatarEl(p.by, p.byName, 'xs'), p.byName || 'Player'), h('small', null, facts.join(' · '))), h('div', { class: 'pay-amt' }, statusChip(p.status), h('strong', null, peso(p.amount)))),
         h('div', { class: 'pay-body' },
           h('div', { class: 'pay-info' },
             h('p', null, h('span', null, p.kind === 'reschedule' ? 'Reschedule balance for ' : 'Booking '), h('strong', null, p.bookingRef)),
@@ -3214,7 +3482,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var shown = r.status === 'refunded' ? (r.actualAmount != null ? r.actualAmount : r.refundable) : r.refundable;
     var kids = [
       h('div', { class: 'rf-head' },
-        h('div', { class: 'rf-who' }, h('span', { class: 'rf-avatar', 'aria-hidden': 'true' }, (r.byName || '?').charAt(0).toUpperCase()), h('div', null, h('strong', null, r.byName || 'Player'), h('small', null, roleLabel(roleOf(r.by)) + (acct.createdAt ? ' · member since ' + mfmt.format(new Date(Number(acct.createdAt))) : '')))),
+        h('div', { class: 'rf-who' }, avatarEl(r.by, r.byName, 'md'), h('div', null, h('strong', null, r.byName || 'Player'), h('small', null, roleLabel(roleOf(r.by)) + (acct.createdAt ? ' · member since ' + mfmt.format(new Date(Number(acct.createdAt))) : '')))),
         h('div', { class: 'rf-badges' }, h('span', { class: 'chip rs-' + (r.status === 'awaiting_user' ? 'requested' : r.status) }, r.status === 'awaiting_user' ? 'Awaiting player' : (STATUS_WORDS[r.status] || r.status)),
           r.method ? h('span', { class: 'chip role' }, isBal ? 'Refund balance' : 'GCash') : null, h('strong', { class: 'rf-amt' }, peso(shown)))),
       h('dl', { class: 'rf-facts' },
@@ -3689,6 +3957,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function renderBar() {
     fill($('#rf-slot'), refundChip());
     fill($('#who'),
+      avatarEl(state.me, myName(), 'sm'),
       h('div', { class: 'who-text' },
         h('strong', { title: myName() }, myName()),
         h('span', { class: 'who-role' }, roleLabel(myRole()))),
@@ -3700,6 +3969,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (can('payments') || can('paysettings')) views.push(['payments', 'Payments']);
     if (can('refunds')) views.push(['refunds', 'Refunds']);
     if (can('roleaccess')) views.push(['roles', 'Role access']);
+    if (canLinkBalances()) views.push(['balink', 'Balance linking']);   // Super Admin and Admin only (also enforced on the server)
     // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
     if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
     $('#book-btn').hidden = !can('book');
@@ -3761,6 +4031,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       $('#view-roles').hidden = state.view !== 'roles';
       $('#view-payments').hidden = state.view !== 'payments';
       $('#view-refunds').hidden = state.view !== 'refunds';
+      $('#view-balink').hidden = state.view !== 'balink';
       if (!can('host')) state.hostOpen = false;
       $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
@@ -3769,6 +4040,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       else if (state.view === 'people') renderUsers();
       else if (state.view === 'payments') renderPayments();
       else if (state.view === 'refunds') renderRefunds();
+      else if (state.view === 'balink') renderBalink();
       else renderRoles();
     }
     renderModal();
@@ -3777,6 +4049,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     renderCheckout();
     renderCancelFlow();
     renderRfInfo();
+    renderRfEdit();
     renderThanks();
     renderNotice();
     renderPayDlg();
@@ -3813,7 +4086,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
-      var topDlg = state.imgView ? ['#imgview', closeImg] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
+      var topDlg = state.imgView ? ['#imgview', closeImg] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
       if (topDlg) {
         if (e.key === 'Escape') { topDlg[1](); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
@@ -3929,17 +4202,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (!$('#h-end').value || toMin($('#h-end').value) <= s) $('#h-end').value = fromMin(s + 90);
     });
 
-    var rs = $('#pf-rating');
-    rs.append(h('option', { value: '' }, 'Not set'));
-    RATINGS.forEach(function (r) { rs.append(h('option', { value: r[0] }, r[1])); });
-    rs.addEventListener('change', function (e) {
-      var me = state.me, v = e.target.value;
-      if (!state.db || !me) return;
-      var next = Object.assign({}, state.accounts[me]);
-      if (v) next.rating = parseFloat(v); else delete next.rating;
-      state.accounts[me] = next;
-      queue(function () { return state.db.doc('members/' + me).set(next); }, 'Could not save your rating.')
-        .then(function () { flash(v ? 'Rating saved: ' + v + '.' : 'Rating cleared.', 'ok'); });
+    $('#pf-rating').addEventListener('change', function (e) {
+      var v = e.target.value;
+      payCall({ action: 'set-level', level: v })
+        .then(function () { flash(v ? 'Level saved: ' + v + '.' : 'Level cleared.', 'ok'); })
+        .catch(function (er) { flash(er.message, 'err'); renderProfile(); });
     });
     function closePwForm() { $('#pf-pw-form').hidden = true; ['#pf-cur', '#pf-new', '#pf-new2'].forEach(function (s) { $(s).value = ''; }); }
     $('#pf-reset').addEventListener('click', function () {
@@ -4141,7 +4408,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       state.payCfg = snap.exists ? (snap.data() || {}) : {};
       render();
     }, function () {});
-    [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs'], ['refundaccts', 'refundaccts'], ['balances', 'balances'], ['ledger', 'ledger']].forEach(function (c) {
+    [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs'], ['refundaccts', 'refundaccts'], ['balances', 'balances'], ['ledger', 'ledger'], ['balancelinks', 'balancelinks']].forEach(function (c) {
       db.collection(c[0]).onSnapshot(function (snap) {
         var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
         state[c[1]] = next; render();

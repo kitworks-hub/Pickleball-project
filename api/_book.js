@@ -184,6 +184,9 @@ async function pushTo(uid, n) {
 /* ---------- refunds: states, and why one cannot be processed ---------- */
 // A refund opened before players could choose how to receive it (status requested or approved, but no method) is really still
 // waiting for the player: nobody knows where the money should go.
+const DEFAULT_LEVELS = ['Open play', 'Beginner 2.0\u20132.5', 'Intermediate 3.0\u20133.5', 'Advanced 4.0+'];
+// The levels set in Session Configurations are the source of truth for a player's level.
+const levelsOf = opts => (opts && Array.isArray(opts.levels) && opts.levels.length ? opts.levels : DEFAULT_LEVELS).map(String);
 const isAwaiting = r => !!r && (r.status === 'awaiting_user' || ((r.status === 'requested' || r.status === 'approved') && !r.method));
 const acctOk = a => !!(a && a.number && a.name && a.qrPath);
 // What is blocking a refund, in plain words, with what to do about it. repair: true means "Fix and remind" can clear it.
@@ -225,5 +228,5 @@ function scheduleText(slots) {
 module.exports = {
   HOLD_MS, RETRY_HOLD_MS, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
   slotId, courtKey, startMs, occupies, allMap, sameVenue, sessionBlocking, bookingBlocking,
-  isAwaiting, acctOk, refundBlockers, usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
+  DEFAULT_LEVELS, levelsOf, isAwaiting, acctOk, refundBlockers, usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
 };

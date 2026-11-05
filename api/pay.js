@@ -355,15 +355,105 @@ const actions = {
   /* ----- the player: GCash details for refunds ----- */
   async 'refund-account'(w, b) {
     const n = String(b.number || '').replace(/[\s-]/g, ''), name = String(b.name || '').trim();
-    need(/^(\+?63|0)9\d{9}$/.test(n), 400, 'Enter a valid GCash number, like 09171234567.');
-    need(name.length >= 2 && name.length <= 60, 400, 'Enter the account name shown in your GCash.');
     const cur = (await L.getDoc('refundaccts', w.uid)) || {};
+    const missing = [!n && 'the GCash number', !name && 'the account name', !b.qr && !cur.qrPath && 'the GCash QR code'].filter(Boolean);
+    need(!missing.length, 400, 'Required: ' + missing.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.');
+    need(/^(\+?63|0)9\d{9}$/.test(n), 400, 'Enter a valid GCash number, like 09171234567.');
+    need(name.length >= 2 && name.length <= 60, 400, 'Enter the account name shown in your GCash (2 to 60 characters).');
     let qrPath = cur.qrPath || '';
     if (b.qr) { const img = parseImage(b.qr); qrPath = 'refundqr/' + w.uid + '-' + Date.now() + '.' + img.ext; await L.putFile(qrPath, img.buf, img.type); }
-    need(qrPath, 400, 'Upload your GCash QR code.');
     await put('refundaccts', w.uid, { number: n, name, qrPath, updatedAt: Date.now() });
     await L.bump();
     return { ok: true };
+  },
+
+  /* ----- the player: level (must be one of the levels in Session Configurations) ----- */
+  async 'set-level'(w, b) {
+    const level = String(b.level == null ? '' : b.level).trim(), cur = (await L.getDoc('members', w.uid)) || {};
+    if (level) {
+      const levels = B.levelsOf(await L.getDoc('config', 'options'));
+      need(levels.indexOf(level) >= 0, 400, 'That level is not offered. Pick one of the levels in the list.');
+    }
+    const next = Object.assign({}, cur); if (level) next.level = level; else delete next.level;
+    await put('members', w.uid, next);
+    await L.bump();
+    return { ok: true, level };
+  },
+
+  /* ----- the player: profile picture (private storage, shown to signed-in people only) ----- */
+  async 'avatar-set'(w, b) {
+    const img = parseImage(b.image);
+    need(img.buf.length <= 600 * 1024, 400, 'That picture is too large. Use a smaller one.');
+    const cur = (await L.getDoc('members', w.uid)) || {}, path = 'avatars/' + w.uid + '-' + Date.now() + '.' + img.ext;
+    await L.putFile(path, img.buf, img.type);
+    await put('members', w.uid, Object.assign({}, cur, { avatar: path, avatarAt: Date.now() }));
+    if (cur.avatar && cur.avatar !== path) await L.delFile(cur.avatar);
+    await L.bump();
+    return { ok: true, avatar: path };
+  },
+  async 'avatar-remove'(w) {
+    const cur = (await L.getDoc('members', w.uid)) || {};
+    if (!cur.avatar) return { ok: true };
+    const next = Object.assign({}, cur); delete next.avatar; delete next.avatarAt;
+    await put('members', w.uid, next);
+    await L.delFile(cur.avatar);
+    await L.bump();
+    return { ok: true };
+  },
+
+  /* ----- Super Admin and Admin: move an existing refund balance from an old account to a new one ----- */
+  async 'balance-search'(w, b) {
+    need(w.canLinkBalances, 403, 'Only a Super Admin or Admin can link refund balances.');
+    const q = String(b.q || '').trim().toLowerCase();
+    need(q.length >= 2, 400, 'Type at least 2 letters of the name, or the full email address.');
+    const [members, roles, bals] = await Promise.all([B.allMap('members'), B.allMap('roles'), B.allMap('balances')]);
+    let ids;
+    if (q.indexOf('@') >= 0) { const id = L.emailId(L.normEmail(q)); ids = members[id] ? [id] : []; }
+    else ids = Object.keys(members).filter(id => String(members[id].name || '').toLowerCase().indexOf(q) >= 0).slice(0, 10);
+    return { results: ids.map(id => {
+      const bl = Object.assign({ amount: 0, reserved: 0 }, bals[id]), rl = (roles[id] && roles[id].role) || 'player';
+      return { id, name: members[id].name, role: rl, since: members[id].createdAt || null, suspended: !!(roles[id] && roles[id].suspended), avatar: members[id].avatar || '', amount: bl.amount, reserved: bl.reserved, available: Math.max(0, bl.amount - bl.reserved) };
+    }) };
+  },
+  async 'balance-link'(w, b) {
+    need(w.canLinkBalances, 403, 'Only a Super Admin or Admin can link refund balances.');
+    const from = String(b.from || ''), to = String(b.to || ''), key = String(b.key || ''), reason = String(b.reason || '').trim();
+    need(b.confirm === true, 400, 'Confirm the transfer first.');
+    need(/^[\w-]{8,64}$/.test(key), 400, 'Bad request. Reload the page and try again.');
+    need(from && to, 400, 'Choose both the old account and the new account.');
+    need(from !== to, 400, 'The old and the new account must be different accounts.');
+    need(reason.length >= 3 && reason.length <= 200, 400, 'Write a short reason for the transfer (3 to 200 characters).');
+    const [fm, tm] = await Promise.all([L.getDoc('members', from), L.getDoc('members', to)]);
+    need(fm, 404, 'The old account was not found.');
+    need(tm, 404, 'The new account was not found.');
+    const amount = Math.round(Number(b.amount) * 100) / 100, expected = Math.round(Number(b.expected) * 100) / 100;
+    need(Number.isFinite(amount) && amount > 0, 400, 'Enter an amount greater than zero.');
+    need(Number.isFinite(expected), 400, 'Bad request. Search for the account again.');
+    need(await lockOnce('ev:balink:' + key, w.uid), 409, 'This transfer was already submitted.');   // a double click or a replay does nothing
+    const id = newId('bl_'), order = [from, to].sort();
+    try {
+      return await withBalance(order[0], () => withBalance(order[1], async () => {
+        const fb = await getBal(from), tb = await getBal(to), avail = Math.round((fb.amount - fb.reserved) * 100) / 100;
+        need(avail > 0, 409, 'The old account has no refund balance to transfer.');
+        need(avail === expected, 409, 'The old account\'s balance changed (it is now ' + B.money(avail) + '). Search again and check it before confirming.');
+        need(amount <= avail, 400, 'The old account only has ' + B.money(avail) + ' available to transfer.');
+        const fromAfter = Math.round((fb.amount - amount) * 100) / 100, toAfter = Math.round((tb.amount + amount) * 100) / 100, at = Date.now();
+        const audit = { id, from, fromName: fm.name, to, toName: tm.name, amount, fromBefore: fb.amount, fromAfter, toBefore: tb.amount, toAfter, reason, by: w.uid, byName: w.member.name, byRole: w.role, at, status: 'done' };
+        need(await putNew('balancelinks', id, Object.assign({}, audit, { status: 'pending' })), 409, 'This transfer was already submitted.');
+        try {
+          await putBal(from, Object.assign({}, fb, { amount: fromAfter }));
+          try { await putBal(to, Object.assign({}, tb, { amount: toAfter })); }
+          catch (e) { await putBal(from, fb); throw e; }   // put the old balance back: never half a transfer
+        } catch (e) { await put('balancelinks', id, Object.assign({}, audit, { status: 'failed' })); throw e; }
+        await ledger(from, 'link-out', -amount, fromAfter, { linkId: id, other: to, otherName: tm.name, by: w.uid, byName: w.member.name });
+        await ledger(to, 'link-in', amount, toAfter, { linkId: id, other: from, otherName: fm.name, by: w.uid, byName: w.member.name });
+        await put('balancelinks', id, audit);
+        await L.bump();
+        await B.notify([from], { event: 'balance-link-out', refId: id, kind: 'balance-linked', read: true, data: { amount, linkId: id }, title: 'Refund balance moved', body: B.money(amount) + ' of your refund balance was moved to another account (' + tm.name + ') by an admin.' });
+        await B.notify([to], { event: 'balance-link-in', refId: id, kind: 'balance-linked', data: { amount, linkId: id }, title: 'Refund balance added', body: B.money(amount) + ' was moved into your refund balance from ' + fm.name + ' by an admin.' });
+        return { ok: true, id, amount, fromAfter, toAfter };
+      }));
+    } catch (e) { await unlock('ev:balink:' + key); throw e; }   // nothing moved: the same request may be tried again
   },
 
   /* ----- the player: how to receive a refund. This is an explicit choice and there is no default.
@@ -375,7 +465,8 @@ const actions = {
     need(B.isAwaiting(r), 409, r.status === 'refunded' ? 'This refund was already completed.' : 'You already chose how to receive this refund.');
     if (method === 'gcash') {
       const a = await L.getDoc('refundaccts', w.uid);
-      need(a && a.number && a.name && a.qrPath, 400, 'Add your GCash number, account name and QR code in Profile before requesting a GCash refund.');
+      const miss = [!(a && a.number) && 'GCash number', !(a && a.name) && 'account name', !(a && a.qrPath) && 'GCash QR code'].filter(Boolean);
+      need(!miss.length, 400, 'Your GCash refund details are incomplete. Add your ' + miss.join(', ').replace(/, ([^,]*)$/, ' and $1') + ' first (Refundable Balance, Edit GCash Details).');
       need(await lockOnce('ev:rfchoose:' + id, w.uid), 409, 'You already chose how to receive this refund.');
       try { await put('refunds', id, Object.assign({}, r, { status: 'requested', method: 'gcash', acct: { number: a.number, name: a.name, qrPath: a.qrPath }, chosenAt: Date.now() })); }   // a request only: nothing is credited
       catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
@@ -580,7 +671,7 @@ function publicConfig() {
 
 async function sendFile(req, res) {
   const w = await L.whoIs(req), path = String(req.query.file || '');
-  need(/^(qr|proofs|refundqr|refundproofs)\/[\w.\-]+$/.test(path), 400, 'Bad file.');
+  need(/^(qr|proofs|refundqr|refundproofs|avatars)\/[\w.\-]+$/.test(path), 400, 'Bad file.');   // avatars: any signed-in person
   if (path.startsWith('proofs/')) {
     const pay = await L.getDoc('payments', path.slice(7).replace(/\.\w+$/, ''));
     need(pay && (pay.by === w.uid || w.can('payments')), 403, 'You cannot view this file.');

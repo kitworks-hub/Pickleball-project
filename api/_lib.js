@@ -75,7 +75,7 @@ async function redis(cmds) {
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
-const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger'];
+const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
 
@@ -139,6 +139,10 @@ async function putFile(path, buffer, contentType) {
   await ensureBucket();
   const r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: sbHeaders({ 'Content-Type': contentType, 'x-upsert': 'true' }), body: buffer });
   if (!r.ok) throw httpErr(502, 'The file could not be saved (' + r.status + ').');
+}
+async function delFile(path) {
+  if (!configured()) { delete memFiles[path]; return; }
+  try { await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'DELETE', headers: sbHeaders() }); } catch (e) {}   // best effort: the old picture is already unlinked
 }
 async function getFile(path) {
   if (!configured()) return memFiles[path] || null;
@@ -253,6 +257,7 @@ async function whoIs(req) {
   return {
     uid: tok.id, member, role, defs, suspended,
     isSuper: role === 'super_admin',
+    canLinkBalances: !suspended && (role === 'super_admin' || role === 'admin'),   // not a role-table permission: only Super Admin and Admin
     can: k => !suspended && perms[k] === true
   };
 }
@@ -281,7 +286,7 @@ function bookingEnded(b) {
 }
 
 module.exports = {
-  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, SB_URL, configured,
+  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
   throttle, clearThrottle, clientIp, whoIs, permsFor, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

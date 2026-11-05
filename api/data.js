@@ -22,7 +22,7 @@ async function read(req, res) {
   const want = Number(req.query && req.query.rev);
   const rev = await L.getRev();
   if (want === rev) return res.status(200).json({ rev, same: true });
-  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'refundaccts', 'balances', 'ledger', 'config']);
+  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'config']);
   const r = await L.redis(names.map(c => ['HGETALL', L.K(c)]));
   const cols = {};
   names.slice(0, -1).forEach((c, i) => { cols[c] = mapOf(r[i]); });
@@ -41,6 +41,10 @@ async function read(req, res) {
   const onlyMineKeyed = (col, perm) => { if (perm && w.can(perm)) return; Object.keys(cols[col]).forEach(id => { if (id !== w.uid) delete cols[col][id]; }); };   // documents named after the person
   onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to'); onlyMine('ledger', 'refunds', 'uid');
   onlyMineKeyed('refundaccts', 'refunds'); onlyMineKeyed('balances', 'refunds');
+  if (!w.canLinkBalances) cols.balancelinks = {};   // the audit history of balance links is for Super Admin and Admin only
+  // A player's level always follows the levels in Session Configurations: one that is no longer offered is not shown (and is never kept in sync by hand)
+  const levels = B.levelsOf(config.options);
+  Object.keys(cols.members).forEach(id => { const m = cols.members[id]; if (m.level && levels.indexOf(m.level) < 0) { m.levelRemoved = m.level; delete m.level; } });
   // Refunds opened before players could choose a method look like what they are: waiting for the player. Reviewers also see what blocks each one.
   const locks = w.can('refunds') ? await B.allMap('locks') : null;
   Object.keys(cols.refunds).forEach(id => {
@@ -86,9 +90,7 @@ const rules = {
     if (!cur || id !== w.uid) throw forbid('You can only change your own profile.');
     if (!isObj(next)) throw L.httpErr(400, 'Bad profile.');
     const out = Object.assign({}, cur, { name: String(next.name || cur.name).trim().slice(0, 80) || cur.name });
-    const r = Number(next.rating);
-    if (next.rating != null && r >= 1 && r <= 6) out.rating = r; else delete out.rating;
-    return out;   // createdAt and pwSetAt can only change through /api/auth
+    return out;   // level and picture change only through /api/pay; the old rating is kept as it was; createdAt and pwSetAt only through /api/auth
   },
 
   roles(w, id, next, cur) {
@@ -153,7 +155,7 @@ async function write(req, res) {
   const col = parts[0];
   let id = parts[1];
   const op = b.op;
-  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
+  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
   if (op === 'add') {
     if (col !== 'sessions' || parts.length !== 1) throw forbid();
     id = crypto.randomBytes(10).toString('hex');
