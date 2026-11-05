@@ -181,6 +181,31 @@ async function pushTo(uid, n) {
   return { sent, failed };
 }
 
+/* ---------- refunds: states, and why one cannot be processed ---------- */
+// A refund opened before players could choose how to receive it (status requested or approved, but no method) is really still
+// waiting for the player: nobody knows where the money should go.
+const isAwaiting = r => !!r && (r.status === 'awaiting_user' || ((r.status === 'requested' || r.status === 'approved') && !r.method));
+const acctOk = a => !!(a && a.number && a.name && a.qrPath);
+// What is blocking a refund, in plain words, with what to do about it. repair: true means "Fix and remind" can clear it.
+function refundBlockers(id, r, locks) {
+  const out = [], name = r.byName || 'The player', amt = money(r.refundable || 0), has = k => !!(locks && locks[k] != null);
+  if (r.status === 'refunded' || r.status === 'denied') return out;
+  if (isAwaiting(r)) {
+    const old = r.status !== 'awaiting_user';
+    out.push({ code: old ? 'legacy' : 'awaiting', repair: old, text: old
+      ? 'This refund was opened before players could choose how to receive it, so it has no method and no GCash details. ' + name + ' needs to choose how to receive ' + amt + '.'
+      : name + ' has not chosen how to receive ' + amt + ' yet.', fix: 'They can choose from the Refundable Balance box. "Fix and remind" sends them a reminder.' });
+    if (has('ev:rfchoose:' + id)) out.push({ code: 'stuck-choose', repair: true, text: 'An earlier attempt to choose did not finish.', fix: '"Fix and remind" clears it so they can choose again.' });
+    return out;
+  }
+  if (r.method === 'gcash' && !acctOk(r.acct)) out.push({ code: 'no-details', repair: true, text: name + "'s GCash number, account name or QR code is missing from this request, so there is nowhere to send the money.", fix: '"Fix and remind" returns it to them to complete their details and choose again.' });
+  if (!(Number(r.refundable) > 0) || Number(r.refundable) > Number(r.paid)) out.push({ code: 'amount', repair: false, text: 'The refund amount (' + amt + ' of ' + money(r.paid || 0) + ' paid) is not valid.', fix: 'Deny this request with a reason, or ask an admin to look at it.' });
+  if (has('ev:rfdone:' + id)) out.push({ code: 'stuck-done', repair: true, text: 'An earlier attempt to record this refund did not finish.', fix: '"Fix and remind" clears it so it can be processed again.' });
+  if (has('ev:rfapprove:' + id) && r.status === 'requested') out.push({ code: 'stuck-approve', repair: true, text: 'An earlier approval did not finish.', fix: '"Fix and remind" clears it.' });
+  if (locks && Object.keys(locks).some(k => k.startsWith('gcash:') && locks[k] === id)) out.push({ code: 'stuck-ref', repair: true, text: 'A GCash reference number is being held by an unfinished attempt on this refund.', fix: '"Fix and remind" frees it.' });
+  return out;
+}
+
 /* ---------- small helpers ---------- */
 const money = n => '₱' + Number(n).toLocaleString('en-PH');
 const hourText = hr => (hr % 12 || 12) + ':00 ' + (hr % 24 < 12 ? 'AM' : 'PM');
@@ -200,5 +225,5 @@ function scheduleText(slots) {
 module.exports = {
   HOLD_MS, RETRY_HOLD_MS, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
   slotId, courtKey, startMs, occupies, allMap, sameVenue, sessionBlocking, bookingBlocking,
-  usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
+  isAwaiting, acctOk, refundBlockers, usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
 };

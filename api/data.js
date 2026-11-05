@@ -41,6 +41,13 @@ async function read(req, res) {
   const onlyMineKeyed = (col, perm) => { if (perm && w.can(perm)) return; Object.keys(cols[col]).forEach(id => { if (id !== w.uid) delete cols[col][id]; }); };   // documents named after the person
   onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to'); onlyMine('ledger', 'refunds', 'uid');
   onlyMineKeyed('refundaccts', 'refunds'); onlyMineKeyed('balances', 'refunds');
+  // Refunds opened before players could choose a method look like what they are: waiting for the player. Reviewers also see what blocks each one.
+  const locks = w.can('refunds') ? await B.allMap('locks') : null;
+  Object.keys(cols.refunds).forEach(id => {
+    const rf = cols.refunds[id];
+    if (locks) rf.blockers = B.refundBlockers(id, rf, locks);   // worked out from the stored record, before it is shown as waiting
+    if (B.isAwaiting(rf) && rf.status !== 'awaiting_user') { rf.legacyStatus = rf.status; rf.status = 'awaiting_user'; }
+  });
   res.status(200).json({ rev, cols, config });
 }
 

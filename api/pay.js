@@ -21,6 +21,7 @@ const lockOnce = async (key, val) => !!(await L.one(['HSETNX', L.K('locks'), key
 const unlock = key => del('locks', key);
 const sum = (list, f) => list.reduce((n, x) => n + (Number(f(x)) || 0), 0);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const NOT_CHOSEN = 'The player has not chosen how to receive this refund yet, so it cannot be processed. Use "Fix and remind" to ask them, or ask them to choose from the Refundable Balance box.';
 
 /* ----- refund balance: one person's balance is changed by one request at a time ----- */
 async function withBalance(uid, fn) {
@@ -371,12 +372,13 @@ const actions = {
     const id = String(b.id || ''), r = await L.getDoc('refunds', id), method = b.method;
     need(r && r.by === w.uid, 404, 'Refund not found.');
     need(method === 'gcash' || method === 'balance', 400, 'Choose "Request GCash Refund" or "Keep as Refund Balance".');
-    need(r.status === 'awaiting_user', 409, 'You already chose how to receive this refund.');
+    need(B.isAwaiting(r), 409, r.status === 'refunded' ? 'This refund was already completed.' : 'You already chose how to receive this refund.');
     if (method === 'gcash') {
       const a = await L.getDoc('refundaccts', w.uid);
       need(a && a.number && a.name && a.qrPath, 400, 'Add your GCash number, account name and QR code in Profile before requesting a GCash refund.');
       need(await lockOnce('ev:rfchoose:' + id, w.uid), 409, 'You already chose how to receive this refund.');
-      await put('refunds', id, Object.assign({}, r, { status: 'requested', method: 'gcash', acct: { number: a.number, name: a.name, qrPath: a.qrPath }, chosenAt: Date.now() }));   // a request only: nothing is credited
+      try { await put('refunds', id, Object.assign({}, r, { status: 'requested', method: 'gcash', acct: { number: a.number, name: a.name, qrPath: a.qrPath }, chosenAt: Date.now() })); }   // a request only: nothing is credited
+      catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
       await L.bump();
       const staff = await B.usersWith('refunds');
       await B.notify(staff.filter(u => u !== w.uid), { event: 'refund-requested', refId: id, kind: 'refund-requested', data: { refundId: id }, title: 'New GCash refund request', body: r.byName + ' · ' + r.bookingRef + ' · ' + B.money(r.refundable) + ' to send to GCash ' + a.number + '.' });
@@ -403,8 +405,10 @@ const actions = {
     need(w.can('refunds'), 403, 'Your role cannot process refunds.');
     const id = String(b.id || ''), r = await L.getDoc('refunds', id);
     need(r, 404, 'Refund not found.');
-    need(r.status === 'requested', 409, r.status === 'awaiting_user' ? 'The player has not chosen how to receive this refund yet.' : 'This refund was already reviewed.');
-    need(r.method === 'gcash' || r.method === 'balance', 409, 'The player has not chosen how to receive this refund yet.');
+    need(r.status !== 'refunded', 409, 'This refund was already completed.');
+    need(r.status !== 'denied', 409, 'This refund was denied, so it cannot be approved.');
+    need(!B.isAwaiting(r), 409, NOT_CHOSEN);
+    need(r.status === 'requested', 409, 'This refund was already approved. The next step is to process it: send the money and record it.');
     let amount = r.refundable;
     if (b.amount !== undefined && b.amount !== '') { amount = Math.round(Number(b.amount)); need(amount >= 0 && amount <= r.paid, 400, 'The refund cannot be more than was paid (' + B.money(r.paid) + ').'); }
     need(await lockOnce('ev:rfapprove:' + id, w.uid), 409, 'This refund is already being approved.');
@@ -414,7 +418,7 @@ const actions = {
         await withBalance(r.by, async () => {
           const bal = await getBal(r.by);
           newBalance = bal.amount + amount;
-          if (!(await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: bal.amount + amount, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited.');
+          if (!(await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: bal.amount + amount, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited to the balance.');
           await putBal(r.by, Object.assign({}, bal, { amount: bal.amount + amount }));
         });
         await put('refunds', id, Object.assign({}, r, { status: 'refunded', refundable: amount, actualAmount: amount, refundRef: 'REFUND BALANCE', approvedBy: w.uid, approvedByName: w.member.name, approvedAt: Date.now(), refundedBy: w.uid, refundedByName: w.member.name, refundedAt: Date.now() }));
@@ -427,19 +431,24 @@ const actions = {
     await L.bump();
     return { ok: true };
   },
+  // GCash refunds: staff send the money by hand, then record the amount really sent, the GCash reference and the receipt. All three are required.
   async 'refund-complete'(w, b) {
     need(w.can('refunds'), 403, 'Your role cannot process refunds.');
     const id = String(b.id || ''), r = await L.getDoc('refunds', id), gref = normRef(b.gcashRef);
     need(r, 404, 'Refund not found.');
-    need(r.method === 'gcash', 400, 'This refund is kept as balance, so there is nothing to send.');
-    need(r.status === 'requested' || r.status === 'approved', 409, r.status === 'refunded' ? 'This refund was already completed.' : r.status === 'awaiting_user' ? 'The player has not chosen how to receive this refund yet.' : 'This refund cannot be processed.');
-    need(gref.length >= 6 && gref.length <= 30, 400, 'Enter the GCash reference number of the refund you sent.');
+    need(r.status !== 'refunded', 409, 'This refund was already completed.');
+    need(r.status !== 'denied', 409, 'This refund was denied, so it cannot be processed.');
+    need(!B.isAwaiting(r), 409, NOT_CHOSEN);   // this also catches refunds opened before players could choose a method
+    need(r.method === 'gcash', 400, 'The player chose to keep this refund as refund balance, so there is nothing to send by GCash.');
+    need(B.acctOk(r.acct), 409, "This request has no usable GCash details (the player's number, account name and QR code), so there is nowhere to send the money. Press \"Fix and remind\": it returns the request to the player to add their details and choose again.");
+    need(gref.length >= 6 && gref.length <= 30, 400, 'Enter the GCash reference number of the refund you sent (6 to 30 letters and numbers).');
     need(b.amount !== undefined && b.amount !== '' && b.amount !== null, 400, 'Enter the amount you actually refunded.');   // the amount, the reference and the receipt are all mandatory
     const actual = Math.round(Number(b.amount));
     need(actual > 0 && actual <= r.paid, 400, 'Enter the amount you actually sent (more than 0 and not more than ' + B.money(r.paid) + ').');
-    const img = parseImage(b.proof);   // the receipt of the refund is required
-    need(await lockOnce('gcash:' + gref, id), 409, 'That GCash reference number was already used.');
-    if (!(await lockOnce('ev:rfdone:' + id, w.uid))) { await unlock('gcash:' + gref); throw err(409, 'This refund is already being completed.'); }
+    need(b.proof, 400, 'Upload the receipt (screenshot) of the refund you sent.');
+    const img = parseImage(b.proof);
+    need(await lockOnce('gcash:' + gref, id), 409, 'That GCash reference number was already used for another payment or refund. Check the reference on your receipt.');
+    if (!(await lockOnce('ev:rfdone:' + id, w.uid))) { await unlock('gcash:' + gref); throw err(409, 'Someone else is processing this refund right now. Refresh to see its result.'); }
     try {
       const path = 'refundproofs/' + id + '.' + img.ext;
       await L.putFile(path, img.buf, img.type);
@@ -460,6 +469,42 @@ const actions = {
     await L.bump();
     await B.notify([r.by], { event: 'refund-denied', refId: id, kind: 'refund-denied', data: { ref: r.bookingRef }, title: 'Refund not approved', body: 'Your refund request for ' + r.bookingRef + ' was not approved.' + (reason ? ' Reason: ' + reason : '') });
     return { ok: true };
+  },
+
+  /* ----- staff: "Fix and remind". Repairs a refund that is stuck, without refunding it, crediting anything or touching any payment record:
+         - a refund opened before players could choose a method (status requested or approved, no method) goes back to "awaiting player";
+         - a GCash request that has no usable GCash details goes back to the player to complete them;
+         - a half-finished step (a leftover lock) is cleared, and a balance credit that was already recorded is finished (never credited again).
+         The player is then reminded to choose. ----- */
+  async 'refund-repair'(w, b) {
+    need(w.can('refunds'), 403, 'Your role cannot process refunds.');
+    const id = String(b.id || ''), r = await L.getDoc('refunds', id);
+    need(r, 404, 'Refund not found.');
+    need(r.status !== 'refunded' && r.status !== 'denied', 409, 'This refund is already ' + r.status + ', so there is nothing to repair.');
+    const locks = await B.allMap('locks'), fixed = [];
+    let doc = r;
+    if (B.isAwaiting(r) && locks['ev:rfchoose:' + id] != null) {
+      const credit = await L.getDoc('ledger', 'credit_' + id);
+      if (credit) {   // the balance was credited but the refund record never caught up: finish it, without crediting again
+        doc = Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: credit.amount, refundRef: 'REFUND BALANCE', refundedAt: credit.at || Date.now(), refundedByName: 'Refund balance' });
+        await put('refunds', id, doc); await L.bump(); fixed.push('finished a refund balance credit that had already been recorded (it was not credited again)');
+        await B.notify([r.by], { event: 'refund-done', refId: id, kind: 'refund-done', data: { ref: r.bookingRef, amount: credit.amount, method: 'balance', balance: credit.balanceAfter }, title: 'Refund added to your balance', body: B.money(credit.amount) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
+        return { ok: true, fixed, status: 'refunded' };
+      }
+      await unlock('ev:rfchoose:' + id); fixed.push('cleared an unfinished choice');
+    }
+    const open = r.status === 'requested' || r.status === 'approved';
+    if (open && !r.method) { doc = Object.assign({}, r, { status: 'awaiting_user', method: null, acct: null, legacyStatus: r.status, repairedAt: Date.now() }); fixed.push('returned to the player to choose how to receive it (it was opened before players could choose)'); }
+    else if (open && r.method === 'gcash' && !B.acctOk(r.acct)) { doc = Object.assign({}, r, { status: 'awaiting_user', method: null, acct: null, repairedAt: Date.now() }); await unlock('ev:rfchoose:' + id); fixed.push("returned to the player to add their GCash details and choose again"); }
+    for (const k of ['ev:rfapprove:' + id, 'ev:rfdone:' + id]) if (locks[k] != null && (doc.status === 'requested' || doc.status === 'approved' || doc.status === 'awaiting_user')) { await unlock(k); fixed.push('cleared an unfinished step'); }
+    for (const k of Object.keys(locks)) if (k.startsWith('gcash:') && locks[k] === id) { await unlock(k); fixed.push('freed a GCash reference that was held by an unfinished refund'); }
+    if (doc !== r) { await put('refunds', id, doc); await L.bump(); }
+    if (doc.status === 'awaiting_user') {
+      const day = new Date().toISOString().slice(0, 10);
+      await B.notify([r.by], { event: 'refund-reminder', refId: id + '.' + day, kind: 'booking-cancelled', data: { ref: r.bookingRef, refundId: id }, title: 'Choose how to receive your refund', body: 'You can get back ' + B.money(r.refundable) + ' for booking ' + r.bookingRef + '. Choose to request it by GCash or to keep it as refund balance.' });
+      fixed.push('reminded ' + (r.byName || 'the player') + ' to choose');
+    }
+    return { ok: true, fixed, status: doc.status };
   },
 
   /* ----- admin: GCash details, QR code and refund policy ----- */
