@@ -2557,7 +2557,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     rates.sort(function (a, b) { return a.from - b.from; });
     for (var j = 1; j < rates.length; j++) if (rates[j].from < rates[j - 1].to) return { error: 'Rates cannot overlap: ' + hourText(rates[j - 1].from) + ' to ' + hourText(rates[j - 1].to) + ' and ' + hourText(rates[j].from) + ' to ' + hourText(rates[j].to) + '.' };
     var bare = hours.filter(function (hr) { return !rates.some(function (r) { return hr >= r.from && hr < r.to; }); });
-    if (bare.length) return { error: 'These open hours have no rate: ' + bare.map(hourShort).join(', ') + '. Add a rate for them or close them.' };
+    if (bare.length) return { error: 'Each open hour runs for a full hour, so the ' + bare.map(function (hr) { return hourShort(hr) + ' hour (' + hourText(hr) + ' to ' + hourText(hr + 1) + ')'; }).join(', ') + (bare.length === 1 ? ' is' : ' are') + ' open but not covered by any rate. Extend a rate so it ends at ' + hourText(bare[bare.length - 1] + 1) + ' (or later), or close ' + (bare.length === 1 ? 'that hour' : 'those hours') + ' above.' };
     return { hours: hours, rates: rates };
   }
   function saveBookCfg() {
