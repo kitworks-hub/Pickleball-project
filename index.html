@@ -1,7 +1,10 @@
 <title>MPC</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icon.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0a2a6e">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script>try { var kt = localStorage.getItem('kl-theme'); if (kt === 'light' || kt === 'dark') document.documentElement.setAttribute('data-theme', kt); } catch (e) {}</script>
@@ -422,7 +425,9 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
-.pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+.pf-pw { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.pf-pw .pw-form { align-self: stretch; }
+.pf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 16px; align-items: start; }
 .pf-grid > * { min-width: 0; }
 .push-box { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--rule); }
 .push-box h4 { margin: 0; }
@@ -562,8 +567,9 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .opt-grid .note { font-size: 0.75rem; }
 .rule-note { font-size: var(--fs-s); color: var(--muted); }
 .panel h3 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
-.profile { max-width: 720px; }
-#view-profile > .panel { width: 100%; max-width: 720px; }
+.profile { max-width: none; }
+.pf-cols { columns: 340px 2; column-gap: 20px; }
+.pf-cols > .panel { break-inside: avoid; margin: 0 0 20px; width: 100%; max-width: none; box-sizing: border-box; }
 .pw-form { display: flex; flex-direction: column; gap: 14px; }
 .view-stack h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
 .rows { display: flex; flex-direction: column; gap: 10px; }
@@ -768,6 +774,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
     <section id="view-profile" class="view-stack" aria-label="Profile" hidden>
       <h2>Profile</h2>
+      <div class="pf-cols">
       <div class="panel profile">
         <h3>Your details</h3>
         <div id="pf-avatar" class="av-box"></div>
@@ -783,11 +790,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           </label>
         </div>
         <p id="pf-level-note" class="note">The levels are the ones set up for sessions, so your level always matches what the club offers. Admins can see it on the Users page. Change or clear it any time.</p>
-      </div>
-      <div id="pf-gcash" class="panel"></div>
-      <div id="pf-refund" class="panel"></div>
-      <div id="pf-notify" class="panel"></div>
-      <div class="panel profile">
+        <div class="pf-pw">
         <h3>Password</h3>
         <p class="note">Change the password you use to log in. You will need your current one.</p>
         <div><button id="pf-reset" class="btn" type="button">Reset password</button></div>
@@ -803,6 +806,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
           </label>
           <div class="submit-row"><button id="pf-save" class="btn primary" type="submit">Save new password</button> <button id="pf-cancel" class="btn" type="button">Cancel</button></div>
         </form>
+        </div>
+      </div>
+      <div id="pf-gcash" class="panel"></div>
+      <div id="pf-refund" class="panel"></div>
+      <div id="pf-notify" class="panel"></div>
       </div>
     </section>
 

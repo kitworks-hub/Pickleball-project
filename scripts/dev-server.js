@@ -14,7 +14,7 @@ http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const fn = api[url.pathname];
   if (!fn) {
-    const files = { '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'], '/icon.jpg': ['icon.jpg', 'image/jpeg'],
+    const files = { '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'], '/icon.jpg': ['icon.jpg', 'image/jpeg'], '/icon-32.png': ['icon-32.png', 'image/png'], '/icon-48.png': ['icon-48.png', 'image/png'], '/icon-192.png': ['icon-192.png', 'image/png'], '/icon-512.png': ['icon-512.png', 'image/png'], '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'],
       '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/firebase-messaging-sw.js': ['firebase-messaging-sw.js', 'text/javascript'] };
     const f = files[url.pathname];
     if (!f) { res.statusCode = 404; return res.end('Not found'); }
