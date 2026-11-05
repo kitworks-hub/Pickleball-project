@@ -198,6 +198,7 @@ async function auditPost(w, b, pre, out) {
       case 'refund-repair': return A('refund.repair', who(w) + ' used Fix and remind on the refund for ' + (pre.refund ? pre.refund.bookingRef : b.id) + (out.fixed && out.fixed.length ? ' (' + out.fixed.join('; ') + ')' : ''), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id) } });
       case 'refund-account': return A('account.gcash', who(w) + ' saved their GCash refund details', { subject: { id: w.uid, name: who(w) } });
       case 'set-level': return A('account.level', who(w) + ' set their level to ' + (out.level || 'not set'), { subject: { id: w.uid, name: who(w) }, after: { level: out.level || null } });
+      case 'user-create': return A('account.create', who(w) + ' created the account of ' + out.name + ' (role: ' + out.role + ')', { subject: { id: out.id, name: out.name }, after: { role: out.role } });
       case 'avatar-set': return A('account.avatar', who(w) + ' changed their profile picture', { subject: { id: w.uid, name: who(w) } });
       case 'avatar-remove': return A('account.avatar', who(w) + ' removed their profile picture', { subject: { id: w.uid, name: who(w) } });
       case 'balance-link': return A('balance.link', who(w) + ' moved ' + B.money(out.amount) + ' of Refundable Balance from ' + ((pre.from && pre.from.name) || b.from) + ' to ' + ((pre.to && pre.to.name) || b.to), { subject: { id: String(b.from), name: pre.from && pre.from.name }, refs: { linkId: out.id, toId: String(b.to), toName: pre.to && pre.to.name }, amount: out.amount, before: { fromBalance: Math.round((out.fromAfter + out.amount) * 100) / 100 }, after: { fromBalance: out.fromAfter, toBalance: out.toAfter }, });
@@ -208,6 +209,26 @@ async function auditPost(w, b, pre, out) {
 }
 
 const actions = {
+  /* ----- Super Admin: create an account for someone (the same account a sign-up would make, with a role chosen here) ----- */
+  async 'user-create'(w, b) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can create users.');
+    const name = String(b.name || '').trim().slice(0, 80), email = L.normEmail(b.email), pw = typeof b.password === 'string' ? b.password : '', role = String(b.role || 'player');
+    need(name.length >= 2, 400, 'Enter the full name.');
+    need(L.validEmail(email), 400, 'Enter a valid email address.');
+    need(pw.length >= 8, 400, 'Use at least 8 characters for the password.');
+    need(pw.length <= 200, 400, 'That password is too long.');
+    need(['super_admin', 'admin', 'staff', 'player'].indexOf(role) >= 0 || (w.defs && w.defs[role]), 400, 'Choose a role from the list.');
+    await L.throttle('usercreate:' + w.uid, 40, 3600);
+    const id = L.emailId(email), now = Date.now();
+    need(await putNew('members', id, { name, createdAt: now, pwSetAt: now }), 409, 'An account with that email already exists.');
+    try {
+      await put('logins', id, await L.makeCred(email, pw));
+      if (role !== 'player') await put('roles', id, { role, by: w.uid, at: now });
+    } catch (e) { await del('members', id); await del('logins', id); await del('roles', id); throw e; }   // never leave half an account
+    await L.bump();
+    return { ok: true, id, name, role };
+  },
+
   /* ----- Super Admin: the Audit Trail (read only: nothing here, or anywhere, edits or deletes a record) ----- */
   async 'audit-list'(w, b) {
     need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can open the Audit Trail.');

@@ -429,6 +429,9 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
+.nu-pw { display: flex; gap: 6px; align-items: center; }
+.nu-pw input { flex: 1 1 auto; min-width: 0; }
+.nu-pw .btn { flex: none; }
 .ap { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
 .ap-ref { text-align: center; padding: 10px 12px; border: 1.5px dashed var(--accent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 9%, var(--card)); }
 .ap-ref small { display: block; font: 600 0.62rem/1.2 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
@@ -913,6 +916,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 <div id="modal" class="modal" hidden></div>
 <div id="confirm" class="modal" hidden></div>
 <div id="confirmuser" class="modal" hidden></div>
+<div id="newuser" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
 <div id="bklist" class="modal" hidden></div>
@@ -981,7 +985,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, newUser: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -1187,7 +1191,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1724,7 +1728,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var spots = 0, taken = 0;
     all.forEach(function (s) { var cap = Math.max(2, Number(s.capacity) || 12); spots += cap; taken += Math.min(cap, roster(s.id).length); });
     function tile(num, label) { return h('div', { class: 'tile' }, h('strong', null, String(num)), h('span', null, label)); }
-    box.append(h('h2', null, 'Users'));
+    box.append(h('div', { class: 'book-head' }, h('h2', null, 'Users'),
+      isSuper() ? h('button', { id: 'nu-open', class: 'btn primary small', type: 'button', 'aria-haspopup': 'dialog', onclick: openNewUser }, '+ Create User') : null));
     box.append(h('div', { class: 'tiles' },
       tile(uids.length, uids.length === 1 ? 'member' : 'members'),
       tile(fresh, 'joined this week'),
@@ -3442,6 +3447,90 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
   }
 
+  /* ---------- Create User (Super Admin only): makes the same kind of account a sign-up would, with the role chosen here ---------- */
+  var nuSig = '';
+  function openNewUser() {
+    if (!isSuper()) return;
+    state.newUser = { name: '', email: '', password: '', role: 'player', show: false, busy: false, error: '', errs: {}, done: null };
+    nuSig = ''; renderNewUser();
+    var f = $('#nu-name'); if (f) f.focus();
+  }
+  function closeNewUser() {
+    var d = state.newUser; if (d && d.busy) return;
+    state.newUser = null; nuSig = ''; renderNewUser();
+    var b = $('#nu-open'); if (b) b.focus();
+  }
+  function genPassword() {
+    var chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789', a = new Uint32Array(12);
+    crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (x) { return chars.charAt(x % chars.length); }).join('');
+  }
+  function submitNewUser() {
+    var d = state.newUser; if (!d || d.busy) return;
+    var e = {}, name = d.name.trim(), email = d.email.trim();
+    if (name.length < 2) e.name = 'Enter the full name.';
+    if (!email) e.email = 'Enter the email address.'; else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) e.email = 'Enter a valid email address.';
+    if (!d.password) e.password = 'Enter a temporary password, or press Generate.'; else if (d.password.length < 8) e.password = 'Use at least 8 characters.';
+    d.errs = e;
+    var bad = Object.keys(e);
+    if (bad.length) { d.error = 'Please fix the highlighted fields.'; nuSig = ''; renderNewUser(); var f = $('#nu-' + bad[0]); if (f) f.focus(); return; }
+    d.busy = true; d.error = ''; nuSig = ''; renderNewUser();
+    payCall({ action: 'user-create', name: name, email: email, password: d.password, role: d.role })
+      .then(function (r) { d.done = { name: r.name, email: email, role: r.role, password: d.password }; })
+      .catch(function (er) { d.error = er.message; if (/email/i.test(er.message)) d.errs = { email: er.message }; })
+      .then(function () { d.busy = false; nuSig = ''; renderNewUser(); var ok = $('#nu-done'); if (ok) ok.focus(); });
+  }
+  function renderNewUser() {
+    var box = $('#newuser'), d = state.newUser;
+    if (!d || !isSuper() || gateState() !== 'ok') { state.newUser = null; nuSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var e = d.errs || {}, sig = [d.busy, d.error, JSON.stringify(e), d.show, !!d.done].join('|');
+    if (sig === nuSig && !box.hidden) return;
+    nuSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (x) {} }
+    function clearErr(key) { return function () { if (d.errs && d.errs[key]) { delete d.errs[key]; var i = document.getElementById('nu-' + key), m = document.getElementById('nu-' + key + '-err'); if (i) i.removeAttribute('aria-invalid'); if (m) m.remove(); } }; }
+    var content;
+    if (d.done) {
+      content = [
+        h('div', { class: 'ri-top' }, h('strong', { id: 'nu-t', class: 're-title' }, 'Account created'), h('small', null, d.done.name + ' can log in now with these details.')),
+        h('dl', { class: 'dlg-rows' }, h('dt', null, 'Name'), h('dd', null, d.done.name), h('dt', null, 'Email'), h('dd', { class: 'mono' }, d.done.email), h('dt', null, 'Role'), h('dd', null, roleLabel(d.done.role)), h('dt', null, 'Temporary password'), h('dd', { class: 'mono' }, d.done.password)),
+        h('p', { class: 'dlg-note' }, 'Share the email and password with them privately. The password is not shown again, and they can change it in Profile.'),
+        h('div', { class: 'dlg-actions' },
+          h('button', { id: 'nu-copy', class: 'btn', type: 'button', onclick: function () { copyText('Email: ' + d.done.email + '\nPassword: ' + d.done.password, 'Login details'); } }, 'Copy login details'),
+          h('button', { id: 'nu-another', class: 'btn', type: 'button', onclick: function () { state.newUser = { name: '', email: '', password: '', role: d.role, show: d.show, busy: false, error: '', errs: {}, done: null }; nuSig = ''; renderNewUser(); var f = $('#nu-name'); if (f) f.focus(); } }, 'Create another'),
+          h('button', { id: 'nu-done', class: 'btn primary', type: 'button', onclick: closeNewUser }, 'Done'))];
+    } else {
+      content = [
+        h('div', { class: 'ri-top' }, h('strong', { id: 'nu-t', class: 're-title' }, 'Create user'), h('small', null, 'Makes a new account. Only you, as Super Admin, can do this.')),
+        h('form', { class: 're-form', novalidate: true, onsubmit: function (ev) { ev.preventDefault(); submitNewUser(); } },
+          h('label', { class: 'field', for: 'nu-name' }, 'Full name',
+            h('input', { id: 'nu-name', type: 'text', maxlength: '80', autocomplete: 'off', placeholder: 'Maria Santos', 'aria-invalid': e.name ? 'true' : null, 'aria-describedby': e.name ? 'nu-name-err' : null, value: d.name, oninput: function (ev) { d.name = ev.target.value; clearErr('name')(); } }),
+            e.name ? h('small', { id: 'nu-name-err', class: 'field-err', role: 'alert' }, e.name) : null),
+          h('label', { class: 'field', for: 'nu-email' }, 'Email',
+            h('input', { id: 'nu-email', type: 'email', maxlength: '120', autocomplete: 'off', inputmode: 'email', placeholder: 'maria@example.com', 'aria-invalid': e.email ? 'true' : null, 'aria-describedby': e.email ? 'nu-email-err' : null, value: d.email, oninput: function (ev) { d.email = ev.target.value; clearErr('email')(); } }),
+            e.email ? h('small', { id: 'nu-email-err', class: 'field-err', role: 'alert' }, e.email) : null),
+          h('div', { class: 'field' }, h('label', { for: 'nu-password' }, 'Temporary password'),
+            h('div', { class: 'nu-pw' },
+              h('input', { id: 'nu-password', type: d.show ? 'text' : 'password', maxlength: '200', autocomplete: 'new-password', placeholder: 'At least 8 characters', 'aria-invalid': e.password ? 'true' : null, 'aria-describedby': e.password ? 'nu-password-err' : null, value: d.password, oninput: function (ev) { d.password = ev.target.value; clearErr('password')(); } }),
+              h('button', { id: 'nu-gen', class: 'btn small', type: 'button', onclick: function () { d.password = genPassword(); d.show = true; delete d.errs.password; nuSig = ''; renderNewUser(); } }, 'Generate'),
+              h('button', { id: 'nu-show', class: 'btn small', type: 'button', 'aria-pressed': String(!!d.show), onclick: function () { d.show = !d.show; nuSig = ''; renderNewUser(); } }, d.show ? 'Hide' : 'Show')),
+            e.password ? h('small', { id: 'nu-password-err', class: 'field-err', role: 'alert' }, e.password) : null),
+          h('label', { class: 'field', for: 'nu-role' }, 'Role',
+            h('select', { id: 'nu-role', onchange: function (ev) { d.role = ev.target.value; } }, roleOrder(roleDefs()).map(function (k) { return h('option', Object.assign({ value: k }, d.role === k ? { selected: '' } : {}), roleLabel(k)); }))),
+          d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
+          h('div', { class: 'dlg-actions' },
+            h('button', { id: 'nu-cancel', class: 'btn', type: 'button', disabled: d.busy, onclick: closeNewUser }, 'Cancel'),
+            h('button', { id: 'nu-submit', class: 'btn primary', type: 'submit', disabled: d.busy }, d.busy ? 'Creating…' : 'Create user')))];
+    }
+    box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: function () { if (!d.busy && !d.done) closeNewUser(); } }),
+      h('div', { class: 'modal-panel dlg re-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'nu-t' },
+        h('button', { class: 'modal-close ri-x', type: 'button', 'aria-label': 'Close', disabled: d.busy, onclick: closeNewUser }, '×'),
+        content));
+    box.hidden = false;
+    lockScroll();
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
+  }
+
   /* ---------- Refund balance linking (Super Admin and Admin only) ---------- */
   function canLinkBalances() { var r = myRole(); return r === 'super_admin' || r === 'admin'; }
   function newKey() { var a = new Uint8Array(12); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
@@ -4250,6 +4339,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     renderCancelFlow();
     renderRfInfo();
     renderRfEdit();
+    renderNewUser();
     renderThanks();
     renderNotice();
     renderPayDlg();
@@ -4286,7 +4376,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
-      var topDlg = state.imgView ? ['#imgview', closeImg] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
+      var topDlg = state.imgView ? ['#imgview', closeImg] : state.newUser ? ['#newuser', closeNewUser] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
       if (topDlg) {
         if (e.key === 'Escape') { topDlg[1](); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
