@@ -123,9 +123,10 @@ async function notify(uids, spec) {
   const made = [];
   for (const uid of Array.from(new Set(uids))) {
     const id = safeId(spec.event + '.' + spec.refId + '.' + uid);
-    const doc = { to: uid, kind: spec.kind || spec.event, title: spec.title, body: spec.body, data: spec.data || {}, at: Date.now(), read: false };
+    const doc = { to: uid, kind: spec.kind || spec.event, title: spec.title, body: spec.body, data: spec.data || {}, at: Date.now(), read: spec.read === true };
     if (!(await L.one(['HSETNX', L.K('notifications'), id, JSON.stringify(doc)]))) continue;   // this event was already announced to this person
     made.push(id);
+    if (spec.read === true) continue;
     try {
       const r = await pushTo(uid, { title: spec.title, body: spec.body, data: Object.assign({}, spec.data, { kind: doc.kind, nid: id }) });
       if (r && (r.sent || r.failed)) await L.one(['HSET', L.K('notifications'), id, JSON.stringify(Object.assign(doc, { push: { sent: r.sent || 0, failed: r.failed || 0 } }))]);
