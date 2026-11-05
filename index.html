@@ -2064,6 +2064,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (plan.rest > 0) { body.gcashRef = c.gcashRef; body.proof = c.proof; }
     body.email = state.email;
     payCall(body).then(function (res) {
+      if (res.confirmed) { state.checkout = null; stopCheckoutTimer(); render(); return; }   // paid entirely with Refundable Balance: the booking confirmation pop-up (from the server) is the only one
       var t = { mode: c.mode, ref: c.ref, amount: c.amount, rest: plan.rest, use: res.balanceUsed != null ? res.balanceUsed : plan.use, confirmed: !!res.confirmed };
       state.checkout = null; stopCheckoutTimer();
       state.thanks = t;
@@ -3332,7 +3333,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         return h('section', { class: 'ap-group' },
           h('div', { class: 'ap-head' }, h('strong', null, g.venue || 'Venue'), h('span', null, dateLabel(g.date))),
           h('ul', { class: 'ap-rows' }, g.runs.map(function (r) { return h('li', null, h('span', { class: 'ap-court' }, r.court), h('span', { class: 'ap-time' }, hourText(r.from) + ' – ' + hourText(r.to), h('small', null, plural(r.to - r.from, 'hour')))); })));
-      }) : h('p', { class: 'ap-fallback' }, (d.venue ? d.venue + ' · ' : '') + (d.schedule || n.body)));
+      }) : h('p', { class: 'ap-fallback' }, (d.venue ? d.venue + ' · ' : '') + (d.schedule || n.body)),
+      d.amount != null ? h('dl', { class: 'dlg-rows ap-pay' }, h('dt', null, d.what === 'reschedule' ? 'Difference paid' : 'Amount paid'), h('dd', null, peso(d.amount)), h('dt', null, 'Paid with'), h('dd', null, d.paidWith || 'GCash'), h('dt', null, 'Status'), h('dd', null, d.status || 'Confirmed')) : null);
   }
 
   /* ---------- Audit Trail (Super Admin only): everything important that happened, searchable ---------- */

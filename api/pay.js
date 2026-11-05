@@ -63,7 +63,7 @@ async function creditRefundToBalance(id, r, uid, actor) {
   return newBalance;
 }
 async function tellBookingConfirmed(uid, name, payId, ref, slots, total, how) {
-  const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })) };
+  const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })), amount: total, paidWith: 'Refund Balance', status: 'Confirmed' };
   await B.notify([uid], { event: 'payment-approved', refId: payId, kind: 'payment-approved', data, title: 'Booking confirmed ✓', body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + ref + '. Show it to the venue staff before using the court.' });
   const staff = (await B.venueStaff(first.venue)).filter(u => u !== uid);
   await B.notify(staff, { event: 'booking-confirmed', refId: payId, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: name + ' · ' + ref + ' · ' + when + ' · Payment: ' + how + ' ' + B.money(total) + '.' });
@@ -402,7 +402,9 @@ const actions = {
     await L.bump();
     // told once, only now that the payment is verified
     const first = slots[0], when = B.scheduleText(slots);
-    const data = { ref: pay.bookingRef, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })) };
+    const resched = pay.kind === 'reschedule', used = Number(pay.balanceUsed) || 0;
+    const data = { ref: pay.bookingRef, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })),
+      amount: resched ? pay.amount : (Number(pay.total) || pay.amount), what: resched ? 'reschedule' : 'booking', paidWith: used > 0 ? (pay.amount > 0 ? 'Refund Balance + GCash' : 'Refund Balance') : 'GCash', status: 'Confirmed' };
     await B.notify([pay.by], {
       event: 'payment-approved', refId: id, kind: 'payment-approved', data,
       title: pay.kind === 'reschedule' ? 'Reschedule confirmed ✓' : 'Payment approved ✓',
