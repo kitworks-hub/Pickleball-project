@@ -41,6 +41,7 @@ const actions = {
     if (ownerEmails().includes(email) && !(await superExists())) {
       await L.one(['HSET', L.K('roles'), id, JSON.stringify({ role: 'super_admin', owner: true, by: id, at: now })]);
     }
+    await L.rememberEmail(id, email);
     await L.bump();
     await L.audit({ id, name, role: 'player' }, 'account.signup', name + ' created an account', { subject: { id, name } });
     return { token: L.signToken(id), id };
@@ -56,6 +57,7 @@ const actions = {
     if (member && needsReset(role, member)) return { status: 'reset', id };   // an admin reset this password: choose a new one
     if (!member || !(await L.checkCred(cred, email, b.password))) throw L.httpErr(401, 'That email and password do not match.');
     await L.clearThrottle(key);
+    await L.rememberEmail(id, email);
     return { status: 'ok', token: L.signToken(id), id };
   },
 
@@ -70,6 +72,7 @@ const actions = {
     if (!member || !needsReset(role, member)) throw L.httpErr(403, 'No password reset is waiting for that email.');
     await L.one(['HSET', L.K('logins'), id, JSON.stringify(await L.makeCred(email, b.password))]);
     await L.one(['HSET', L.K('members'), id, JSON.stringify(Object.assign({}, member, { pwSetAt: Date.now() }))]);
+    await L.rememberEmail(id, email);
     await L.bump();
     await L.audit({ id, name: member.name, role: (role && role.role) || 'player' }, 'account.password', member.name + ' chose a new password after an admin reset', { subject: { id, name: member.name } });
     return { status: 'ok', token: L.signToken(id), id };

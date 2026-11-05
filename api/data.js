@@ -204,7 +204,7 @@ async function write(req, res) {
   const col = parts[0];
   let id = parts[1];
   const op = b.op;
-  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
+  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit', 'emails'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
   if (op === 'add') {
     if (col !== 'sessions' || parts.length !== 1) throw forbid();
     id = crypto.randomBytes(10).toString('hex');
@@ -217,6 +217,7 @@ async function write(req, res) {
     if (id === w.uid) throw forbid();
     const gone = await L.getDoc('members', id);
     await L.one(['HDEL', L.K('logins'), id]);
+    await L.one(['HDEL', L.K('emails'), id]);
     await L.bump();
     await L.audit(w, 'account.remove', (w.member.name) + ' removed the account of ' + ((gone && gone.name) || id), { subject: { id, name: gone && gone.name } });
     return res.status(200).json({ ok: true });

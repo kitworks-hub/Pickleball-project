@@ -129,7 +129,8 @@ const slotDoc = (w, ref, status, extra) => s => Object.assign({ date: s.date, ve
 
 async function payerEmail(w, email) {
   const e = L.normEmail(email);
-  return e && L.validEmail(e) && L.emailId(e) === w.uid ? e : '';   // only an email that really belongs to this account is kept
+  if (e && L.validEmail(e) && L.emailId(e) === w.uid) { await L.rememberEmail(w.uid, e); return e; }   // only an email that really belongs to this account is kept
+  return '';
 }
 async function submitPayment(w, b, spec) {
   need(w.can('book'), 403, 'Your role cannot book courts.');
@@ -196,6 +197,7 @@ async function auditPost(w, b, pre, out) {
       case 'refund-repair': return A('refund.repair', who(w) + ' used Fix and remind on the refund for ' + (pre.refund ? pre.refund.bookingRef : b.id) + (out.fixed && out.fixed.length ? ' (' + out.fixed.join('; ') + ')' : ''), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id) } });
       case 'refund-account': return A('account.gcash', who(w) + ' saved their GCash refund details', { subject: { id: w.uid, name: who(w) } });
       case 'set-level': return A('account.level', who(w) + ' set their level to ' + (out.level || 'not set'), { subject: { id: w.uid, name: who(w) }, after: { level: out.level || null } });
+      case 'user-update': if (out.unchanged) return; return A('account.profile', who(w) + ' changed the name of ' + out.was + ' to ' + out.name, { subject: { id: String(b.uid), name: out.name }, before: { name: out.was }, after: { name: out.name } });
       case 'user-create': return A('account.create', who(w) + ' created the account of ' + out.name + ' (role: ' + out.role + ')', { subject: { id: out.id, name: out.name }, after: { role: out.role } });
       case 'avatar-set': return A('account.avatar', who(w) + ' changed their profile picture', { subject: { id: w.uid, name: who(w) } });
       case 'avatar-remove': return A('account.avatar', who(w) + ' removed their profile picture', { subject: { id: w.uid, name: who(w) } });
@@ -227,6 +229,25 @@ const actions = {
     return { ok: true };
   },
 
+  /* ----- Super Admin: Edit user. The name is changed here (people can only change their own name through the page); roles use the normal role rules ----- */
+  async 'user-detail'(w, b) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can see account details.');
+    const uid = String(b.uid || ''), m = await L.getDoc('members', uid);
+    need(m, 404, 'That account was not found.');
+    const e = await L.getDoc('emails', uid);
+    return { ok: true, name: m.name, email: (e && e.email) || null };
+  },
+  async 'user-update'(w, b) {
+    need(w.isSuper && !w.suspended && !w.impBy, 403, 'Only the Super Admin can edit user details.');
+    const uid = String(b.uid || ''), name = String(b.name || '').trim().slice(0, 80), m = await L.getDoc('members', uid);
+    need(m, 404, 'That account was not found.');
+    need(name.length >= 2, 400, 'Enter the full name.');
+    if (name === m.name) return { ok: true, name, unchanged: true };
+    await put('members', uid, Object.assign({}, m, { name }));
+    await L.bump();
+    return { ok: true, name, was: m.name };
+  },
+
   /* ----- Super Admin: create an account for someone (the same account a sign-up would make, with a role chosen here) ----- */
   async 'user-create'(w, b) {
     need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can create users.');
@@ -241,6 +262,7 @@ const actions = {
     need(await putNew('members', id, { name, createdAt: now, pwSetAt: now }), 409, 'An account with that email already exists.');
     try {
       await put('logins', id, await L.makeCred(email, pw));
+      await L.rememberEmail(id, email);
       if (role !== 'player') await put('roles', id, { role, by: w.uid, at: now });
     } catch (e) { await del('members', id); await del('logins', id); await del('roles', id); throw e; }   // never leave half an account
     await L.bump();

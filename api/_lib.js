@@ -75,7 +75,7 @@ async function redis(cmds) {
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
-const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit'];
+const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit', 'emails'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
 
@@ -293,6 +293,18 @@ async function audit(actor, action, summary, extra) {
   } catch (e) { console.error('audit failed:', e && e.message); }
 }
 
+// The email an account was last seen with, kept so the Super Admin can see it in Edit user. Account ids stay hashes of the email; this is a separate
+// server-only record: it is never sent to the page except through the Super Admin's user-detail action. It fills in as people log in or pay.
+async function rememberEmail(uid, email) {
+  try {
+    email = String(email || '').trim().toLowerCase();
+    if (!uid || !email || emailId(email) !== uid) return;   // only an email that really belongs to this account
+    const cur = await getDoc('emails', uid);
+    if (cur && cur.email === email) return;
+    await one(['HSET', K('emails'), uid, JSON.stringify({ email, at: Date.now() })]);
+  } catch (e) { /* never block a login */ }
+}
+
 /* ---------- time (sessions and bookings are wall-clock times in APP_TIMEZONE) ---------- */
 function tzOffset(ts) {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(ts));
@@ -317,7 +329,7 @@ function bookingEnded(b) {
 }
 
 module.exports = {
-  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured, hmac, audit, auditSig,
+  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured, hmac, audit, auditSig, rememberEmail,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, signImpToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
   throttle, clearThrottle, clientIp, whoIs, permsFor, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

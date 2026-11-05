@@ -426,6 +426,14 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
+.ue-hint { color: var(--muted); font-size: 0.74rem; }
+.ue-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.ue-actions h4 { margin: 0; font: 700 var(--fs-m)/1.2 var(--display); text-transform: uppercase; }
+.ue-act { display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; }
+.ue-act > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 160px; }
+.ue-act small { color: var(--muted); font-size: 0.74rem; line-height: 1.3; }
+.ue-act .btn { flex: none; }
+.ue-panel { max-height: calc(100dvh - 24px); overflow-y: auto; }
 .imp-bar { position: sticky; top: 0; z-index: 60; background: var(--ball); color: var(--on-ball); border-bottom: 2px solid rgba(0, 0, 0, 0.25); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .imp-in { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; padding-block: 6px; }
 .imp-txt { font-size: var(--fs-s); line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
@@ -922,6 +930,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 <div id="confirmuser" class="modal" hidden></div>
 <div id="newuser" class="modal" hidden></div>
 <div id="impask" class="modal" hidden></div>
+<div id="useredit" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
 <div id="bklist" class="modal" hidden></div>
@@ -990,7 +999,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, newUser: null, imp: null, impAsk: null, ret: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, newUser: null, imp: null, impAsk: null, ue: null, ret: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -1202,7 +1211,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.impAsk || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.impAsk || state.ue || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1764,18 +1773,8 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       var cur = roleOf(u);
       var ctl = [];
       if (opts.length) {
-        var sel = h('select', { class: 'plain', 'aria-label': 'Role for ' + personName(u),
-          onchange: function (e) { var v = e.target.value; setRole(u, v).then(function () { flash(personName(u) + ' is now ' + roleLabel(v) + '.', 'ok'); }); } },
-          order.filter(function (k) { return opts.indexOf(k) >= 0 || k === cur; }).map(function (k) { return h('option', { value: k }, roleLabel(k)); }));
-        sel.value = cur;
-        ctl.push(sel);
-        ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () {
-          queue(function () { var nr = Object.assign({}, state.roles[u] || { role: cur }); nr.suspended = !r.suspended; nr.by = state.me; nr.at = Date.now(); return state.db.doc('roles/' + u).set(nr); }, 'Could not change access.')
-            .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
-        } }, r.suspended ? 'Restore access' : 'Pause access'));
-        ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () { resetPassword(u); } }, 'Reset password'));
         if (isSuper() && u !== state.me && cur !== 'super_admin' && !isOwnerAccount(u)) ctl.push(h('button', { id: 'im-' + u, class: 'btn small', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askImpersonate(u); } }, 'Impersonate'));
-        if (isSuper()) ctl.push(h('button', { id: 'ru-' + u, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveUser(u); } }, 'Remove'));
+        ctl.push(h('button', { id: 'ue-' + u, class: 'btn small', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { openUserEdit(u); } }, 'Edit'));
       } else {
         ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
       }
@@ -3599,6 +3598,95 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       .then(function () { if (restoreAdminSession()) location.reload(); else forceLogout('Please log in again.'); });
   }
 
+  /* ---------- Edit user: name, email (read only), role, and the account actions (reset password, pause, remove) ---------- */
+  var ueSig = '', ueTimer = 0;
+  function openUserEdit(u) {
+    if (!assignable(u).length) return;
+    state.ue = { uid: u, name: personName(u), role: roleOf(u), saving: false, error: '', errs: {}, email: isSuper() ? 'loading' : null, confirm: '' };
+    ueSig = ''; renderUserEdit();
+    var f = $('#ue-name'); if (f && !f.disabled) f.focus(); else { var s = $('#ue-role'); if (s) s.focus(); }
+    if (isSuper()) payCall({ action: 'user-detail', uid: u }).then(function (r) { if (state.ue && state.ue.uid === u) { state.ue.email = r.email || ''; ueSig = ''; renderUserEdit(); } })
+      .catch(function () { if (state.ue && state.ue.uid === u) { state.ue.email = ''; ueSig = ''; renderUserEdit(); } });
+  }
+  function closeUserEdit() {
+    var d = state.ue; if (d && d.saving) return;
+    clearTimeout(ueTimer); state.ue = null; ueSig = ''; renderUserEdit();
+    var b = d && $('#ue-' + d.uid); if (b) b.focus();
+  }
+  function saveUserEdit() {
+    var d = state.ue; if (!d || d.saving) return;
+    var u = d.uid, nameNow = personName(u), name = d.name.trim(), e = {};
+    var nameChanged = isSuper() && name !== nameNow, roleChanged = d.role !== roleOf(u);
+    if (isSuper() && name.length < 2) e.name = 'Enter the full name.';
+    d.errs = e;
+    if (e.name) { d.error = 'Please fix the highlighted field.'; ueSig = ''; renderUserEdit(); var f = $('#ue-name'); if (f) f.focus(); return; }
+    if (!nameChanged && !roleChanged) { d.error = 'Nothing was changed.'; ueSig = ''; renderUserEdit(); return; }
+    d.saving = true; d.error = ''; ueSig = ''; renderUserEdit();
+    var done = [];
+    var step1 = nameChanged ? payCall({ action: 'user-update', uid: u, name: name }).then(function () { done.push('name'); }) : Promise.resolve();
+    step1.then(function () {
+      if (!roleChanged) return;
+      var prev = state.roles[u] || {}, next = { role: d.role, by: state.me, at: Date.now() };
+      if (prev.suspended) next.suspended = true;
+      if (prev.owner) next.owner = true;
+      if (prev.pwReset) next.pwReset = prev.pwReset;
+      return state.db.doc('roles/' + u).set(next).then(function () { done.push('role'); });
+    }).then(function () {
+      flash(personName(u) + ' was updated' + (done.length ? ' (' + done.join(' and ') + ')' : '') + '.', 'ok');
+      state.ue = null; ueSig = ''; renderUserEdit(); var b = $('#ue-' + u); if (b) b.focus();
+    }).catch(function (er) {
+      var cur = state.ue; if (!cur) return;
+      cur.saving = false; cur.error = (er && er.message ? er.message : 'That did not save.') + (done.length ? ' (' + done.join(' and ') + ' was saved before the problem.)' : '');
+      ueSig = ''; renderUserEdit();
+    });
+  }
+  function renderUserEdit() {
+    var box = $('#useredit'), d = state.ue;
+    if (!d || !can('people') || gateState() !== 'ok' || !state.accounts[d.uid] || !assignable(d.uid).length) { state.ue = null; ueSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var u = d.uid, r = state.roles[u] || {}, cur = roleOf(u), opts = assignable(u), order = roleOrder(roleDefs()), e = d.errs || {};
+    var sig = [u, d.saving, d.error, JSON.stringify(e), d.email, d.confirm, !!r.suspended, r.pwReset || '', personName(u), cur].join('|');
+    if (sig === ueSig && !box.hidden) return;
+    ueSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (x) {} }
+    var canName = isSuper(), pending = Number(r.pwReset) > Number((state.accounts[u] || {}).pwSetAt || 0);
+    var emailText = !isSuper() ? 'Only the Super Admin can see emails' : d.email === 'loading' ? 'Loading…' : d.email ? d.email : 'Not recorded yet. It appears after they next log in.';
+    function arm(key, run) { return function () { if (d.confirm === key) { clearTimeout(ueTimer); d.confirm = ''; ueSig = ''; renderUserEdit(); run(); } else { d.confirm = key; ueSig = ''; renderUserEdit(); clearTimeout(ueTimer); ueTimer = setTimeout(function () { if (state.ue && state.ue.confirm === key) { state.ue.confirm = ''; ueSig = ''; renderUserEdit(); } }, 4000); } }; }
+    box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: function () { if (!d.saving) closeUserEdit(); } }),
+      h('div', { class: 'modal-panel dlg re-panel ue-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'ue-t' },
+        h('button', { class: 'modal-close ri-x', type: 'button', 'aria-label': 'Close', disabled: d.saving, onclick: closeUserEdit }, '×'),
+        h('div', { class: 'ri-top' }, h('strong', { id: 'ue-t', class: 're-title' }, 'Edit user'), h('small', null, personName(u) + ' · ' + roleLabel(cur) + (r.suspended ? ' · access paused' : ''))),
+        h('form', { class: 're-form', novalidate: true, onsubmit: function (ev) { ev.preventDefault(); saveUserEdit(); } },
+          h('label', { class: 'field', for: 'ue-name' }, 'Full name',
+            h('input', { id: 'ue-name', type: 'text', maxlength: '80', autocomplete: 'off', disabled: !canName, 'aria-invalid': e.name ? 'true' : null, 'aria-describedby': e.name ? 'ue-name-err' : null, value: d.name,
+              oninput: function (ev) { d.name = ev.target.value; if (d.errs.name) { delete d.errs.name; ev.target.removeAttribute('aria-invalid'); var m = document.getElementById('ue-name-err'); if (m) m.remove(); } } }),
+            e.name ? h('small', { id: 'ue-name-err', class: 'field-err', role: 'alert' }, e.name) : (!canName ? h('small', { class: 'ue-hint' }, 'Only the Super Admin can change names.') : null)),
+          h('label', { class: 'field', for: 'ue-email' }, 'Email',
+            h('input', { id: 'ue-email', type: 'text', readonly: true, disabled: true, value: emailText, 'aria-describedby': 'ue-email-hint' }),
+            h('small', { id: 'ue-email-hint', class: 'ue-hint' }, 'The email is what identifies the account, so it cannot be edited.')),
+          h('label', { class: 'field', for: 'ue-role' }, 'Role',
+            h('select', { id: 'ue-role', disabled: d.saving, onchange: function (ev) { d.role = ev.target.value; } },
+              order.filter(function (k) { return opts.indexOf(k) >= 0 || k === cur; }).map(function (k) { return h('option', Object.assign({ value: k }, d.role === k ? { selected: '' } : {}), roleLabel(k)); }))),
+          d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
+          h('div', { class: 'dlg-actions' },
+            h('button', { id: 'ue-cancel', class: 'btn', type: 'button', disabled: d.saving, onclick: closeUserEdit }, 'Cancel'),
+            h('button', { id: 'ue-save', class: 'btn primary', type: 'submit', disabled: d.saving }, d.saving ? 'Saving…' : 'Save changes'))),
+        h('div', { class: 'ue-actions' },
+          h('h4', null, 'Account actions'),
+          h('div', { class: 'ue-act' }, h('div', null, h('strong', null, 'Reset password'), h('small', null, pending ? 'A reset is already waiting: they will choose a new password when they next open the site.' : 'They choose a new password the next time they open the site.')),
+            h('button', { id: 'ue-reset', class: 'btn small' + (d.confirm === 'reset' ? ' danger-outline' : ''), type: 'button', onclick: arm('reset', function () { resetPassword(u); }) }, d.confirm === 'reset' ? 'Tap again to reset' : 'Reset password')),
+          h('div', { class: 'ue-act' }, h('div', null, h('strong', null, r.suspended ? 'Restore access' : 'Pause access'), h('small', null, r.suspended ? 'They can use the site normally again.' : 'They can look around but cannot book, join or change anything.')),
+            h('button', { id: 'ue-pause', class: 'btn small', type: 'button', onclick: function () {
+              queue(function () { var nr = Object.assign({}, state.roles[u] || { role: cur }); nr.suspended = !r.suspended; nr.by = state.me; nr.at = Date.now(); return state.db.doc('roles/' + u).set(nr); }, 'Could not change access.')
+                .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
+            } }, r.suspended ? 'Restore access' : 'Pause access')),
+          isSuper() && u !== state.me && !isOwnerAccount(u) ? h('div', { class: 'ue-act' }, h('div', null, h('strong', null, 'Remove user'), h('small', null, 'Deletes the account and its login. This cannot be undone.')),
+            h('button', { id: 'ue-remove', class: 'btn small danger-outline', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { var uu = u; clearTimeout(ueTimer); state.ue = null; ueSig = ''; renderUserEdit(); askRemoveUser(uu); } }, 'Remove user')) : null)));
+    box.hidden = false;
+    lockScroll();
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
+  }
+
   /* ---------- Refund balance linking (Super Admin and Admin only) ---------- */
   function canLinkBalances() { var r = myRole(); return r === 'super_admin' || r === 'admin'; }
   function newKey() { var a = new Uint8Array(12); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
@@ -4414,6 +4502,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     renderRfInfo();
     renderRfEdit();
     renderNewUser();
+    renderUserEdit();
     renderImpAsk();
     renderImpBar();
     renderThanks();
@@ -4452,7 +4541,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
-      var topDlg = state.imgView ? ['#imgview', closeImg] : state.impAsk ? ['#impask', closeImpAsk] : state.newUser ? ['#newuser', closeNewUser] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
+      var topDlg = state.imgView ? ['#imgview', closeImg] : state.impAsk ? ['#impask', closeImpAsk] : state.ue ? ['#useredit', closeUserEdit] : state.newUser ? ['#newuser', closeNewUser] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
       if (topDlg) {
         if (e.key === 'Escape') { topDlg[1](); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog
