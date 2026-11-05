@@ -443,13 +443,13 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .rf-policy { display: flex; flex-direction: column; gap: 6px; }
 @media (max-width: 640px) { .pf-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 420px) { .gc-card { flex-direction: column; align-items: stretch; } .gc-qrbtn { align-self: center; } }
-.av { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--accent); color: var(--on-accent); font: 700 0.9rem/1 var(--display); }
-.av img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.av.xs { width: 24px; height: 24px; font-size: 0.72rem; }
-.av.sm { width: 32px; height: 32px; }
-.av.md { width: 34px; height: 34px; font-size: 1rem; }
-.av.xl { width: 76px; height: 76px; font-size: 1.9rem; }
-.who .av { background: var(--ball); color: var(--on-ball); }
+.pic { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--accent); color: var(--on-accent); font: 700 0.9rem/1 var(--display); }
+.pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pic.xs { width: 24px; height: 24px; font-size: 0.72rem; }
+.pic.sm { width: 32px; height: 32px; }
+.pic.md { width: 34px; height: 34px; font-size: 1rem; }
+.pic.xl { width: 76px; height: 76px; font-size: 1.9rem; }
+.who .pic { background: var(--ball); color: var(--on-ball); }
 .with-av { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .av-box { display: flex; align-items: center; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
 .av-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -3119,7 +3119,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 
   /* ---------- profile pictures: a square crop, the same round shape everywhere ---------- */
   function avatarEl(uid, name, size) {
-    var a = state.accounts[uid] || {}, el = h('span', { class: 'av' + (size ? ' ' + size : ''), 'aria-hidden': 'true' }, String(name || personName(uid) || '?').charAt(0).toUpperCase());
+    var a = state.accounts[uid] || {}, el = h('span', { class: 'pic' + (size ? ' ' + size : ''), 'aria-hidden': 'true' }, String(name || personName(uid) || '?').charAt(0).toUpperCase());
     if (a.avatar) fileUrl(a.avatar).then(function (u) { if (u) el.replaceChildren(h('img', { alt: '', src: u })); });
     return el;
   }
@@ -3145,7 +3145,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var sig = [a.avatar || '', d.img ? d.img.length : 0, d.busy, d.error || '', myName()].join('|');
     if (sig === avSig) return;
     avSig = sig;
-    var preview = d.img ? h('span', { class: 'av xl' }, h('img', { alt: 'Preview of your new profile picture', src: d.img })) : avatarEl(state.me, myName(), 'xl');
+    var preview = d.img ? h('span', { class: 'pic xl' }, h('img', { alt: 'Preview of your new profile picture', src: d.img })) : avatarEl(state.me, myName(), 'xl');
     var pick = h('input', { id: 'av-file', type: 'file', accept: 'image/*', hidden: true, 'aria-label': 'Choose a profile picture', onchange: function (e) {
       var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
       cropAvatar(f).then(function (u) { state.avDraft = { img: u, busy: false, error: '' }; }).catch(function (er) { state.avDraft = { img: '', busy: false, error: er.message }; }).then(function () { avSig = ''; renderAvatarBox(); });
