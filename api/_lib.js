@@ -75,7 +75,7 @@ async function redis(cmds) {
 }
 const one = async cmd => (await redis([cmd]))[0];
 const K = col => 'mpc:c:' + col;
-const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks'];
+const COLS = ['sessions', 'signups', 'members', 'roles', 'bookings', 'config', 'logins', 'payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit'];
 const parse = s => { if (s == null) return null; try { return JSON.parse(s); } catch (e) { return null; } };
 const getDoc = async (col, id) => parse(await one(['HGET', K(col), id]));
 
@@ -192,6 +192,7 @@ function verifyPayload(token) {
   const p = parse(Buffer.from(body, 'base64url').toString('utf8'));
   return p && p.exp > Date.now() ? p : null;
 }
+const hmac = text => sig(String(text));   // a keyed hash (used to seal audit records)
 const signToken = id => signPayload({ id }, TOKEN_DAYS * 86400000);
 function readToken(req) {
   const h = String(req.headers.authorization || '');
@@ -262,6 +263,21 @@ async function whoIs(req) {
   };
 }
 
+/* ---------- audit trail: append-only, written only by the server, readable only by the Super Admin through /api/pay ---------- */
+const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
+const auditSig = d => hmac('audit|' + canon([d.at, d.action, d.actor, d.subject, d.summary, d.refs, d.before, d.after, d.amount]));   // changing a stored record breaks this seal
+// actor: a whoIs() result, or { id, name, role }. extra: { subject: {id,name}, refs, before, after, amount }. Never throws: a logging problem must not break the action.
+async function audit(actor, action, summary, extra) {
+  try {
+    const a = actor && actor.member ? { id: actor.uid, name: actor.member.name, role: actor.role } : (actor || { id: 'system', name: 'System', role: 'system' });
+    const x = extra || {};
+    const doc = { at: Date.now(), area: String(action).split('.')[0], action, summary: String(summary).slice(0, 300), actor: { id: String(a.id), name: String(a.name || ''), role: String(a.role || '') },
+      subject: x.subject ? { id: String(x.subject.id), name: String(x.subject.name || '') } : null, refs: x.refs || {}, before: x.before === undefined ? null : x.before, after: x.after === undefined ? null : x.after, amount: x.amount == null ? null : Number(x.amount) };
+    doc.sig = auditSig(doc);
+    await one(['HSETNX', K('audit'), String(doc.at).padStart(14, '0') + '_' + crypto.randomBytes(4).toString('hex'), JSON.stringify(doc)]);
+  } catch (e) { console.error('audit failed:', e && e.message); }
+}
+
 /* ---------- time (sessions and bookings are wall-clock times in APP_TIMEZONE) ---------- */
 function tzOffset(ts) {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(ts));
@@ -286,7 +302,7 @@ function bookingEnded(b) {
 }
 
 module.exports = {
-  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured,
+  redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured, hmac, audit, auditSig,
   emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
   throttle, clearThrottle, clientIp, whoIs, permsFor, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

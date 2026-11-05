@@ -45,7 +45,7 @@ function gcashInput(b) {
   return { gref, img: parseImage(b.proof) };
 }
 // Adds a refund to the player's Refundable Balance, once: the ledger entry credit_<refundId> is the one-time marker.
-async function creditRefundToBalance(id, r, uid) {
+async function creditRefundToBalance(id, r, uid, actor) {
   need(await lockOnce('ev:rfchoose:' + id, uid), 409, 'You already chose how to receive this refund.');
   let newBalance = 0;
   try {
@@ -58,11 +58,12 @@ async function creditRefundToBalance(id, r, uid) {
   } catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
   await put('refunds', id, Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: r.refundable, refundRef: 'REFUND BALANCE', chosenAt: Date.now(), refundedAt: Date.now(), refundedByName: 'Refund balance' }));
   await L.bump();
+  await L.audit(actor || null, 'balance.credit', B.money(r.refundable) + ' added to ' + (r.byName || 'a player') + "'s Refundable Balance (refund of " + r.bookingRef + ')', { subject: { id: uid, name: r.byName }, refs: { refundId: id, ref: r.bookingRef }, amount: r.refundable, before: { balance: Math.round((newBalance - r.refundable) * 100) / 100 }, after: { balance: newBalance } });
   await B.notify([uid], { event: 'refund-done', refId: id, kind: 'refund-done', read: true, data: { ref: r.bookingRef, amount: r.refundable, method: 'balance', balance: newBalance }, title: 'Refund added to your balance', body: B.money(r.refundable) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
   return newBalance;
 }
 async function tellBookingConfirmed(uid, name, payId, ref, slots, total, how) {
-  const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when };
+  const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })) };
   await B.notify([uid], { event: 'payment-approved', refId: payId, kind: 'payment-approved', data, title: 'Booking confirmed ✓', body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + ref + '. Show it to the venue staff before using the court.' });
   const staff = (await B.venueStaff(first.venue)).filter(u => u !== uid);
   await B.notify(staff, { event: 'booking-confirmed', refId: payId, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: name + ' · ' + ref + ' · ' + when + ' · Payment: ' + how + ' ' + B.money(total) + '.' });
@@ -153,7 +154,106 @@ async function tellReviewers(w, payId, doc) {
   await B.notify(who, { event: 'payment-submitted', refId: payId, kind: 'payment-submitted', title: 'New GCash payment to verify', body: doc.byName + ' sent ' + B.money(doc.amount) + ' for ' + doc.bookingRef + ' (GCash ref ' + doc.gcashRef + ').', data: { payId } });
 }
 
+/* ----- audit trail: what is recorded for each money / booking action (written by the server after the action succeeded) ----- */
+const who = w => w.member.name;
+async function auditPre(w, b) {
+  try {
+    if (b.action === 'cancel') return { slots: (await Promise.all((Array.isArray(b.ids) ? b.ids.slice(0, 48) : []).map(id => L.getDoc('bookings', String(id))))).filter(Boolean) };
+    if (b.action === 'approve' || b.action === 'deny') return { pay: await L.getDoc('payments', String(b.id || '')) };
+    if (b.action.indexOf('refund-') === 0 && b.id) return { refund: await L.getDoc('refunds', String(b.id)) };
+    if (b.action === 'balance-link') { const [f, t] = await Promise.all([L.getDoc('members', String(b.from || '')), L.getDoc('members', String(b.to || ''))]); return { from: f, to: t }; }
+  } catch (e) { /* the action itself reports real problems */ }
+  return {};
+}
+async function auditPost(w, b, pre, out) {
+  try {
+    const A = (action, summary, x) => L.audit(w, action, summary, x);
+    switch (b.action) {
+      case 'book': return A('booking.hold', who(w) + ' held ' + out.slots.length + ' court hour(s) for ' + B.money(out.total) + ' (' + out.ref + ')', { refs: { ref: out.ref }, amount: out.total, after: { slots: B.scheduleText(out.slots) } });
+      case 'release': return A('booking.release', who(w) + ' released their unpaid hold ' + b.ref, { refs: { ref: String(b.ref || '') } });
+      case 'pay':
+        if (out.status === 'paid') { await A('payment.balance', who(w) + ' paid ' + B.money(out.total) + ' for ' + b.ref + ' with Refund Balance', { refs: { ref: String(b.ref), paymentId: out.paymentId }, amount: out.total }); return A('balance.use', B.money(out.total) + ' of ' + who(w) + "'s Refundable Balance used for " + b.ref, { subject: { id: w.uid, name: who(w) }, refs: { ref: String(b.ref), paymentId: out.paymentId }, amount: -out.total }); }
+        return A('payment.submit', who(w) + ' sent a GCash payment of ' + B.money(out.amount) + ' for ' + b.ref + (out.balanceUsed ? ' (plus ' + B.money(out.balanceUsed) + ' Refund Balance set aside)' : ''), { refs: { ref: String(b.ref), paymentId: out.paymentId }, amount: out.amount, after: { total: out.total, balanceUsed: out.balanceUsed } });
+      case 'reschedule':
+        if (out.moved) { await A('booking.reschedule', who(w) + ' rescheduled ' + (pre.from ? '' : '') + 'a booking hour: ' + out.from.court + ' ' + B.dateText(out.from.date) + ' ' + B.hourText(out.from.hour) + ' to ' + out.to.court + ' ' + B.dateText(out.to.date) + ' ' + B.hourText(out.to.hour) + (out.credited ? ', difference ' + B.money(out.credited) + ' credited to balance' : ''), { refs: { bookingId: String(b.id) }, before: out.from, after: out.to, amount: out.credited || 0 });
+          if (out.credited) await A('balance.credit', B.money(out.credited) + " price difference added to the Refundable Balance after a reschedule", { refs: { bookingId: String(b.id) }, amount: out.credited });
+          return; }
+        if (out.status === 'pending_verification') return A('payment.submit', who(w) + ' sent ' + B.money(out.amount) + ' by GCash for a reschedule (' + (b.id) + ')', { refs: { paymentId: out.paymentId, bookingId: String(b.id) }, amount: out.amount });
+        return;
+      case 'approve': { const p = pre.pay; if (!p) return;
+        await A('payment.approve', who(w) + ' approved the payment of ' + B.money(p.amount) + ' for ' + p.bookingRef + ' (' + (p.byName || '') + ')', { subject: { id: p.by, name: p.byName }, refs: { paymentId: String(b.id), ref: p.bookingRef }, amount: p.amount, before: { status: p.status }, after: { status: 'paid', booking: 'confirmed' } });
+        if (p.kind === 'booking' && Number(p.balanceUsed) > 0) await A('balance.use', B.money(p.balanceUsed) + " of Refundable Balance deducted for " + p.bookingRef, { subject: { id: p.by, name: p.byName }, refs: { paymentId: String(b.id), ref: p.bookingRef }, amount: -p.balanceUsed });
+        return; }
+      case 'deny': { const p = pre.pay; if (!p) return; return A('payment.deny', who(w) + ' did not approve the payment for ' + p.bookingRef + (b.reason ? ': ' + String(b.reason).slice(0, 100) : ''), { subject: { id: p.by, name: p.byName }, refs: { paymentId: String(b.id), ref: p.bookingRef }, amount: p.amount, before: { status: p.status }, after: { status: 'rejected' } }); }
+      case 'cancel': {
+        const groups = {};
+        (pre.slots || []).forEach(s => { const k = s.by + '|' + s.ref; (groups[k] = groups[k] || []).push(s); });
+        for (const k of Object.keys(groups)) { const g = groups[k], f = g[0], paid = g.reduce((n, s) => n + (Number(s.paid) || 0), 0);
+          await A('booking.cancel', who(w) + ' cancelled ' + f.ref + ' (' + B.scheduleText(g) + ') of ' + f.byName + (paid ? ', paid ' + B.money(paid) : ', nothing paid'), { subject: { id: f.by, name: f.byName }, refs: { ref: f.ref, refundIds: out.refunds || [] }, amount: paid, before: { status: f.status || 'confirmed' }, after: { credited: out.credited || 0, refundOpen: out.chooseAmount || 0 } }); }
+        return; }
+      case 'refund-choose': return A('refund.choose', who(w) + ' chose ' + (b.method === 'gcash' ? 'a GCash refund' : 'to keep the refund as balance') + ' for ' + (pre.refund ? pre.refund.bookingRef : b.id), { refs: { refundId: String(b.id) }, amount: pre.refund ? pre.refund.refundable : null });
+      case 'refund-approve': return A('refund.approve', who(w) + ' approved a refund for ' + (pre.refund ? pre.refund.bookingRef : b.id), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id) } });
+      case 'refund-complete': return A('refund.complete', who(w) + ' recorded a GCash refund of ' + B.money(Math.round(Number(b.amount))) + ' for ' + (pre.refund ? pre.refund.bookingRef : b.id), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id), gcashRef: normRef(b.gcashRef) }, amount: Math.round(Number(b.amount)) });
+      case 'refund-deny': return A('refund.deny', who(w) + ' denied the refund for ' + (pre.refund ? pre.refund.bookingRef : b.id) + (b.reason ? ': ' + String(b.reason).slice(0, 100) : ''), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id) } });
+      case 'refund-repair': return A('refund.repair', who(w) + ' used Fix and remind on the refund for ' + (pre.refund ? pre.refund.bookingRef : b.id) + (out.fixed && out.fixed.length ? ' (' + out.fixed.join('; ') + ')' : ''), { subject: pre.refund && { id: pre.refund.by, name: pre.refund.byName }, refs: { refundId: String(b.id) } });
+      case 'refund-account': return A('account.gcash', who(w) + ' saved their GCash refund details', { subject: { id: w.uid, name: who(w) } });
+      case 'set-level': return A('account.level', who(w) + ' set their level to ' + (out.level || 'not set'), { subject: { id: w.uid, name: who(w) }, after: { level: out.level || null } });
+      case 'avatar-set': return A('account.avatar', who(w) + ' changed their profile picture', { subject: { id: w.uid, name: who(w) } });
+      case 'avatar-remove': return A('account.avatar', who(w) + ' removed their profile picture', { subject: { id: w.uid, name: who(w) } });
+      case 'balance-link': return A('balance.link', who(w) + ' moved ' + B.money(out.amount) + ' of Refundable Balance from ' + ((pre.from && pre.from.name) || b.from) + ' to ' + ((pre.to && pre.to.name) || b.to), { subject: { id: String(b.from), name: pre.from && pre.from.name }, refs: { linkId: out.id, toId: String(b.to), toName: pre.to && pre.to.name }, amount: out.amount, before: { fromBalance: Math.round((out.fromAfter + out.amount) * 100) / 100 }, after: { fromBalance: out.fromAfter, toBalance: out.toAfter }, });
+      case 'settings': return A('settings.payment', who(w) + ' changed the payment settings (' + ['gcashNumber', 'accountName', 'qr', 'removeQr'].filter(k => b[k] !== undefined && b[k] !== '' && b[k] !== false).join(', ') + ')', {});
+      default: return;
+    }
+  } catch (e) { console.error('audit failed:', e && e.message); }
+}
+
 const actions = {
+  /* ----- Super Admin: the Audit Trail (read only: nothing here, or anywhere, edits or deletes a record) ----- */
+  async 'audit-list'(w, b) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can open the Audit Trail.');
+    const all = await B.allMap('audit'), q = String(b.q || '').trim().toLowerCase(), area = String(b.area || ''), actor = String(b.actor || '').trim().toLowerCase();
+    const from = Number(b.from) || 0, to = Number(b.to) || 0, before = String(b.before || ''), limit = Math.min(200, Math.max(10, Number(b.limit) || 60));
+    const rows = Object.keys(all).sort().reverse().map(id => Object.assign({ id }, all[id]));
+    const areas = Array.from(new Set(rows.map(r => r.area))).sort(), tampered = rows.filter(r => r.sig !== L.auditSig(r)).length;
+    let list = rows.filter(r => (!area || r.area === area) && (!from || r.at >= from) && (!to || r.at <= to)
+      && (!actor || [r.actor && r.actor.name, r.actor && r.actor.id, r.actor && r.actor.role].join(' ').toLowerCase().indexOf(actor) >= 0)
+      && (!q || [r.summary, r.action, r.actor && r.actor.name, r.subject && r.subject.name, JSON.stringify(r.refs || {})].join(' ').toLowerCase().indexOf(q) >= 0));
+    const total = list.length;
+    if (before) list = list.filter(r => r.id < before);
+    const page = list.slice(0, limit);
+    return { items: page.map(r => { const o = Object.assign({}, r, { verified: r.sig === L.auditSig(r) }); delete o.sig; return o; }), total, hasMore: list.length > page.length, areas, tampered, all: rows.length };
+  },
+  // Compares each stored refund balance with the sum of its ledger entries (the history of every credit and use).
+  async 'balance-check'(w) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can run this check.');
+    const [bals, led, members] = await Promise.all([B.allMap('balances'), B.allMap('ledger'), B.allMap('members')]);
+    const sums = {}; Object.keys(led).forEach(k => { const e = led[k]; if (e && e.uid) sums[e.uid] = Math.round(((sums[e.uid] || 0) + (Number(e.amount) || 0)) * 100) / 100; });
+    const uids = Array.from(new Set(Object.keys(bals).concat(Object.keys(sums)))), bad = [];
+    uids.forEach(uid => { const stored = Math.round((Number((bals[uid] || {}).amount) || 0) * 100) / 100, ledger = sums[uid] || 0; if (Math.abs(stored - ledger) >= 0.005) bad.push({ uid, name: (members[uid] && members[uid].name) || uid, stored, ledger, diff: Math.round((stored - ledger) * 100) / 100, reserved: Number((bals[uid] || {}).reserved) || 0, entries: Object.keys(led).filter(k => led[k].uid === uid).length }); });
+    return { checked: uids.length, mismatches: bad };
+  },
+  // Sets a stored balance back to what its ledger adds up to. Nothing else changes: no ledger entry, payment or refund record is touched, and the change is audited.
+  async 'balance-fix'(w, b) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can correct a balance.');
+    const uid = String(b.uid || ''), seen = Number(b.seen), reason = String(b.reason || '').trim();
+    need(b.confirm === true && uid && Number.isFinite(seen), 400, 'Confirm the correction first.');
+    need(reason.length >= 3 && reason.length <= 200, 400, 'Write a short reason for the correction (3 to 200 characters).');
+    const led = await B.allMap('ledger'); let target = 0;
+    Object.keys(led).forEach(k => { if (led[k].uid === uid) target += Number(led[k].amount) || 0; });
+    target = Math.round(target * 100) / 100;
+    const m = await L.getDoc('members', uid); need(m, 404, 'Account not found.');
+    return await withBalance(uid, async () => {
+      const bal = await getBal(uid), cur = Math.round(bal.amount * 100) / 100;
+      need(Math.abs(cur - Math.round(seen * 100) / 100) < 0.005, 409, 'This balance changed since you checked it (it is now ' + B.money(cur) + '). Run the check again.');
+      need(Math.abs(cur - target) >= 0.005, 409, 'This balance already matches its history.');
+      need(target >= 0, 409, 'Its history adds up to a negative amount, so it cannot be set automatically.');
+      await putBal(uid, Object.assign({}, bal, { amount: target }));
+      await L.bump();
+      await L.audit(w, 'balance.correct', who(w) + ' corrected the Refundable Balance of ' + m.name + ' from ' + B.money(cur) + ' to ' + B.money(target) + ' (its ledger history): ' + reason, { subject: { id: uid, name: m.name }, before: { balance: cur }, after: { balance: target }, amount: Math.round((target - cur) * 100) / 100, refs: { reason } });
+      return { ok: true, balance: target };
+    });
+  },
+
   /* ----- pick hours and hold them while paying ----- */
   async book(w, b) {
     need(w.can('book'), 403, 'Your role cannot book courts.');
@@ -237,11 +337,24 @@ const actions = {
     const paidSoFar = Number(from.paid) || 0, diff = to.price - paidSoFar;
     const base = { by: from.by, byName: from.byName, ref: from.ref, price: to.price, at: Date.now() };
     if (diff <= 0) {   // no extra money needed: move straight away (claim the new hour first, then free the old one)
-      await claimAll({ uid: from.by, member: { name: from.byName } }, [to], s => Object.assign({ date: s.date, venue: s.venue, court: s.court, hour: s.hour, paid: paidSoFar, status: 'confirmed' }, base));
+      const excess = Math.round(-diff * 100) / 100;   // paid more than the new hour costs: this difference is the only thing that can be credited
+      await claimAll({ uid: from.by, member: { name: from.byName } }, [to], s => Object.assign({ date: s.date, venue: s.venue, court: s.court, hour: s.hour, paid: excess ? to.price : paidSoFar, status: 'confirmed' }, base));
       await del('bookings', b.id);
+      let credited = 0, creditFailed = false;
+      if (excess > 0) {   // only now that the move is complete; the ledger entry is the once-only marker
+        try {
+          await withBalance(from.by, async () => {
+            const bal = await getBal(from.by), after = Math.round((bal.amount + excess) * 100) / 100;
+            const key = 'rs_' + crypto.createHash('sha256').update(b.id + '|' + from.at + '|' + to.id).digest('hex').slice(0, 24);
+            if (!(await putNew('ledger', key, { uid: from.by, type: 'resched-credit', amount: excess, balanceAfter: after, ref: from.ref, from: b.id, to: to.id, at: Date.now() }))) return;
+            await putBal(from.by, Object.assign({}, bal, { amount: after }));
+            credited = excess;
+          });
+        } catch (e) { creditFailed = true; console.error('reschedule credit failed:', e && e.message); }
+      }
       await L.bump();
-      await B.notify([from.by], { event: 'rescheduled', refId: from.ref + '.' + to.id, kind: 'rescheduled', title: 'Booking rescheduled', body: 'Your booking ' + from.ref + ' is now ' + B.scheduleText([to]) + '.', data: { ref: from.ref } });
-      return { moved: true, amount: 0 };
+      await B.notify([from.by], { event: 'rescheduled', refId: from.ref + '.' + to.id, kind: 'rescheduled', title: 'Booking rescheduled', body: 'Your booking ' + from.ref + ' is now ' + B.scheduleText([to]) + '.' + (credited ? ' The ' + B.money(credited) + ' price difference was added to your Refundable Balance.' : ''), data: { ref: from.ref, slots: [{ venue: to.venue || '', court: to.court, date: to.date, hour: to.hour }], credited } });
+      return { moved: true, amount: 0, credited, creditFailed, from: { date: from.date, venue: from.venue, court: from.court, hour: from.hour, paid: paidSoFar }, to: { date: to.date, venue: to.venue, court: to.court, hour: to.hour, price: to.price } };
     }
     need(owner, 403, 'This move costs more than was paid. Ask the player to reschedule from their own account so they can pay the difference.');
     if (!b.proof) return { needPayment: true, amount: diff, newPrice: to.price, paid: paidSoFar };   // nothing changes yet: the page now collects the balance
@@ -289,7 +402,7 @@ const actions = {
     await L.bump();
     // told once, only now that the payment is verified
     const first = slots[0], when = B.scheduleText(slots);
-    const data = { ref: pay.bookingRef, venue: first.venue || '', court: first.court, date: first.date, schedule: when };
+    const data = { ref: pay.bookingRef, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })) };
     await B.notify([pay.by], {
       event: 'payment-approved', refId: id, kind: 'payment-approved', data,
       title: pay.kind === 'reschedule' ? 'Reschedule confirmed ✓' : 'Payment approved ✓',
@@ -362,7 +475,7 @@ const actions = {
       await put('refunds', id, doc); made.push(id);
       if (after) {   // started hour: straight to the Refundable Balance (once; if that step fails the refund stays waiting and can only be kept as balance)
         try {
-          balance = await creditRefundToBalance(id, doc, first.by); credited += refundable;
+          balance = await creditRefundToBalance(id, doc, first.by, w); credited += refundable;
           await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' was added to your Refundable Balance.' });
         } catch (e) {
           console.error('after-start credit failed:', e && e.message);
@@ -502,7 +615,7 @@ const actions = {
       await B.notify(staff.filter(u => u !== w.uid), { event: 'refund-requested', refId: id, kind: 'refund-requested', data: { refundId: id }, title: 'New GCash refund request', body: r.byName + ' · ' + r.bookingRef + ' · ' + B.money(r.refundable) + ' to send to GCash ' + a.number + '.' });
       return { ok: true, method: 'gcash', status: 'requested' };
     }
-    const newBalance = await creditRefundToBalance(id, r, w.uid);
+    const newBalance = await creditRefundToBalance(id, r, w.uid, w);
     return { ok: true, method: 'balance', status: 'refunded', credited: r.refundable, balance: newBalance };
   },
 
@@ -718,7 +831,9 @@ module.exports = async (req, res) => {
     const fn = actions[b.action];
     need(fn, 400, 'Unknown action.');
     await L.throttle('pay:' + w.uid, 120, 600);
-    res.status(200).json(await fn(w, b));
+    const pre = await auditPre(w, b), out = await fn(w, b);
+    await auditPost(w, b, pre, out);
+    res.status(200).json(out);
   } catch (e) {
     const status = e.status || 500;
     if (status >= 500) console.error('pay error:', e && e.message);

@@ -42,6 +42,7 @@ const actions = {
       await L.one(['HSET', L.K('roles'), id, JSON.stringify({ role: 'super_admin', owner: true, by: id, at: now })]);
     }
     await L.bump();
+    await L.audit({ id, name, role: 'player' }, 'account.signup', name + ' created an account', { subject: { id, name } });
     return { token: L.signToken(id), id };
   },
 
@@ -70,6 +71,7 @@ const actions = {
     await L.one(['HSET', L.K('logins'), id, JSON.stringify(await L.makeCred(email, b.password))]);
     await L.one(['HSET', L.K('members'), id, JSON.stringify(Object.assign({}, member, { pwSetAt: Date.now() }))]);
     await L.bump();
+    await L.audit({ id, name: member.name, role: (role && role.role) || 'player' }, 'account.password', member.name + ' chose a new password after an admin reset', { subject: { id, name: member.name } });
     return { status: 'ok', token: L.signToken(id), id };
   },
 
@@ -101,6 +103,7 @@ const actions = {
     await L.one(['HSET', L.K('logins'), p.id, JSON.stringify(await L.makeCred(p.email, b.password))]);
     await L.one(['HSET', L.K('members'), p.id, JSON.stringify(Object.assign({}, member, { pwSetAt: Date.now() }))]);
     await L.bump();
+    await L.audit({ id: p.id, name: member.name, role: 'player' }, 'account.password', member.name + ' reset their password (Forgot password)', { subject: { id: p.id, name: member.name } });
     return { status: 'ok', token: L.signToken(p.id), id: p.id };
   },
 
@@ -120,6 +123,7 @@ const actions = {
     await L.one(['HSET', L.K('logins'), tok.id, JSON.stringify(await L.makeCred(email, b.next))]);
     await L.one(['HSET', L.K('members'), tok.id, JSON.stringify(Object.assign({}, member, { pwSetAt: Date.now() }))]);
     await L.bump();
+    await L.audit({ id: tok.id, name: member.name, role: 'player' }, 'account.password', member.name + ' changed their password', { subject: { id: tok.id, name: member.name } });
     return { status: 'ok' };
   }
 };

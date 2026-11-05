@@ -147,6 +147,58 @@ const rules = {
   }
 };
 
+// What each change in the data API means, in words, for the audit trail.
+const permDiff = (a, c) => { const out = []; Object.keys(Object.assign({}, a, c)).forEach(k => { if (!!(a || {})[k] !== !!(c || {})[k]) out.push(((c || {})[k] ? '+' : '-') + k); }); return out; };
+async function auditWrite(w, col, id, op, cur, out, wasSigns) {
+  try {
+    const who = async uid => { const m = await L.getDoc('members', uid); return { id: uid, name: (m && m.name) || uid }; };
+    if (col === 'sessions') {
+      if (out === null) return L.audit(w, 'session.delete', 'Removed session "' + ((cur && cur.title) || id) + '" (' + (cur && cur.date) + ' ' + (cur && cur.start) + ')', { refs: { sessionId: id }, before: cur && { title: cur.title, date: cur.date, start: cur.start, court: cur.court, venue: cur.venue } });
+      const keys = ['title', 'date', 'start', 'duration', 'court', 'venue', 'level', 'format', 'capacity'], pick = o => keys.reduce((n, k) => { n[k] = o[k]; return n; }, {});
+      if (!cur) return L.audit(w, 'session.create', 'Added session "' + out.title + '" (' + out.date + ' ' + out.start + ')', { refs: { sessionId: id }, after: pick(out) });
+      const ch = keys.filter(k => String(cur[k]) !== String(out[k]));
+      if (ch.length) return L.audit(w, 'session.update', 'Edited session "' + out.title + '": ' + ch.join(', '), { refs: { sessionId: id }, before: ch.reduce((n, k) => { n[k] = cur[k]; return n; }, {}), after: ch.reduce((n, k) => { n[k] = out[k]; return n; }, {}) });
+      return;
+    }
+    if (col === 'signups') {
+      const now = out ? Object.keys(out.joined || {}) : [], added = now.filter(s => wasSigns.indexOf(s) < 0), removed = wasSigns.filter(s => now.indexOf(s) < 0);
+      if (!added.length && !removed.length) return;
+      const subj = await who(id), title = async s => { const d = await L.getDoc('sessions', s); return d ? d.title : s; };
+      const act = id === w.uid ? '' : ' (by ' + w.member.name + ')';
+      if (added.length && removed.length) return L.audit(w, 'session.move', subj.name + ' moved from "' + (await title(removed[0])) + '" to "' + (await title(added[0])) + '"' + act, { subject: subj, refs: { from: removed[0], to: added[0] } });
+      if (added.length) return L.audit(w, 'session.join', subj.name + ' joined "' + (await title(added[0])) + '"' + act, { subject: subj, refs: { sessionId: added[0] } });
+      return L.audit(w, 'session.leave', subj.name + ' was removed from "' + (await title(removed[0])) + '"' + act, { subject: subj, refs: { sessionId: removed[0] } });
+    }
+    if (col === 'members') {
+      if (out === null) return L.audit(w, 'account.remove', w.member.name + ' removed the account of ' + ((cur && cur.name) || id), { subject: { id, name: cur && cur.name } });
+      if (cur && cur.name !== out.name) return L.audit(w, 'account.profile', (cur.name) + ' changed their name to ' + out.name, { subject: { id, name: out.name }, before: { name: cur.name }, after: { name: out.name } });
+      return;
+    }
+    if (col === 'roles') {
+      const subj = await who(id), was = (cur && cur.role) || 'player';
+      if (out === null) return L.audit(w, 'role.remove', 'Reset the role of ' + subj.name + ' (was ' + was + ')', { subject: subj, before: { role: was } });
+      if (out.role !== was) await L.audit(w, 'role.change', 'Changed the role of ' + subj.name + ' from ' + was + ' to ' + out.role, { subject: subj, before: { role: was }, after: { role: out.role } });
+      if (!!out.suspended !== !!(cur && cur.suspended)) await L.audit(w, out.suspended ? 'account.suspend' : 'account.resume', (out.suspended ? 'Paused access for ' : 'Restored access for ') + subj.name, { subject: subj });
+      if (out.pwReset && out.pwReset !== (cur && cur.pwReset)) await L.audit(w, 'account.password_reset', 'Started a password reset for ' + subj.name, { subject: subj });
+      if (JSON.stringify(out.venues || []) !== JSON.stringify((cur && cur.venues) || [])) await L.audit(w, 'role.venues', 'Changed the venues of ' + subj.name, { subject: subj, before: { venues: (cur && cur.venues) || [] }, after: { venues: out.venues || [] } });
+      return;
+    }
+    if (col === 'config') {
+      if (id === 'roles') {
+        const a = (cur && cur.defs) || {}, c = (out && out.defs) || {}, lines = [];
+        Object.keys(Object.assign({}, a, c)).forEach(k => {
+          if (!a[k]) lines.push('added role ' + k); else if (!c[k]) lines.push('removed role ' + k);
+          else { const d = permDiff(L.permsFor(k, a), L.permsFor(k, c)); if (d.length) lines.push(k + ': ' + d.join(' ')); if ((a[k].label || '') !== (c[k].label || '')) lines.push(k + ' renamed to ' + c[k].label); }
+        });
+        if (lines.length) return L.audit(w, 'permissions.change', 'Changed role access: ' + lines.join('; '), { before: { roles: Object.keys(a) }, after: { changes: lines } });
+        return;
+      }
+      if (id === 'options') return L.audit(w, 'settings.options', 'Changed Session Configurations (levels, formats, courts or venues)', { before: cur && { levels: cur.levels, formats: cur.formats, courts: cur.courts, venues: cur.venues }, after: out && { levels: out.levels, formats: out.formats, courts: out.courts, venues: out.venues } });
+      if (id === 'booking') return L.audit(w, 'settings.booking', 'Changed the Court booking configuration (hours, rates, courts or venues)', { before: cur && { hours: cur.hours, rates: cur.rates, courts: cur.courts }, after: out && { hours: out.hours, rates: out.rates, courts: out.courts } });
+    }
+  } catch (e) { console.error('audit write failed:', e && e.message); }
+}
+
 async function write(req, res) {
   const w = await L.whoIs(req);
   if (w.suspended) throw forbid('Your access is paused.');
@@ -155,7 +207,7 @@ async function write(req, res) {
   const col = parts[0];
   let id = parts[1];
   const op = b.op;
-  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
+  if (L.COLS.indexOf(col) < 0 || ['payments', 'refunds', 'notifications', 'locks', 'pushtokens', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'audit'].indexOf(col) >= 0 || col === 'logins' && !(op === 'delete' && w.isSuper)) throw forbid();
   if (op === 'add') {
     if (col !== 'sessions' || parts.length !== 1) throw forbid();
     id = crypto.randomBytes(10).toString('hex');
@@ -166,8 +218,10 @@ async function write(req, res) {
 
   if (col === 'logins') {   // only a super admin removing someone else's account
     if (id === w.uid) throw forbid();
+    const gone = await L.getDoc('members', id);
     await L.one(['HDEL', L.K('logins'), id]);
     await L.bump();
+    await L.audit(w, 'account.remove', (w.member.name) + ' removed the account of ' + ((gone && gone.name) || id), { subject: { id, name: gone && gone.name } });
     return res.status(200).json({ ok: true });
   }
 
@@ -188,6 +242,7 @@ async function write(req, res) {
     if (hit) throw L.httpErr(409, 'That court is already booked on ' + B.dateText(hit.date) + ' at ' + B.hourText(hit.hour) + ' (booking ' + hit.ref + '). Pick another court or time.');
   }
 
+  const wasSigns = cur && col === 'signups' ? Object.keys(cur.joined || {}) : [];
   if (out === null) await L.one(['HDEL', L.K(col), id]);
   else if (col === 'bookings' && !cur) {
     if (!(await L.one(['HSETNX', L.K(col), id, JSON.stringify(out)]))) throw L.httpErr(409, 'That hour was just booked.');
@@ -200,6 +255,7 @@ async function write(req, res) {
     }
   }
   await L.bump();
+  await auditWrite(w, col, id, op, cur, out, wasSigns);
   res.status(200).json({ ok: true, id });
 }
 

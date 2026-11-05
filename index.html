@@ -384,21 +384,21 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .rf-chip:hover { background: rgba(255, 255, 255, 0.12); }
 .rf-chip small { font: 500 0.6rem/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--band-muted); }
 .rf-chip strong { font: 700 0.95rem/1.1 var(--display); }
-.bk-list { display: flex; flex-direction: column; gap: 10px; max-width: 700px; }
-.bk-card { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 12px; }
+.bk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
+.bk-card { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 12px; }
 .bk-card.st-hold { border-style: dashed; border-color: var(--warn); }
-.bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 6px 12px; }
-.bk-when strong { display: block; font: 700 1rem/1.2 var(--display); }
-.bk-ref { font: 500 0.74rem/1.2 var(--mono); color: var(--muted); letter-spacing: 0.03em; }
+.bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.bk-when strong { display: block; font: 700 1rem/1.25 var(--display); }
+.bk-ref { display: block; margin-top: 2px; font: 500 0.74rem/1.2 var(--mono); color: var(--muted); letter-spacing: 0.04em; }
 .bk-state { display: flex; align-items: center; gap: 10px; }
-.bk-state strong { font: 700 1.05rem/1 var(--display); }
-.bk-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.bk-runs li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; padding: 7px 10px; background: var(--paper); border-radius: 8px; font-size: var(--fs-s); }
-.bk-runs li span { display: flex; flex-direction: column; min-width: 0; }
-.bk-runs li small { color: var(--muted); font-size: 0.72rem; }
-.bk-time { text-align: right; align-items: flex-end; }
-.bk-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 0.76rem; }
-.bk-actions { display: flex; gap: 8px; }
+.bk-state strong { font: 800 1.1rem/1 var(--display); }
+.bk-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bk-runs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 16px; padding: 9px 12px; background: var(--paper); border-radius: 8px; font-size: var(--fs-s); }
+.bk-runs li span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bk-runs li small { color: var(--muted); font-size: 0.72rem; line-height: 1.25; }
+.bk-time { text-align: right; align-items: flex-end; font-weight: 600; }
+.bk-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.78rem; }
+.bk-actions { display: flex; gap: 8px; margin-top: 2px; }
 .bk-actions .btn { flex: 1 1 0; }
 .btn.danger-outline { background: transparent; border-color: var(--danger); color: var(--danger); }
 .btn.danger-outline:hover:not(:disabled) { background: var(--danger); color: var(--on-danger); }
@@ -425,6 +425,47 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
+.ap { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+.ap-ref { text-align: center; padding: 10px 12px; border: 1.5px dashed var(--accent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 9%, var(--card)); }
+.ap-ref small { display: block; font: 600 0.62rem/1.2 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.ap-ref strong { display: block; margin-top: 2px; font: 800 1.45rem/1.1 var(--mono); letter-spacing: 0.06em; color: var(--ink); overflow-wrap: anywhere; }
+.ap-group { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.ap-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; padding: 8px 12px; background: var(--paper); font-size: var(--fs-s); }
+.ap-head span { color: var(--muted); }
+.ap-rows { list-style: none; margin: 0; padding: 0; }
+.ap-rows li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--rule); font-size: var(--fs-s); }
+.ap-court { font-weight: 700; }
+.ap-time { display: flex; flex-direction: column; align-items: flex-end; font-weight: 600; text-align: right; }
+.ap-time small { color: var(--muted); font-weight: 400; font-size: 0.7rem; }
+.ap-fallback { margin: 0; font-size: var(--fs-s); color: var(--muted); }
+.au-ok { margin: 0; color: var(--ok); font-weight: 600; font-size: var(--fs-s); }
+.au-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 12px; align-items: end; }
+.au-filters .field input, .au-filters .field select { width: 100%; }
+.au-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.au-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
+.au-item.bad { border-color: var(--warn); }
+.au-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; width: 100%; }
+.au-act { color: var(--muted); font-size: 0.72rem; }
+.au-when { margin-left: auto; color: var(--muted); font-size: 0.74rem; }
+.au-sum { margin: 0; font-weight: 600; font-size: var(--fs-s); overflow-wrap: anywhere; }
+.au-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 0.76rem; }
+.au-meta strong { color: var(--ink); }
+.au-warn { color: var(--warn); font-weight: 700; }
+.au-det { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 10px; background: var(--paper); border-radius: 8px; font-size: 0.76rem; overflow-wrap: anywhere; }
+.au-det small { display: inline-block; min-width: 64px; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.62rem; letter-spacing: 0.05em; }
+.au-more { display: flex; justify-content: center; }
+.au-bc summary { cursor: pointer; }
+.au-bc summary small { color: var(--muted); }
+.au-mm { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.au-mm li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 8px 10px; border: 1.5px solid var(--warn); border-radius: 8px; font-size: var(--fs-s); }
+.au-mm li > div { display: flex; flex-direction: column; min-width: 0; }
+.au-mm li span { color: var(--muted); font-size: 0.76rem; }
+.au-fix { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.au-fix input { padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.au-fix p { margin: 0; }
+.chip.au-booking, .chip.au-payment { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.chip.au-refund, .chip.au-balance { background: color-mix(in srgb, var(--ok) 18%, transparent); }
+.chip.au-account, .chip.au-role, .chip.au-permissions { background: color-mix(in srgb, var(--warn) 16%, transparent); }
 .pf-pw { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--rule); }
 .pf-pw .pw-form { align-self: stretch; }
 .pf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 16px; align-items: start; }
@@ -859,6 +900,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     <section id="view-payments" class="view-stack" aria-label="Payments" hidden></section>
     <section id="view-refunds" class="view-stack" aria-label="Refunds" hidden></section>
     <section id="view-balink" class="view-stack" aria-label="Refund balance linking" hidden></section>
+    <section id="view-audit" class="view-stack" aria-label="Audit Trail" hidden></section>
   </div>
 
   <footer>Copyright © 2026. KitCraft All Rights Reserved.</footer>
@@ -935,7 +977,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
@@ -2332,6 +2374,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   /* ---------- Upcoming Bookings: one clear card per booking ---------- */
   function dateLabel(ds) { var d = parse(ds, '00:00'); return wfmt.format(d) + ', ' + mfmt.format(d); }
   function bookingCard(ref, slots) {
+    var firstHr = {}, gk = function (p) { return p.date + '|' + (p.venue || '') + '|' + p.court; };   // keep each court's hours together, earliest court first
+    slots.forEach(function (p) { var k = gk(p); if (firstHr[k] == null || p.hour < firstHr[k]) firstHr[k] = p.hour; });
+    slots = slots.slice().sort(function (p, q) { return p.date.localeCompare(q.date) || firstHr[gk(p)] - firstHr[gk(q)] || gk(p).localeCompare(gk(q)) || p.hour - q.hour; });
     var nowMs = Date.now(), runs = [];
     slots.forEach(function (p) {
       var l = runs[runs.length - 1], v = p.venue || '';
@@ -2462,7 +2507,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var newPrice = avail.length ? slotPrice(mv.hour) : 0, paid = Number(x.paid) || 0, diff = newPrice - paid;
       var note = !avail.length ? '' : diff > 0 ? (mine ? 'New price ' + peso(newPrice) + ', already paid ' + peso(paid) + '. You pay the difference of ' + peso(diff) + ' by GCash; your booking stays as it is until staff verify it.'
         : 'This costs ' + peso(diff) + ' more than was paid, so the player has to reschedule it from their own account.')
-        : 'New price ' + peso(newPrice) + (diff < 0 ? ' (lower than the ' + peso(paid) + ' paid; no money is returned automatically).' : '. No extra payment is needed.');
+        : 'New price ' + peso(newPrice) + (diff < 0 ? ' (lower than the ' + peso(paid) + ' paid: the ' + peso(-diff) + ' difference is added to the Refundable Balance).' : '. No extra payment is needed.');
       return h('div', { class: 'mb-picker' },
         h('div', { class: 'mb-pick-grid' }, dateIn, colSel, hourSel),
         note ? h('p', { class: 'note move-note' }, note) : null,
@@ -2947,8 +2992,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var d = n.data || {}, o = { id: 'nt', title: n.title.replace(/\s*✓\s*$/, ''), lead: n.body, actions: [{ id: 'nt-ok', label: 'OK', primary: true, onclick: closeNotice }] };
     if (n.kind === 'payment-approved' || n.kind === 'rescheduled') {
       o.tone = 'ok'; o.icon = '✓';
-      o.lead = 'Please go to ' + (d.venue || 'the venue') + '. Show your reference number to the venue staff before using the court.';
-      o.rows = [d.venue ? ['Venue', d.venue] : null, ['When', d.schedule || n.body], ['Reference', h('span', { class: 'dlg-ref' }, d.ref || '')]];
+      o.lead = 'Show your reference number to the venue staff before using the court.';
+      o.rows = [];
+      o.extra = approvalDetail(d, n);
     } else if (n.kind === 'refund-done') {
       var rf = state.refunds[d.refundId] || {}, isBal = d.method === 'balance';
       o.tone = 'ok'; o.icon = '₱'; o.title = isBal ? 'Added to your refund balance' : 'Payment Refunded';
@@ -3044,7 +3090,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     return { amount: amount, reserved: reserved, available: Math.max(0, amount - reserved) };
   }
   function myRefundAcct() { var a = state.refundaccts[state.me]; return a && a.number && a.name && a.qrPath ? a : null; }
-  var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking', 'link-in': 'Moved in from another account', 'link-out': 'Moved to another account' };
+  var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking', 'link-in': 'Moved in from another account', 'link-out': 'Moved to another account', 'resched-credit': 'Price difference after a reschedule' };
   var rpSig = '';
   function renderProfileRefunds() {
     var box = $('#pf-refund');
@@ -3106,8 +3152,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: closeRfInfo }),
       h('div', { class: 'modal-panel dlg dlg-info ri-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'ri-t' },
         h('button', { class: 'modal-close ri-x', type: 'button', 'aria-label': 'Close', onclick: closeRfInfo }, '×'),
-        h('div', { class: 'ri-top' }, h('span', { class: 'ri-label' }, 'Refundable balance'), h('strong', { id: 'ri-t', class: 'ri-amount' }, peso(rb)), h('small', null, 'what you would get back if your paid, upcoming bookings were cancelled now')),
-        h('dl', { class: 'dlg-rows' }, h('dt', null, 'Refund balance to spend'), h('dd', null, peso(bal.available)), bal.reserved ? h('dt', null, 'Set aside for a booking') : null, bal.reserved ? h('dd', null, peso(bal.reserved)) : null),
+        h('div', { class: 'ri-top' }, h('span', { class: 'ri-label' }, 'Refundable balance'), h('strong', { id: 'ri-t', class: 'ri-amount' }, peso(bal.available)), h('small', null, 'credit from cancelled or rescheduled bookings. Use it when you pay for a booking.')),
+        h('dl', { class: 'dlg-rows' }, bal.reserved ? h('dt', null, 'Set aside for a booking') : null, bal.reserved ? h('dd', null, peso(bal.reserved)) : null, h('dt', null, 'Paid for upcoming bookings'), h('dd', null, peso(rb))),
+        h('p', { class: 'dlg-note' }, 'The amount paid for your bookings is not part of your balance. It only comes back if you cancel (a full refund before the start time).'),
         h('h3', { class: 'ri-h' }, 'Your GCash refund details'),
         details,
         h('div', { class: 'dlg-actions' },
@@ -3267,6 +3314,122 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     return h('ul', { class: 'policy' },
       h('li', { class: show === 'before' || show === 'both' ? 'on' : '' }, h('strong', null, 'Cancel before the booked start time'), h('span', null, 'Eligible for a full refund. You choose GCash or your Refundable Balance.')),
       h('li', { class: show === 'after' || show === 'both' ? 'on' : '' }, h('strong', null, 'Cancel after the booked start time'), h('span', null, 'The refundable amount goes to your Refundable Balance instead of a GCash refund.')));
+  }
+
+  /* ---------- the booked courts in an approval pop-up: venue and date, then one row per court and time ---------- */
+  function approvalDetail(d, n) {
+    var slots = (d.slots || []).slice().sort(function (a, c) { return (a.venue || '').localeCompare(c.venue || '') || a.date.localeCompare(c.date) || a.court.localeCompare(c.court, undefined, { numeric: true }) || a.hour - c.hour; });
+    var groups = [];
+    slots.forEach(function (s) {
+      var g = groups[groups.length - 1];
+      if (!g || g.venue !== (s.venue || '') || g.date !== s.date) { g = { venue: s.venue || '', date: s.date, runs: [] }; groups.push(g); }
+      var r = g.runs[g.runs.length - 1];
+      if (r && r.court === s.court && r.to === s.hour) r.to = s.hour + 1; else g.runs.push({ court: s.court, from: s.hour, to: s.hour + 1 });
+    });
+    return h('div', { class: 'ap' },
+      h('div', { class: 'ap-ref' }, h('small', null, 'Reference number'), h('strong', null, d.ref || '')),
+      groups.length ? groups.map(function (g) {
+        return h('section', { class: 'ap-group' },
+          h('div', { class: 'ap-head' }, h('strong', null, g.venue || 'Venue'), h('span', null, dateLabel(g.date))),
+          h('ul', { class: 'ap-rows' }, g.runs.map(function (r) { return h('li', null, h('span', { class: 'ap-court' }, r.court), h('span', { class: 'ap-time' }, hourText(r.from) + ' – ' + hourText(r.to), h('small', null, plural(r.to - r.from, 'hour')))); })));
+      }) : h('p', { class: 'ap-fallback' }, (d.venue ? d.venue + ' · ' : '') + (d.schedule || n.body)));
+  }
+
+  /* ---------- Audit Trail (Super Admin only): everything important that happened, searchable ---------- */
+  var AU_AREAS = { booking: 'Bookings', payment: 'Payments', refund: 'Refunds', balance: 'Balances', account: 'Accounts', role: 'Roles', permissions: 'Permissions', session: 'Sessions', settings: 'Settings' };
+  function auNow() {
+    if (!state.au) state.au = { q: '', area: '', actor: '', from: '', to: '', items: [], total: 0, all: 0, hasMore: false, areas: [], tampered: 0, loading: false, error: '', open: {}, loaded: false, bc: null, bcBusy: false, bcConfirm: '', bcReason: '', bcError: '' };
+    return state.au;
+  }
+  var auSig = '', auTimer = 0;
+  function auLoad(reset) {
+    var a = auNow(); if (a.loading) return;
+    a.loading = true; a.error = ''; auRender(true);
+    var body = { action: 'audit-list', q: a.q, area: a.area, actor: a.actor, limit: 60 };
+    if (a.from) body.from = parse(a.from, '00:00').getTime();
+    if (a.to) body.to = parse(a.to, '00:00').getTime() + 86400000 - 1;
+    if (!reset && a.items.length) body.before = a.items[a.items.length - 1].id;
+    payCall(body).then(function (r) {
+      a.items = reset ? r.items : a.items.concat(r.items); a.total = r.total; a.all = r.all; a.hasMore = r.hasMore; a.areas = r.areas; a.tampered = r.tampered; a.loaded = true;
+    }).catch(function (e) { a.error = e.message; }).then(function () { a.loading = false; auRender(true); });
+  }
+  function auLater() { clearTimeout(auTimer); auTimer = setTimeout(function () { auLoad(true); }, 350); }
+  function auValue(v) { return v && typeof v === 'object' ? Object.keys(v).map(function (k) { return k + ': ' + (v[k] && typeof v[k] === 'object' ? JSON.stringify(v[k]) : v[k]); }).join(' · ') : String(v); }
+  function auItem(x) {
+    var a = auNow(), open = !!a.open[x.id], det = [];
+    if (x.before) det.push(h('div', null, h('small', null, 'Before'), h('span', null, auValue(x.before))));
+    if (x.after) det.push(h('div', null, h('small', null, 'After'), h('span', null, auValue(x.after))));
+    var refs = Object.keys(x.refs || {}).filter(function (k) { return x.refs[k] !== '' && x.refs[k] != null && !(Array.isArray(x.refs[k]) && !x.refs[k].length); });
+    if (refs.length) det.push(h('div', null, h('small', null, 'Records'), h('span', { class: 'mono' }, refs.map(function (k) { return k + ' ' + (Array.isArray(x.refs[k]) ? x.refs[k].join(', ') : x.refs[k]); }).join(' · '))));
+    det.push(h('div', null, h('small', null, 'Record id'), h('span', { class: 'mono' }, x.id)));
+    return h('li', { class: 'au-item' + (x.verified ? '' : ' bad') },
+      h('div', { class: 'au-top' }, h('span', { class: 'chip au-' + x.area }, AU_AREAS[x.area] || x.area), h('span', { class: 'au-act mono' }, x.action), h('time', { class: 'au-when' }, when(x.at))),
+      h('p', { class: 'au-sum' }, x.summary),
+      h('div', { class: 'au-meta' },
+        h('span', null, 'By ', h('strong', null, x.actor.name), ' (' + (roleLabel(x.actor.role) || x.actor.role) + ')'),
+        x.subject ? h('span', null, 'Affects ', h('strong', null, x.subject.name || x.subject.id)) : null,
+        x.amount != null ? h('span', null, 'Amount ', h('strong', null, (x.amount < 0 ? '−' : '') + peso(Math.abs(x.amount)))) : null,
+        !x.verified ? h('span', { class: 'au-warn' }, 'This record was altered after it was written') : null),
+      h('button', { id: 'au-d-' + x.id, class: 'link', type: 'button', 'aria-expanded': String(open), onclick: function () { a.open[x.id] = !open; auRender(true); } }, open ? 'Hide details' : 'Show details'),
+      open ? h('div', { class: 'au-det' }, det) : null);
+  }
+  function auBalanceCheck() {
+    var a = auNow(); if (a.bcBusy) return;
+    a.bcBusy = true; a.bcError = ''; auRender(true);
+    payCall({ action: 'balance-check' }).then(function (r) { a.bc = r; }).catch(function (e) { a.bcError = e.message; }).then(function () { a.bcBusy = false; auRender(true); });
+  }
+  function auFix(m) {
+    var a = auNow(); if (a.bcBusy) return;
+    a.bcBusy = true; a.bcError = ''; auRender(true);
+    payCall({ action: 'balance-fix', uid: m.uid, seen: m.stored, confirm: true, reason: a.bcReason })
+      .then(function () { flash('The balance of ' + m.name + ' was corrected to its history.', 'ok'); a.bcConfirm = ''; a.bcReason = ''; return payCall({ action: 'balance-check' }).then(function (r) { a.bc = r; }); })
+      .catch(function (e) { a.bcError = e.message; }).then(function () { a.bcBusy = false; auRender(true); auLoad(true); });
+  }
+  function renderAudit() { auRender(false); }
+  function auRender(force) {
+    var box = $('#view-audit');
+    if (!box || state.view !== 'audit') return;
+    if (!isSuper()) { state.view = 'schedule'; render(); return; }
+    var a = auNow();
+    if (!a.loaded && !a.loading && !a.error) { auLoad(true); return; }
+    var sig = [a.loading, a.error, a.total, a.items.length, a.hasMore, a.tampered, a.bcBusy, a.bcError, a.bcConfirm, a.bc && a.bc.mismatches.length, a.bc && a.bc.checked, Object.keys(a.open).filter(function (k) { return a.open[k]; }).join(',')].join('|');
+    if (!force && sig === auSig) return;
+    auSig = sig;
+    var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
+    if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (x) {} }
+    var areas = Object.keys(AU_AREAS).concat((a.areas || []).filter(function (k) { return !AU_AREAS[k]; }));
+    var bcBox = h('details', { class: 'panel au-bc', open: a.bc || a.bcBusy || a.bcError ? '' : null },
+      h('summary', null, h('strong', null, 'Balance check'), h('small', null, ' compares every Refundable Balance with its history')),
+      h('p', { class: 'note' }, 'Each balance should equal the sum of its credits and uses. A difference is shown here and can be set back to its history. Payments, refunds and history records are never changed.'),
+      h('div', null, h('button', { id: 'bc-run', class: 'btn small', type: 'button', disabled: a.bcBusy, onclick: auBalanceCheck }, a.bcBusy ? 'Checking…' : 'Run balance check')),
+      a.bcError ? h('p', { class: 'form-error', role: 'alert' }, a.bcError) : null,
+      a.bc ? (a.bc.mismatches.length ? h('ul', { class: 'au-mm' }, a.bc.mismatches.map(function (m) {
+        var conf = a.bcConfirm === m.uid;
+        return h('li', null,
+          h('div', null, h('strong', null, m.name), h('span', null, 'Stored ' + peso(m.stored) + ' · History ' + peso(m.ledger) + ' · Difference ' + (m.diff > 0 ? '+' : '−') + peso(Math.abs(m.diff)) + (m.entries ? '' : ' · no history at all'))),
+          conf ? h('div', { class: 'au-fix' },
+            h('p', null, 'Set ' + m.name + ' to ' + peso(m.ledger) + '? Only the balance number changes, and this is recorded in the audit trail.'),
+            h('input', { id: 'bc-reason', type: 'text', maxlength: '200', placeholder: 'Reason (required)', value: a.bcReason, 'aria-label': 'Reason for the correction', oninput: function (e) { a.bcReason = e.target.value; } }),
+            h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: a.bcBusy, onclick: function () { a.bcConfirm = ''; auRender(true); } }, 'Cancel'), h('button', { id: 'bc-do', class: 'btn small primary', type: 'button', disabled: a.bcBusy, onclick: function () { auFix(m); } }, 'Correct balance')))
+            : h('button', { id: 'bc-fix-' + m.uid, class: 'btn small', type: 'button', onclick: function () { a.bcConfirm = m.uid; a.bcReason = ''; auRender(true); } }, 'Correct to history'));
+      })) : h('p', { class: 'au-ok' }, '✓ ' + (a.bc.checked === 1 ? 'The 1 balance matches' : 'All ' + a.bc.checked + ' balances match') + ' its history.')) : null);
+    fill(box,
+      h('div', { class: 'book-head' }, h('h2', null, 'Audit Trail'), h('button', { id: 'au-refresh', class: 'btn small', type: 'button', disabled: a.loading, onclick: function () { auLoad(true); } }, a.loading ? 'Loading…' : 'Refresh')),
+      h('p', { class: 'note' }, 'Every important action on the site, written by the server when it happens. Only the Super Admin can see this page, and no one can edit or delete a record.'),
+      a.loaded ? h('p', { class: a.tampered ? 'form-error' : 'au-ok', role: 'status' }, a.tampered ? '⚠ ' + a.tampered + ' record(s) were changed after they were written. They are marked below.' : '✓ ' + a.all + ' records, all sealed and unaltered.') : null,
+      bcBox,
+      h('div', { class: 'au-filters' },
+        h('label', { class: 'field', for: 'au-q' }, 'Search', h('input', { id: 'au-q', type: 'search', maxlength: '80', placeholder: 'Name, booking reference, payment…', value: a.q, oninput: function (e) { a.q = e.target.value; auLater(); } })),
+        h('label', { class: 'field', for: 'au-actor' }, 'Done by', h('input', { id: 'au-actor', type: 'search', maxlength: '60', placeholder: 'Name or role', value: a.actor, oninput: function (e) { a.actor = e.target.value; auLater(); } })),
+        h('label', { class: 'field', for: 'au-area' }, 'Type', h('select', { id: 'au-area', onchange: function (e) { a.area = e.target.value; auLoad(true); } }, h('option', { value: '' }, 'Everything'), areas.map(function (k) { return h('option', Object.assign({ value: k }, a.area === k ? { selected: '' } : {}), AU_AREAS[k] || k); }))),
+        h('label', { class: 'field', for: 'au-from' }, 'From', h('input', { id: 'au-from', type: 'date', value: a.from, onchange: function (e) { a.from = e.target.value; auLoad(true); } })),
+        h('label', { class: 'field', for: 'au-to' }, 'To', h('input', { id: 'au-to', type: 'date', value: a.to, onchange: function (e) { a.to = e.target.value; auLoad(true); } })),
+        h('div', { class: 'au-clear' }, h('button', { id: 'au-clear', class: 'btn small', type: 'button', onclick: function () { a.q = ''; a.actor = ''; a.area = ''; a.from = ''; a.to = ''; auLoad(true); } }, 'Clear filters'))),
+      a.error ? h('p', { class: 'form-error', role: 'alert' }, a.error) : null,
+      a.loaded ? h('p', { class: 'note' }, a.total + (a.total === 1 ? ' record' : ' records') + (a.q || a.actor || a.area || a.from || a.to ? ' match your filters' : '')) : null,
+      a.items.length ? h('ul', { class: 'au-list' }, a.items.map(auItem)) : (a.loaded && !a.loading ? h('p', { class: 'note' }, 'Nothing matches.') : null),
+      a.hasMore ? h('div', { class: 'au-more' }, h('button', { id: 'au-more', class: 'btn', type: 'button', disabled: a.loading, onclick: function () { auLoad(false); } }, a.loading ? 'Loading…' : 'Load older records')) : null);
+    if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
   }
 
   /* ---------- Refund balance linking (Super Admin and Admin only) ---------- */
@@ -3961,10 +4124,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   // the player's Refundable Balance, always visible in the top bar (tap it for the pop-up with the refund details)
   function refundChip() {
     if (!can('book')) return null;
-    var rb = refundableBalance(), credit = myBalance().available;
-    return h('button', { id: 'rf-chip', class: 'rf-chip', type: 'button', title: 'Refundable balance: what you would get back if your paid, upcoming bookings were cancelled now.' + (credit > 0 ? ' Refund balance to use: ' + peso(credit) + '.' : ''),
-      'aria-label': 'Refundable balance ' + peso(rb) + (credit > 0 ? ', refund balance ' + peso(credit) : '') + '. Opens your refund details.', 'aria-haspopup': 'dialog', onclick: openRfInfo },
-      h('small', null, 'Refundable balance'), h('strong', null, peso(rb)));
+    var credit = myBalance().available;
+    return h('button', { id: 'rf-chip', class: 'rf-chip', type: 'button', title: 'Your Refundable Balance: credit from cancelled or rescheduled bookings that you can use to pay for a booking.',
+      'aria-label': 'Refundable balance ' + peso(credit) + '. Opens your refund details.', 'aria-haspopup': 'dialog', onclick: openRfInfo },
+      h('small', null, 'Refundable balance'), h('strong', null, peso(credit)));
   }
   function themeButton() {
     var dark = themeNow() === 'dark', ns = 'http://www.w3.org/2000/svg';
@@ -3993,7 +4156,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (can('payments') || can('paysettings')) views.push(['payments', 'Payments']);
     if (can('refunds')) views.push(['refunds', 'Refunds']);
     if (can('roleaccess')) views.push(['roles', 'Role access']);
-    if (canLinkBalances()) views.push(['balink', 'Balance linking']);   // Super Admin and Admin only (also enforced on the server)
+    if (canLinkBalances()) views.push(['balink', 'Balance linking']);
+    if (isSuper()) views.push(['audit', 'Audit Trail']);   // Super Admin only (the server enforces it too)   // Super Admin and Admin only (also enforced on the server)
     // Book a Court and Session Configurations are opened from buttons, not the menu, but are still valid pages
     if (!views.some(function (i) { return i[0] === state.view; }) && !(state.view === 'book' && can('book'))) state.view = 'schedule';
     $('#book-btn').hidden = !can('book');
@@ -4056,6 +4220,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       $('#view-payments').hidden = state.view !== 'payments';
       $('#view-refunds').hidden = state.view !== 'refunds';
       $('#view-balink').hidden = state.view !== 'balink';
+      $('#view-audit').hidden = state.view !== 'audit';
       if (!can('host')) state.hostOpen = false;
       $('#host').hidden = !(state.hostOpen && state.view === 'schedule');
       if (state.view === 'schedule') { renderCalendar(all); renderList(all); }
@@ -4065,6 +4230,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       else if (state.view === 'payments') renderPayments();
       else if (state.view === 'refunds') renderRefunds();
       else if (state.view === 'balink') renderBalink();
+      else if (state.view === 'audit') renderAudit();
       else renderRoles();
     }
     renderModal();
