@@ -295,6 +295,8 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .pay-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pay-filters input { flex: 1 1 220px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
 .pay-list { display: flex; flex-direction: column; gap: 12px; }
+.pay-list.rf-scroll { max-height: 360px; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+.pay-list.rf-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 .pay-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
 .pay-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; }
 .pay-top small { display: block; color: var(--muted); overflow-wrap: anywhere; }
@@ -3107,6 +3109,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var sig = [raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(','), ledgerList.length].join('|');
     if (sig === rpSig) return;
     rpSig = sig;
+    var oldScroll = box.querySelector('.rf-scroll'), scrollTop = oldScroll ? oldScroll.scrollTop : 0;   // keep the place in the list when it refreshes
     var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
     if (focusKey) { try { selA = ae.selectionStart; selB = ae.selectionEnd; } catch (e) {} }
     var cards = refunds.map(function (r) {
@@ -3132,9 +3135,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       h('h3', null, 'Refund balance'),
       h('div', { class: 'rf-bal' }, h('div', null, h('span', { class: 'note' }, 'Refund balance'), h('strong', null, peso(bal.available))), bal.reserved ? h('span', { class: 'note' }, peso(bal.reserved) + ' is set aside for a booking waiting for payment verification.') : h('span', { class: 'note' }, 'Use it when you pay for a booking.')),
       h('div', { class: 'nf-head' }, h('h3', null, 'Refund history')),
-      cards.length ? h('div', { class: 'pay-list' }, cards) : h('p', { class: 'note' }, 'No refunds yet. If staff cancel a booking you paid for, the refund shows up here.'),
+      cards.length ? h('div', { class: 'pay-list rf-scroll', tabindex: '0', role: 'region', 'aria-label': 'Refund history' }, cards) : h('p', { class: 'note' }, 'No refunds yet. If staff cancel a booking you paid for, the refund shows up here.'),
       ledgerList.length ? h('div', { class: 'nf-head' }, h('h3', null, 'Balance history')) : null,
       ledgerList.length ? h('ul', { class: 'nf-list' }, ledgerList.map(function (x) { return h('li', null, h('strong', null, (x.amount > 0 ? '+' : '−') + peso(Math.abs(x.amount)) + ' · ' + (LEDGER_WORDS[x.type] || x.type)), h('span', null, (x.ref ? x.ref + ' · ' : '') + 'balance after ' + peso(x.balanceAfter)), h('small', null, when(x.at))); })) : null);
+    var sc = box.querySelector('.rf-scroll'); if (sc) sc.scrollTop = scrollTop;
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
   }
 
