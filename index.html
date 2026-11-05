@@ -308,6 +308,12 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .pay-lines { margin: 0; padding-left: 18px; }
 .proof-btn { padding: 0; border: 1.5px solid var(--rule); border-radius: 8px; background: var(--paper); cursor: zoom-in; }
 .pay-proof { display: block; width: 120px; height: 120px; object-fit: cover; border-radius: 6px; }
+.pay-card .proof-btn { align-self: flex-start; overflow: hidden; }
+.rf-receipt { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.rf-receipt > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rf-receipt small { color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.rf-receipt .proof-btn { flex: none; align-self: center; }
+.rf-receipt .pay-proof { width: 84px; height: 84px; }
 .img-panel { width: min(720px, 100%); max-height: 94vh; overflow: auto; }
 .img-full { display: block; max-width: 100%; height: auto; border-radius: 8px; }
 .chip.rs-pending_verification, .chip.rs-requested, .chip.rs-approved { border-color: var(--warn); color: var(--warn); }
@@ -3126,7 +3132,9 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       var kids = [
         h('div', { class: 'pay-top' }, h('div', null, h('strong', null, 'Booking ' + r.bookingRef), h('small', null, slotRuns(r.slots).join('; '))), h('div', { class: 'pay-amt' }, h('span', { class: 'chip rs-' + (r.status === 'awaiting_user' ? 'requested' : r.status) }, r.status === 'awaiting_user' ? 'Choose how to receive' : (STATUS_WORDS[r.status] || r.status)))),
         h('dl', { class: 'kv' }, rows.reduce(function (acc, x) { acc.push(h('dt', null, x[0]), h('dd', null, x[1])); return acc; }, []))];
-      if (r.status === 'refunded' && r.receiptPath) kids.push(h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(r.receiptPath); } }, fileImg(r.receiptPath, 'Refund receipt', 'pay-proof')));
+      if (r.status === 'refunded' && r.receiptPath) kids.push(h('div', { class: 'rf-receipt' },
+        h('div', null, h('strong', null, 'Refund receipt'), h('small', null, 'Proof that the money was sent to your GCash. Tap the picture to see it full size.')),
+        h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(r.receiptPath); } }, fileImg(r.receiptPath, 'Refund receipt', 'pay-proof'))));
       if (r.status === 'awaiting_user') {
         kids.push(h('p', { class: 'note' }, 'You can get back ' + peso(r.refundable) + ' of ' + peso(r.paid) + '. Nothing happens until you choose: request it by GCash, or keep it as refund balance.'));
         if (!acct) kids.push(h('p', { class: 'pay-reason' }, 'To request a GCash refund, add your GCash number, account name and QR code first (Edit GCash Details above).'));
