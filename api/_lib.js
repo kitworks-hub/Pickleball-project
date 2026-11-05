@@ -193,11 +193,12 @@ function verifyPayload(token) {
   return p && p.exp > Date.now() ? p : null;
 }
 const hmac = text => sig(String(text));   // a keyed hash (used to seal audit records)
+const signImpToken = (adminId, targetId) => signPayload({ id: targetId, imp: adminId }, 2 * 3600000);   // acts as the target for at most 2 hours
 const signToken = id => signPayload({ id }, TOKEN_DAYS * 86400000);
-function readToken(req) {
+function readToken(req, allowImp) {
   const h = String(req.headers.authorization || '');
   const p = verifyPayload(h.startsWith('Bearer ') ? h.slice(7) : '');
-  return p && p.id && !p.t ? p : null;   // a reset link (t: 'reset') is never a login
+  return p && p.id && !p.t && (allowImp || !p.imp) ? p : null;   // a reset link (t: 'reset') is never a login, and an impersonation token only works where whoIs() accepts it
 }
 
 /* ---------- email (password reset links) ----------
@@ -246,8 +247,15 @@ function permsFor(role, cfgDefs) {
   return Object.assign({}, base, (sd && sd.perms) || {});
 }
 async function whoIs(req) {
-  const tok = readToken(req);
+  const tok = readToken(req, true);
   if (!tok) throw httpErr(401, 'Please log in again.');
+  let impBy = null;
+  if (tok.imp) {
+    const [am, ar] = await Promise.all([getDoc('members', tok.imp), getDoc('roles', tok.imp)]);
+    if (!am || !ar || ar.role !== 'super_admin' || ar.suspended) throw httpErr(401, 'The impersonation ended. Please log in again.');
+    if (tok.imp === tok.id) throw httpErr(401, 'Please log in again.');
+    impBy = { id: tok.imp, name: am.name };
+  }
   const [member, roleDoc, cfg] = await Promise.all([getDoc('members', tok.id), getDoc('roles', tok.id), getDoc('config', 'roles')]);
   if (!member) throw httpErr(401, 'This account no longer exists.');
   const defs = (cfg && cfg.defs) || {};
@@ -255,8 +263,9 @@ async function whoIs(req) {
   if (role !== 'super_admin' && !DEFAULTS[role] && !defs[role]) role = 'player';
   const perms = permsFor(role, defs);
   const suspended = !!(roleDoc && roleDoc.suspended);
+  if (impBy && role === 'super_admin') throw httpErr(403, 'A Super Admin account cannot be impersonated.');
   return {
-    uid: tok.id, member, role, defs, suspended,
+    uid: tok.id, member, role, defs, suspended, impBy,
     isSuper: role === 'super_admin',
     canLinkBalances: !suspended && (role === 'super_admin' || role === 'admin'),   // not a role-table permission: only Super Admin and Admin
     can: k => !suspended && perms[k] === true
@@ -265,14 +274,20 @@ async function whoIs(req) {
 
 /* ---------- audit trail: append-only, written only by the server, readable only by the Super Admin through /api/pay ---------- */
 const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
-const auditSig = d => hmac('audit|' + canon([d.at, d.action, d.actor, d.subject, d.summary, d.refs, d.before, d.after, d.amount]));   // changing a stored record breaks this seal
+const auditSig = d => { const parts = [d.at, d.action, d.actor, d.subject, d.summary, d.refs, d.before, d.after, d.amount]; if (d.imp) parts.push(d.imp); return hmac('audit|' + canon(parts)); };   // changing a stored record breaks this seal
 // actor: a whoIs() result, or { id, name, role }. extra: { subject: {id,name}, refs, before, after, amount }. Never throws: a logging problem must not break the action.
 async function audit(actor, action, summary, extra) {
   try {
-    const a = actor && actor.member ? { id: actor.uid, name: actor.member.name, role: actor.role } : (actor || { id: 'system', name: 'System', role: 'system' });
-    const x = extra || {};
+    let a = actor && actor.member ? { id: actor.uid, name: actor.member.name, role: actor.role } : (actor || { id: 'system', name: 'System', role: 'system' });
+    let imp = null; const x = extra || {};
+    if (actor && actor.impBy) {   // acting through impersonation: the actor is the Super Admin, and who they were acting as is recorded alongside
+      imp = { id: String(a.id), name: String(a.name || '') };
+      a = { id: actor.impBy.id, name: actor.impBy.name, role: 'super_admin' };
+      if (String(action).indexOf('impersonation.') !== 0) summary = String(summary) + ' [done by Super Admin ' + actor.impBy.name + ' while impersonating ' + imp.name + ']';
+    }
     const doc = { at: Date.now(), area: String(action).split('.')[0], action, summary: String(summary).slice(0, 300), actor: { id: String(a.id), name: String(a.name || ''), role: String(a.role || '') },
       subject: x.subject ? { id: String(x.subject.id), name: String(x.subject.name || '') } : null, refs: x.refs || {}, before: x.before === undefined ? null : x.before, after: x.after === undefined ? null : x.after, amount: x.amount == null ? null : Number(x.amount) };
+    if (imp) doc.imp = imp;
     doc.sig = auditSig(doc);
     await one(['HSETNX', K('audit'), String(doc.at).padStart(14, '0') + '_' + crypto.randomBytes(4).toString('hex'), JSON.stringify(doc)]);
   } catch (e) { console.error('audit failed:', e && e.message); }
@@ -303,6 +318,6 @@ function bookingEnded(b) {
 
 module.exports = {
   redis, one, K, COLS, parse, getDoc, bump, getRev, httpErr, putFile, getFile, delFile, SB_URL, configured, hmac, audit, auditSig,
-  emailId, normEmail, validEmail, makeCred, checkCred, signToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
+  emailId, normEmail, validEmail, makeCred, checkCred, signToken, signImpToken, readToken, signPayload, verifyPayload, mailReady, sendMail, IS_PROD,
   throttle, clearThrottle, clientIp, whoIs, permsFor, sessionEnded, bookingEnded, wallToUtc, FEATURE_KEYS, DEFAULTS
 };

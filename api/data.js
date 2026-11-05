@@ -107,8 +107,6 @@ const rules = {
     const role = String(next.role || 'player').slice(0, 40);
     if (!w.isSuper && (role === 'super_admin' || role === 'admin')) throw forbid('Only a super admin can make an admin.');
     const out = { role, by: w.uid, at: Date.now() };
-    const venues = Array.isArray(next.venues) ? next.venues : (cur && cur.venues);
-    if (Array.isArray(venues) && venues.length) out.venues = venues.map(v => String(v).slice(0, 60)).slice(0, 20);   // venues this person staffs: they are told about confirmed bookings there
     if (next.suspended) out.suspended = true;
     if (next.pwReset) out.pwReset = Number(next.pwReset) || Date.now();
     return out;
@@ -180,7 +178,6 @@ async function auditWrite(w, col, id, op, cur, out, wasSigns) {
       if (out.role !== was) await L.audit(w, 'role.change', 'Changed the role of ' + subj.name + ' from ' + was + ' to ' + out.role, { subject: subj, before: { role: was }, after: { role: out.role } });
       if (!!out.suspended !== !!(cur && cur.suspended)) await L.audit(w, out.suspended ? 'account.suspend' : 'account.resume', (out.suspended ? 'Paused access for ' : 'Restored access for ') + subj.name, { subject: subj });
       if (out.pwReset && out.pwReset !== (cur && cur.pwReset)) await L.audit(w, 'account.password_reset', 'Started a password reset for ' + subj.name, { subject: subj });
-      if (JSON.stringify(out.venues || []) !== JSON.stringify((cur && cur.venues) || [])) await L.audit(w, 'role.venues', 'Changed the venues of ' + subj.name, { subject: subj, before: { venues: (cur && cur.venues) || [] }, after: { venues: out.venues || [] } });
       return;
     }
     if (col === 'config') {

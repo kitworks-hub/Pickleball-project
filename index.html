@@ -313,9 +313,6 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .chip.rs-pending_verification, .chip.rs-requested, .chip.rs-approved { border-color: var(--warn); color: var(--warn); }
 .chip.rs-paid, .chip.rs-refunded { border-color: var(--ok); color: var(--ok); }
 .chip.rs-rejected, .chip.rs-denied { border-color: var(--danger); color: var(--danger); }
-.venue-pick { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.venue-pick .chip.opt { cursor: pointer; background: var(--card); color: var(--ink); }
-.venue-pick .chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .notice-ref { display: flex; flex-direction: column; gap: 2px; margin: 12px 0 4px; padding: 12px 14px; border: 2px solid var(--accent); border-radius: 8px; background: var(--paper); }
 .notice-ref span, .notice-ref small { color: var(--muted); font-size: var(--fs-s); }
 .notice-ref strong { font: 800 1.5rem/1.1 var(--mono); letter-spacing: 0.04em; color: var(--accent); overflow-wrap: anywhere; }
@@ -429,6 +426,12 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .topbar { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 640px) { .topbar .who { flex: 1 1 100%; justify-content: flex-end; } .topbar .rf-slot { display: contents; } }
 .rf-slot { display: contents; }
+.imp-bar { position: sticky; top: 0; z-index: 60; background: var(--ball); color: var(--on-ball); border-bottom: 2px solid rgba(0, 0, 0, 0.25); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.imp-in { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; padding-block: 6px; }
+.imp-txt { font-size: var(--fs-s); line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
+.imp-txt small { opacity: 0.8; }
+.imp-bar .btn { flex: none; background: var(--band); color: #fff; border-color: var(--band); font-weight: 700; }
+.chip.au-impersonation { background: color-mix(in srgb, var(--ball) 40%, transparent); }
 .nu-pw { display: flex; gap: 6px; align-items: center; }
 .nu-pw input { flex: 1 1 auto; min-width: 0; }
 .nu-pw .btn { flex: none; }
@@ -650,6 +653,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 </style>
 
 <header class="band">
+  <div id="imp-bar" class="imp-bar" hidden></div>
   <div class="wrap topbar" id="topbar" hidden>
     <div class="top-left">
     <div class="menu-wrap">
@@ -917,6 +921,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
 <div id="confirm" class="modal" hidden></div>
 <div id="confirmuser" class="modal" hidden></div>
 <div id="newuser" class="modal" hidden></div>
+<div id="impask" class="modal" hidden></div>
 <div id="editdlg" class="modal" hidden></div>
 <div id="bookcfg" class="modal" hidden></div>
 <div id="bklist" class="modal" hidden></div>
@@ -985,13 +990,19 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     me: null, email: '', token: '', canWrite: true, db: null,
     phase: 'loading', slow: false, err: '',
     loaded: { sessions: false, players: false, accounts: false, roles: false, cfg: false },
-    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, newUser: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
+    view: 'schedule', edit: null, menuOpen: false, hostOpen: false, calOpen: false, playersFor: null, moving: null, confirmRemove: null, confirmUser: null, checkout: null, cancelFlow: null, rfInfo: false, rfEdit: false, rfRepair: null, bl: null, au: null, newUser: null, imp: null, impAsk: null, ret: null, avDraft: null, balancelinks: {}, thanks: null, notice: null, payDlg: null, imgView: null, payments: {}, refunds: {}, notifs: {}, refundaccts: {}, balances: {}, ledger: {}, rfDraft: null, rfAct: null, payCfg: {}, venueEdit: null, payFilter: 'pending_verification', refundFilter: 'open', booking: { date: '', sel: {}, busy: false, done: null, error: '' }, mb: null, sessCfg: null, bkList: null, bookingMap: {}, bookingList: [], bookingCfg: {}, bookCfg: null, authMode: 'login', resetId: null, resetEmail: '', resetToken: ''
   };
   // state.me is the id of the logged-in MPC account (a hash of its email). state.token is the signed login token from /api/auth.
   var filters = { day: 'all', level: 'all', format: 'all', mine: false };
   var savedName = '';
   try { savedName = localStorage.getItem('kl-name') || ''; } catch (e) {}
   try { state.me = localStorage.getItem('kl-acct') || null; state.email = localStorage.getItem('kl-email') || ''; state.token = localStorage.getItem('kl-token') || ''; } catch (e) {}
+try {   // a Super Admin impersonating someone keeps their own login in kl-imp; kl-return is where to go when it ends
+  var savedImp = JSON.parse(localStorage.getItem('kl-imp') || 'null');
+  if (savedImp && savedImp.token && state.token && state.me && state.me === savedImp.targetId) state.imp = savedImp; else if (savedImp) localStorage.removeItem('kl-imp');
+  var savedRet = JSON.parse(localStorage.getItem('kl-return') || 'null');
+  if (savedRet) { state.ret = savedRet; localStorage.removeItem('kl-return'); }
+} catch (e) {}
   var flashTimer = null;
   var chain = Promise.resolve();
   var ownerSyncing = false;
@@ -1191,7 +1202,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
-  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
+  function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.impAsk || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
   function askRemoveSession(s) {
     state.confirmRemove = s.id;
     renderConfirm();
@@ -1688,13 +1699,6 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     if (hadFocus) { var no = $('#confirmuser .confirm-no'); if (no) no.focus(); }
   }
 
-  function toggleVenue(u, v) {
-    queue(function () {
-      var prev = state.roles[u] || { role: roleOf(u) }, list = (prev.venues || []).slice(), i = list.indexOf(v);
-      if (i >= 0) list.splice(i, 1); else list.push(v);
-      return state.db.doc('roles/' + u).set(Object.assign({}, prev, { venues: list, by: state.me, at: Date.now() }));
-    }, 'Could not change the venues.');
-  }
   function resetPassword(u) {
     var name = personName(u);
     queue(function () {
@@ -1770,7 +1774,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
             .then(function () { flash(r.suspended ? personName(u) + ' can use the site again.' : personName(u) + ' is paused.', 'ok'); });
         } }, r.suspended ? 'Restore access' : 'Pause access'));
         ctl.push(h('button', { class: 'btn small', type: 'button', onclick: function () { resetPassword(u); } }, 'Reset password'));
-        if (bookingVenues().length) ctl.push(h('button', { id: 'vn-' + u, class: 'btn small', type: 'button', 'aria-expanded': String(state.venueEdit === u), onclick: function () { state.venueEdit = state.venueEdit === u ? null : u; render(); } }, 'Venues' + ((r.venues || []).length ? ' (' + r.venues.length + ')' : '')));
+        if (isSuper() && u !== state.me && cur !== 'super_admin' && !isOwnerAccount(u)) ctl.push(h('button', { id: 'im-' + u, class: 'btn small', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askImpersonate(u); } }, 'Impersonate'));
         if (isSuper()) ctl.push(h('button', { id: 'ru-' + u, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { askRemoveUser(u); } }, 'Remove'));
       } else {
         ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
@@ -1784,17 +1788,11 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       var acct = state.accounts[u];
       if (Number(r.pwReset) > Number(acct.pwSetAt || 0)) facts.push('password reset pending');
       if (r.suspended) facts.push('access paused');
-      var picker = state.venueEdit === u && opts.length ? h('div', { class: 'venue-pick' },
-        h('span', { class: 'note' }, 'Venues ' + personName(u) + ' staffs. They are told when a booking there is confirmed:'),
-        bookingVenues().map(function (v) {
-          var on = (r.venues || []).indexOf(v) >= 0;
-          return h('button', { class: 'chip opt' + (on ? ' on' : ''), type: 'button', 'aria-pressed': String(on), onclick: function () { toggleVenue(u, v); } }, (on ? '✓ ' : '') + v);
-        })) : null;
       return h('div', { class: 'row' },
         h('div', { class: 'meta' },
           h('strong', { class: 'with-av' }, avatarEl(u, personName(u), 'xs'), personName(u) + (u === state.me ? ' (you)' : '')),
-          h('span', null, facts.join(' · ') + ((r.venues || []).length ? ' · ' + r.venues.join(', ') : ''))),
-        h('div', { class: 'ctl' }, ctl), picker);
+          h('span', null, facts.join(' · '))),
+        h('div', { class: 'ctl' }, ctl));
     });
     box.append(h('div', { class: 'rows' }, rows));
   }
@@ -2959,7 +2957,9 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   function renderProfile() {
     var a = myAccount() || {};
     $('#pf-name').value = myName();
-    $('#pf-email').value = state.email;
+    $('#pf-email').value = state.imp ? '' : state.email;
+    $('#pf-email').placeholder = state.imp ? 'Hidden while impersonating' : 'Log out and log in again to show your email';
+    var pw = $('.pf-pw'); if (pw) pw.hidden = !!state.imp;   // credentials stay with their owner
     var sel = $('#pf-rating'), levels = opts().levels, lsig = levels.join('\n');
     if (sel.getAttribute('data-sig') !== lsig) {   // the choices are the levels from Session Configurations
       sel.replaceChildren(h('option', { value: '' }, 'Not set'));
@@ -3084,7 +3084,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     var words = { on: 'On for this device. You will get a notification for payments, bookings, reschedules and refunds, even when the site is closed.', off: 'Off for this device. Turn it on to get notifications on your phone, even when the site is closed.' }[sup];
     fill(box,
       h('h3', null, 'Notifications'),
-      sup === 'on' || sup === 'off' ? h('div', { class: 'push-box' }, h('h4', null, 'Phone notifications'), h('p', { class: 'note' }, words), h('div', null, h('button', { id: 'pf-push', class: 'btn' + (sup === 'off' ? ' primary' : ''), type: 'button', disabled: !!busy,
+      (sup === 'on' || sup === 'off') && !state.imp ? h('div', { class: 'push-box' }, h('h4', null, 'Phone notifications'), h('p', { class: 'note' }, words), h('div', null, h('button', { id: 'pf-push', class: 'btn' + (sup === 'off' ? ' primary' : ''), type: 'button', disabled: !!busy,
         onclick: function () {
           state.pushBusy = true; nfSig = ''; renderNotify();
           (sup === 'on' ? disablePush() : enablePush()).then(function () { flash(sup === 'on' ? 'Phone notifications are off for this device.' : 'Phone notifications are on for this device.', 'ok'); })
@@ -3351,7 +3351,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
 
   /* ---------- Audit Trail (Super Admin only): everything important that happened, searchable ---------- */
-  var AU_AREAS = { booking: 'Bookings', payment: 'Payments', refund: 'Refunds', balance: 'Balances', account: 'Accounts', role: 'Roles', permissions: 'Permissions', session: 'Sessions', settings: 'Settings' };
+  var AU_AREAS = { booking: 'Bookings', payment: 'Payments', refund: 'Refunds', balance: 'Balances', account: 'Accounts', role: 'Roles', permissions: 'Permissions', session: 'Sessions', settings: 'Settings', impersonation: 'Impersonation' };
   function auNow() {
     if (!state.au) state.au = { q: '', area: '', actor: '', from: '', to: '', items: [], total: 0, all: 0, hasMore: false, areas: [], tampered: 0, loading: false, error: '', open: {}, loaded: false, bc: null, bcBusy: false, bcConfirm: '', bcReason: '', bcError: '' };
     return state.au;
@@ -3382,6 +3382,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       h('p', { class: 'au-sum' }, x.summary),
       h('div', { class: 'au-meta' },
         h('span', null, 'By ', h('strong', null, x.actor.name), ' (' + (roleLabel(x.actor.role) || x.actor.role) + ')'),
+        x.imp ? h('span', { class: 'au-warn' }, 'Impersonating ', h('strong', null, x.imp.name || x.imp.id)) : null,
         x.subject ? h('span', null, 'Affects ', h('strong', null, x.subject.name || x.subject.id)) : null,
         x.amount != null ? h('span', null, 'Amount ', h('strong', null, (x.amount < 0 ? '−' : '') + peso(Math.abs(x.amount)))) : null,
         !x.verified ? h('span', { class: 'au-warn' }, 'This record was altered after it was written') : null),
@@ -3529,6 +3530,73 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     box.hidden = false;
     lockScroll();
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
+  }
+
+  /* ---------- Impersonate User (Super Admin only) ----------
+     The Super Admin's own login is kept in localStorage (kl-imp) while the page runs on a short-lived impersonation token.
+     Exit Impersonation puts the original login back and returns to the page they were on. The server decides what the token may do. */
+  var impSig = '';
+  function askImpersonate(uid) { if (!isSuper() || state.imp) return; state.impAsk = { uid: uid, busy: false, error: '' }; impSig = ''; renderImpAsk(); var b = $('#imp-yes'); if (b) b.focus(); }
+  function closeImpAsk() { var a = state.impAsk; if (a && a.busy) return; state.impAsk = null; impSig = ''; renderImpAsk(); }
+  function startImpersonation() {
+    var a = state.impAsk; if (!a || a.busy) return;
+    a.busy = true; a.error = ''; impSig = ''; renderImpAsk();
+    var view = state.view, y = window.pageYOffset || 0, q = dashQuery, adminName = myName();
+    payCall({ action: 'impersonate-start', uid: a.uid }).then(function (res) {
+      var saved = { token: state.token, acct: state.me, email: state.email, adminName: adminName, target: res.name, targetRole: res.role, targetId: res.id, view: view, y: y, q: q, at: Date.now() };
+      try {
+        localStorage.setItem('kl-imp', JSON.stringify(saved));
+        localStorage.setItem('kl-token', res.token); localStorage.setItem('kl-acct', res.id); localStorage.setItem('kl-email', 'impersonating@mpc.invalid');
+      } catch (e) { a.busy = false; a.error = 'This browser could not save the session. Allow site data and try again.'; impSig = ''; renderImpAsk(); return; }
+      location.reload();
+    }).catch(function (e) { a.busy = false; a.error = e.message; impSig = ''; renderImpAsk(); });
+  }
+  function renderImpAsk() {
+    var box = $('#impask'), a = state.impAsk;
+    if (!a || !isSuper() || gateState() !== 'ok') { state.impAsk = null; impSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    var sig = [a.uid, a.busy, a.error].join('|');
+    if (sig === impSig && !box.hidden) return;
+    impSig = sig;
+    var name = personName(a.uid), role = roleLabel(roleOf(a.uid));
+    box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: closeImpAsk }),
+      dlgStatus({ id: 'ia', tone: 'warn', icon: '!', title: 'Impersonate ' + name + '?',
+        lead: 'You will use the site as ' + name + ' (' + role + ') without logging out. Your own login is kept, and "Exit Impersonation" brings you back to this page.',
+        extra: a.error ? h('p', { class: 'form-error', role: 'alert' }, a.error) : null,
+        note: 'Everything you do is recorded in the Audit Trail with both your name and theirs. Changing their password, payout details or devices is not possible while impersonating.',
+        actions: [{ id: 'imp-no', label: 'Cancel', onclick: closeImpAsk, disabled: a.busy }, { id: 'imp-yes', label: a.busy ? 'Starting…' : 'Impersonate', primary: true, disabled: a.busy, onclick: startImpersonation }] }));
+    box.hidden = false;
+    lockScroll();
+  }
+  // the bar that stays at the top for the whole impersonation
+  function renderImpBar() {
+    var box = $('#imp-bar'); if (!box) return;
+    var i = state.imp;
+    if (!i || gateState() !== 'ok') { box.hidden = true; box.replaceChildren(); document.body.classList.remove('imping'); return; }
+    document.body.classList.add('imping');
+    if (!box.hidden && box.getAttribute('data-n') === i.target) return;
+    box.setAttribute('data-n', i.target);
+    box.replaceChildren(h('div', { class: 'wrap imp-in' },
+      h('span', { class: 'imp-txt', role: 'status' }, 'Impersonating ', h('strong', null, i.target), ' (' + roleLabel(i.targetRole) + ')', h('small', null, ' · signed in as ' + i.adminName)),
+      h('button', { id: 'imp-exit', class: 'btn small', type: 'button', onclick: exitImpersonation }, 'Exit Impersonation')));
+    box.hidden = false;
+  }
+  var impExiting = false;
+  function restoreAdminSession() {
+    var i = state.imp; if (!i) return false;
+    try {
+      localStorage.setItem('kl-token', i.token); localStorage.setItem('kl-acct', i.acct); localStorage.setItem('kl-email', i.email);
+      localStorage.setItem('kl-return', JSON.stringify({ view: i.view, y: i.y, q: i.q }));
+      localStorage.removeItem('kl-imp'); localStorage.removeItem('kl-push'); localStorage.removeItem('kl-push-token');
+    } catch (e) { return false; }
+    return true;
+  }
+  function exitImpersonation() {
+    if (!state.imp || impExiting) return;
+    impExiting = true;
+    var btn = $('#imp-exit'); if (btn) { btn.disabled = true; btn.textContent = 'Exiting…'; }
+    // tell the server first (it records the end in the Audit Trail), then put the Super Admin's own login back
+    Promise.race([payCall({ action: 'impersonate-end' }), new Promise(function (r) { setTimeout(r, 3000); })]).catch(function () {})
+      .then(function () { if (restoreAdminSession()) location.reload(); else forceLogout('Please log in again.'); });
   }
 
   /* ---------- Refund balance linking (Super Admin and Admin only) ---------- */
@@ -3993,6 +4061,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
   // Leave the account and start fresh, so no data from the last login stays on the page.
   function forceLogout(msg) {
+    if (state.imp && restoreAdminSession()) { try { sessionStorage.setItem('kl-flash', 'The impersonation ended.'); } catch (e) {} location.reload(); return; }   // an ended impersonation puts the Super Admin back, it does not log them out
     try { sessionStorage.setItem('kl-flash', msg || ''); } catch (e) {}
     endSession();
     location.reload();
@@ -4187,6 +4256,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
   }
   function closeHost() { state.hostOpen = false; render(); }
   function logOut() {
+    if (state.imp) { exitImpersonation(); return; }
     // a shared phone must not keep sending this person's notifications to the next person who logs in
     var token = '';
     try { token = localStorage.getItem('kl-push-token') || ''; localStorage.removeItem('kl-push'); localStorage.removeItem('kl-push-token'); } catch (e) {}
@@ -4308,6 +4378,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     $('#topbar').hidden = (g !== 'ok');
     if (g !== 'ok') setMenu(false);
     if (g === 'ok') {
+      if (state.ret && !state.imp) {   // back from an impersonation: the exact page and scroll position the Super Admin left
+        var rt = state.ret; state.ret = null; state.view = rt.view || 'schedule'; dashQuery = rt.q || '';
+        setTimeout(function () { window.scrollTo(0, rt.y || 0); }, 80); setTimeout(function () { window.scrollTo(0, rt.y || 0); }, 500);
+      }
       renderBar();
       fillHostForm();
       fillFilters();
@@ -4340,6 +4414,8 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
     renderRfInfo();
     renderRfEdit();
     renderNewUser();
+    renderImpAsk();
+    renderImpBar();
     renderThanks();
     renderNotice();
     renderPayDlg();
@@ -4376,7 +4452,7 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
       if (state.calOpen && e.composedPath().indexOf($('#days')) < 0) { state.calOpen = false; render(); }
     });
     document.addEventListener('keydown', function (e) {
-      var topDlg = state.imgView ? ['#imgview', closeImg] : state.newUser ? ['#newuser', closeNewUser] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
+      var topDlg = state.imgView ? ['#imgview', closeImg] : state.impAsk ? ['#impask', closeImpAsk] : state.newUser ? ['#newuser', closeNewUser] : state.rfEdit ? ['#rfedit', closeRfEdit] : state.cancelFlow ? ['#cancelflow', closeCancelFlow] : state.rfInfo ? ['#rfinfo', closeRfInfo] : state.notice ? ['#notice', closeNotice] : state.thanks ? ['#thanks', closeThanks] : state.checkout ? ['#checkout', closeCheckout] : state.payDlg ? ['#paycfg', closePayDlg] : null;
       if (topDlg) {
         if (e.key === 'Escape') { topDlg[1](); return; }
         if (e.key === 'Tab') {   // keep keyboard focus inside the dialog

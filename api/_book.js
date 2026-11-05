@@ -113,12 +113,6 @@ async function usersWith(perm) {
     return Object.assign({}, base, (sd && sd.perms) || {})[perm] === true;
   });
 }
-// Staff assigned to a venue (set on the Users page as roles/{id}.venues).
-async function venueStaff(venue) {
-  if (!venue) return [];
-  const roles = await allMap('roles'), v = String(venue).toLowerCase();
-  return Object.keys(roles).filter(uid => !roles[uid].suspended && Array.isArray(roles[uid].venues) && roles[uid].venues.some(x => String(x).toLowerCase() === v));
-}
 
 /* ---------- notifications: created only by server events, each exactly once ---------- */
 const safeId = s => String(s).replace(/[^A-Za-z0-9_.\-]/g, '_').slice(0, 190);
@@ -233,5 +227,5 @@ function scheduleText(slots) {
 module.exports = {
   HOLD_MS, RETRY_HOLD_MS, REFUND_RULES, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
   slotId, courtKey, startMs, occupies, allMap, sameVenue, sessionBlocking, bookingBlocking,
-  DEFAULT_LEVELS, levelsOf, isAwaiting, acctOk, refundBlockers, usersWith, venueStaff, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
+  DEFAULT_LEVELS, levelsOf, isAwaiting, acctOk, refundBlockers, usersWith, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
 };

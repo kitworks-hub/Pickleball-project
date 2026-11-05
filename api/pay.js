@@ -65,8 +65,6 @@ async function creditRefundToBalance(id, r, uid, actor) {
 async function tellBookingConfirmed(uid, name, payId, ref, slots, total, how) {
   const first = slots[0], when = B.scheduleText(slots), data = { ref, venue: first.venue || '', court: first.court, date: first.date, schedule: when, slots: slots.map(s => ({ venue: s.venue || '', court: s.court, date: s.date, hour: s.hour })), amount: total, paidWith: 'Refund Balance', status: 'Confirmed' };
   await B.notify([uid], { event: 'payment-approved', refId: payId, kind: 'payment-approved', data, title: 'Booking confirmed ✓', body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + ref + '. Show it to the venue staff before using the court.' });
-  const staff = (await B.venueStaff(first.venue)).filter(u => u !== uid);
-  await B.notify(staff, { event: 'booking-confirmed', refId: payId, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: name + ' · ' + ref + ' · ' + when + ' · Payment: ' + how + ' ' + B.money(total) + '.' });
 }
 
 function parseImage(dataUrl) {
@@ -208,7 +206,27 @@ async function auditPost(w, b, pre, out) {
   } catch (e) { console.error('audit failed:', e && e.message); }
 }
 
+// While impersonating, these stay with the real owner of the account (credentials, payout details, devices) or are Super Admin only.
+const NOT_WHILE_IMPERSONATING = { 'refund-account': 1, push: 1, 'impersonate-start': 1, 'user-create': 1, 'balance-link': 1, 'balance-search': 1, 'balance-check': 1, 'balance-fix': 1, 'audit-list': 1, settings: 1 };
 const actions = {
+  /* ----- Super Admin: impersonate (use the site as another person). The token is short-lived, names the Super Admin, and is re-checked on every request ----- */
+  async 'impersonate-start'(w, b) {
+    need(w.isSuper && !w.suspended && !w.impBy, 403, 'Only the Super Admin can impersonate a user.');
+    const uid = String(b.uid || '');
+    need(uid && uid !== w.uid, 400, 'Choose another person to impersonate.');
+    const [m, r] = await Promise.all([L.getDoc('members', uid), L.getDoc('roles', uid)]);
+    need(m, 404, 'That account was not found.');
+    need(!(r && (r.role === 'super_admin' || r.owner)), 403, 'A Super Admin account cannot be impersonated.');
+    await L.throttle('impersonate:' + w.uid, 30, 3600);
+    await L.audit(w, 'impersonation.start', w.member.name + ' (Super Admin) started impersonating ' + m.name, { subject: { id: uid, name: m.name }, after: { role: (r && r.role) || 'player', expiresInHours: 2 } });
+    return { ok: true, token: L.signImpToken(w.uid, uid), id: uid, name: m.name, role: (r && r.role) || 'player' };
+  },
+  async 'impersonate-end'(w) {
+    need(w.impBy, 400, 'You are not impersonating anyone.');
+    await L.audit(w, 'impersonation.end', w.impBy.name + ' (Super Admin) stopped impersonating ' + w.member.name, { subject: { id: w.uid, name: w.member.name } });
+    return { ok: true };
+  },
+
   /* ----- Super Admin: create an account for someone (the same account a sign-up would make, with a role chosen here) ----- */
   async 'user-create'(w, b) {
     need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can create users.');
@@ -431,8 +449,6 @@ const actions = {
       title: pay.kind === 'reschedule' ? 'Reschedule confirmed ✓' : 'Payment approved ✓',
       body: 'Please go to ' + (first.venue || 'the venue') + ': ' + when + '. Your reference number is ' + pay.bookingRef + '. Show it to the venue staff before using the court.'
     });
-    const staff = (await B.venueStaff(first.venue)).filter(u => u !== pay.by);
-    await B.notify(staff, { event: 'booking-confirmed', refId: id, kind: 'booking-confirmed', data, title: 'New confirmed booking', body: pay.byName + ' · ' + pay.bookingRef + ' · ' + when + ' · Payment: Paid ' + B.money(pay.total || pay.amount) + '.' });
     return { ok: true };
   },
 
@@ -850,12 +866,14 @@ module.exports = async (req, res) => {
     }
     need(req.method === 'POST', 405, 'Use GET or POST.');
     const w = await L.whoIs(req), b = isObj(req.body) ? req.body : {};
-    need(!w.suspended, 403, 'Your access is paused.');
+    need(!w.suspended || b.action === 'impersonate-end', 403, 'Your access is paused.');
     const fn = actions[b.action];
     need(fn, 400, 'Unknown action.');
+    need(!(w.impBy && NOT_WHILE_IMPERSONATING[b.action]), 403, 'That is not available while you are impersonating someone.');
+    if (w.impBy && b.action === 'markread') return res.status(200).json({ ok: true, skipped: true });   // looking around must not mark their notifications as read
     await L.throttle('pay:' + w.uid, 120, 600);
     const pre = await auditPre(w, b), out = await fn(w, b);
-    await auditPost(w, b, pre, out);
+    if (b.action.indexOf('impersonate-') !== 0) await auditPost(w, b, pre, out);
     res.status(200).json(out);
   } catch (e) {
     const status = e.status || 500;
