@@ -325,6 +325,22 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .nf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .nf-head h4 { margin: 0; font: 700 var(--fs-m)/1.2 var(--display); text-transform: uppercase; }
 .nf-list.nf-scroll { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+.upl { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px dashed var(--rule); border-radius: 10px; background: var(--paper); min-width: 0; }
+.upl-prev { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; display: grid; place-items: center; background: #fff; border: 1px solid var(--rule); }
+.upl-prev img, .upl-img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; max-height: none; margin: 0; border: 0; }
+.upl-none { font-size: 1.3rem; opacity: 0.5; }
+.upl-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.upl-name { font-weight: 600; font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upl-meta { color: var(--muted); font-size: 0.72rem; overflow-wrap: anywhere; }
+.upl-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.re-hint { color: var(--muted); display: block; margin-bottom: 6px; }
+.nf-list.bh-list { max-height: 260px; }
+.cn-list { list-style: none; margin: 8px 0 0; padding: 0 6px 0 0; max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; text-align: left; display: grid; gap: 6px; }
+.cn-list li { padding: 8px 10px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; font-size: var(--fs-s); display: grid; gap: 2px; }
+.cn-top { display: flex; justify-content: space-between; gap: 8px; }
+.cn-amt { font-weight: 700; }
+.cn-line { color: var(--muted); overflow-wrap: anywhere; }
+.cn-status { font-weight: 600; color: var(--accent); }
 .nf-list.nf-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 .nf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .nf-list li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; }
@@ -465,6 +481,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .au-ok { margin: 0; color: var(--ok); font-weight: 600; font-size: var(--fs-s); }
 .au-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 12px; align-items: end; }
 .au-filters .field input, .au-filters .field select { width: 100%; }
+.au-clear { display: flex; gap: 6px; flex-wrap: wrap; }
 .au-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .au-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 14px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 10px; }
 .au-item.bad { border-color: var(--warn); }
@@ -515,6 +532,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .pic.md { width: 34px; height: 34px; font-size: 1rem; }
 .pic.xl { width: 76px; height: 76px; font-size: 1.9rem; }
 .who .pic { background: var(--ball); color: var(--on-ball); }
+.pl-who { display: grid; min-width: 0; line-height: 1.2; }
+.pl-name { overflow-wrap: anywhere; }
+.pl-level { color: var(--muted); font-size: 0.72rem; font-weight: 500; }
+.pl-level.unk { font-style: italic; }
 .with-av { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .av-box { display: flex; align-items: center; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
 .av-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -634,6 +655,9 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .panel h3 { font: 700 var(--fs-l)/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
 .profile { max-width: none; }
 .pf-cols { columns: 340px 2; column-gap: 20px; }
+.pf-cols > .pf-stack { break-inside: avoid; margin: 0 0 20px; }
+.pf-stack > .panel { margin: 0 0 20px; width: 100%; max-width: none; box-sizing: border-box; }
+.pf-stack > .panel:last-child { margin-bottom: 0; }
 .pf-cols > .panel { break-inside: avoid; margin: 0 0 20px; width: 100%; max-width: none; box-sizing: border-box; }
 .pw-form { display: flex; flex-direction: column; gap: 14px; }
 .view-stack h2 { font: 700 var(--fs-xl)/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
@@ -874,7 +898,10 @@ footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); tex
         </form>
         </div>
       </div>
-      <div id="pf-gcash" class="panel"></div>
+      <div class="pf-stack">
+        <div id="pf-gcash" class="panel"></div>
+        <div id="pf-balhist" class="panel"></div>
+      </div>
       <div id="pf-refund" class="panel"></div>
       <div id="pf-notify" class="panel"></div>
       </div>
@@ -1457,6 +1484,11 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     renderModal();
     var b = sid && document.getElementById('players-' + sid); if (b) b.focus();
   }
+  // A player's level comes from their Profile and counts only while Session Configurations still offers it; otherwise "Unknown Level".
+  function playerLevel(uid) {
+    var a = state.accounts[uid], lv = a && a.level;
+    return lv && opts().levels.indexOf(lv) >= 0 ? lv : 'Unknown Level';
+  }
   function renderModal() {
     var box = $('#modal'), sid = state.playersFor;
     var s = sid ? state.sessions.filter(function (x) { return x.id === sid; })[0] : null;
@@ -1469,14 +1501,14 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var list = roster(sid), cap = Math.max(2, Number(s.capacity) || 12);
     var going = list.slice(0, cap), wait = list.slice(cap);
     var canManage = can('moveplayers') && state.canWrite;
-    var sig = [sid, s.title, s.start, s.date, cap, going.map(function (r) { return r.uid + ':' + r.name; }).join(','), wait.map(function (r) { return r.uid + ':' + r.name; }).join(','), state.me, canManage, pendingRemovePlayer, JSON.stringify(state.moving)].join('|');
+    var sig = [sid, s.title, s.start, s.date, cap, going.map(function (r) { return r.uid + ':' + r.name + ':' + playerLevel(r.uid); }).join(','), wait.map(function (r) { return r.uid + ':' + r.name + ':' + playerLevel(r.uid); }).join(','), state.me, canManage, pendingRemovePlayer, JSON.stringify(state.moving)].join('|');
     if (sig === modalSig && !box.hidden) return;
     modalSig = sig;
     var hadFocus = box.contains(document.activeElement), focusKey = hadFocus ? document.activeElement.id : '';
     var t = times(s);
     function li(r) {
       var mine = r.uid === state.me;
-      var row = h('div', { class: 'p-row' }, h('span', { class: 'with-av' }, avatarEl(r.uid, r.name, 'xs'), mine ? 'You' : r.name));
+      var row = h('div', { class: 'p-row' }, h('span', { class: 'with-av' }, avatarEl(r.uid, r.name, 'xs'), h('span', { class: 'pl-who' }, h('span', { class: 'pl-name' }, mine ? 'You' : r.name), h('small', { class: 'pl-level' + (playerLevel(r.uid) === 'Unknown Level' ? ' unk' : '') }, playerLevel(r.uid)))));
       if (canManage) {
         var confirming = pendingRemovePlayer === sid + '|' + r.uid, moving = !!(state.moving && state.moving.uid === r.uid);
         row.append(h('span', { class: 'p-actions' },
@@ -1982,6 +2014,22 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       img.src = url;
     });
   }
+  // One layout for every payment-related image upload: a small preview, the file name and size, and Upload / Change and Remove buttons.
+  function dataSize(u) { var n = Math.round(String(u || '').length * 0.75); return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  // o: id, label, preview (element), name, meta, empty, disabled, onFile(file), onRemove (optional), removeLabel
+  function uploadField(o) {
+    var input = h('input', { id: o.id, type: 'file', accept: 'image/*', hidden: true, disabled: o.disabled, 'aria-label': o.label, onchange: function (e) { var fl = e.target.files && e.target.files[0]; e.target.value = ''; if (fl) o.onFile(fl); } });
+    var has = !!(o.preview || o.name);
+    return h('div', { class: 'upl' },
+      h('div', { class: 'upl-prev' }, o.preview || h('span', { class: 'upl-none', 'aria-hidden': 'true' }, '🖼')),
+      h('div', { class: 'upl-main' },
+        h('div', { class: 'upl-name', title: o.name || '' }, o.name || o.empty || 'No file selected'),
+        o.meta ? h('small', { class: 'upl-meta' }, o.meta) : null,
+        h('div', { class: 'upl-btns' },
+          h('button', { id: o.id + '-btn', class: 'btn small', type: 'button', disabled: o.disabled, onclick: function () { input.click(); } }, has ? 'Change' : 'Upload'),
+          has && o.onRemove ? h('button', { id: o.id + '-rm', class: 'btn small', type: 'button', disabled: o.disabled, onclick: o.onRemove }, o.removeLabel || 'Remove') : null)),
+      input);
+  }
   /* refund rules (fixed): cancelled before the booked start time = full refund (GCash or Refundable Balance); after it = the amount goes to the Refundable Balance */
   function hourEndedAt(x, now) { return parse(x.date, pad(x.hour) + ':00').getTime() + 3600000 <= now; }
   function hourStartedAt(x, now) { return parse(x.date, pad(x.hour) + ':00').getTime() <= now; }
@@ -2135,11 +2183,10 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
           h('label', { class: 'field', for: 'co-ref' }, h('span', null, 'GCash reference number ', h('em', { class: 'req' }, 'required')),
             h('input', { id: 'co-ref', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: 'e.g. 1234 567 890123', value: c.gcashRef, required: true, disabled: c.busy || !ready, oninput: function (e) { c.gcashRef = e.target.value; } })),
           h('div', { class: 'field' }, h('span', null, 'Receipt screenshot ', h('em', { class: 'req' }, 'required')),
-            h('input', { id: 'co-file', type: 'file', accept: 'image/*', required: true, disabled: c.busy || !ready, 'aria-label': 'Receipt screenshot (required)', onchange: function (e) {
-              var f = e.target.files && e.target.files[0]; if (!f) return;
-              resizeImage(f).then(function (d) { c.proof = d; c.proofName = f.name; c.error = ''; renderCheckout(); }).catch(function (er) { c.error = er.message; renderCheckout(); });
-            } }),
-            c.proof ? h('img', { class: 'co-proof', src: c.proof, alt: 'Your receipt screenshot' }) : null),
+            uploadField({ id: 'co-file', label: 'Receipt screenshot (required)', disabled: c.busy || !ready, empty: 'No receipt selected yet', name: c.proof ? (c.proofName || 'Receipt screenshot') : '', meta: c.proof ? dataSize(c.proof) : '',
+              preview: c.proof ? h('img', { class: 'upl-img', src: c.proof, alt: 'Your receipt screenshot' }) : null,
+              onFile: function (f) { resizeImage(f).then(function (d) { c.proof = d; c.proofName = f.name; c.error = ''; renderCheckout(); }).catch(function (er) { c.error = er.message; renderCheckout(); }); },
+              onRemove: function () { c.proof = ''; c.proofName = ''; renderCheckout(); } })),
           h('p', { class: 'note' }, 'Both are needed. Staff check your payment before the booking is confirmed; screenshots are never approved automatically.')) : null,
         c.error ? h('p', { class: 'form-error', role: 'alert' }, c.error) : null,
         h('div', { class: 'confirm-actions' },
@@ -2324,6 +2371,12 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     if (cf && cf.busy) return;
     state.cancelFlow = null; cfSig = '';
     renderCancelFlow();
+    var q = state.choiceQueue || [];
+    state.choiceQueue = [];
+    if (cf && cf.step === 'done' && q.length) {   // after one refund is settled from the combined pop-up, the next one opens
+      var nx = q.filter(function (id) { var r = state.refunds[id]; return r && r.status === 'awaiting_user'; });
+      if (nx.length) { state.choiceQueue = nx.slice(1); openRefundChoice(nx[0]); }
+    }
   }
   function goProfile() { state.cancelFlow = null; cfSig = ''; state.view = 'profile'; state.menuOpen = false; render(); renderCancelFlow(); var el = $('#pf-refund'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70); }
   function confirmCancel() {
@@ -2988,7 +3041,30 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     return Object.keys(state.notifs).map(function (id) { return Object.assign({ id: id }, state.notifs[id]); }).sort(function (a, c) { return c.at - a.at; });
   }
   function markRead(ids) { if (ids.length) payCall({ action: 'markread', ids: ids }).catch(function () {}); }
-  function goChooseRefund() { var n = state.notice, id = n && n.data && n.data.refundId; closeNotice(); openRefundChoice(id); }
+  // Cancellations made in one request share data.batch: they open ONE pop-up listing every booking, not one pop-up each.
+  function sameBatch(n) {
+    var b = n.data && n.data.batch;
+    if (n.kind !== 'booking-cancelled' || !b) return [];
+    return notices().filter(function (x) { return x.kind === 'booking-cancelled' && x.data && x.data.batch === b && !x.read; }).reverse();
+  }
+  function groupIds(n) { return (n.group || [n]).map(function (x) { return x.id; }); }
+  function goChooseRefund() {
+    var n = state.notice, ids = n ? (n.group || [n]).map(function (x) { return x.data && x.data.refundId; }).filter(Boolean) : [];
+    closeNotice();
+    state.choiceQueue = ids.slice(1);
+    if (ids.length) openRefundChoice(ids[0]);
+  }
+  function cancelGroupBody(o, list) {
+    var total = list.reduce(function (s, x) { return s + (Number(x.data && x.data.amount) || 0); }, 0);
+    o.rows = [['Bookings', String(list.length)], ['Total refund', peso(total)]];
+    o.extra = h('ul', { class: 'cn-list nf-scroll', tabindex: '0', 'aria-label': 'Cancelled bookings' }, list.map(function (x) {
+      var d = x.data || {};
+      return h('li', null,
+        h('div', { class: 'cn-top' }, h('strong', null, d.ref || 'Booking'), h('span', { class: 'cn-amt' }, d.amount != null ? peso(d.amount) : '')),
+        h('div', { class: 'cn-line' }, d.schedule || [d.venue, d.court].filter(Boolean).join(' · ')),
+        d.status ? h('div', { class: 'cn-status' }, d.status) : null);
+    }));
+  }
   function renderNotice() {
     var box = $('#notice');
     if (gateState() !== 'ok') { state.notice = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
@@ -2998,12 +3074,21 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       quiet.forEach(function (n) { seenNotice[n.id] = 1; flash(n.title + ': ' + n.body, 'ok'); });
       markRead(quiet.map(function (n) { return n.id; }));
       var next = unread.filter(function (n) { return STAFF_KINDS.indexOf(n.kind) < 0; })[0];
-      if (next) { seenNotice[next.id] = 1; state.notice = next; }
+      if (next) {
+        var grp = sameBatch(next).filter(function (x) { return x.id === next.id || !seenNotice[x.id]; });
+        (grp.length ? grp : [next]).forEach(function (x) { seenNotice[x.id] = 1; });
+        state.notice = grp.length > 1 ? Object.assign({}, next, { group: grp }) : next;
+      }
+    } else if (state.notice && state.notice.data && state.notice.data.batch) {
+      // a cancellation from the same request that reached the page a moment later joins the pop-up that is already open
+      var late = sameBatch(state.notice).filter(function (x) { return !seenNotice[x.id]; });
+      if (late.length) { late.forEach(function (x) { seenNotice[x.id] = 1; }); state.notice = Object.assign({}, state.notice, { group: (state.notice.group || [state.notice]).concat(late) }); }
     }
     var n = state.notice;
     if (!n) { box.hidden = true; box.replaceChildren(); box.removeAttribute('data-nid'); lockScroll(); return; }
-    if (!box.hidden && box.getAttribute('data-nid') === n.id) return;
-    box.setAttribute('data-nid', n.id);
+    var nkey = groupIds(n).join(',');
+    if (!box.hidden && box.getAttribute('data-nid') === nkey) return;
+    box.setAttribute('data-nid', nkey);
     var d = n.data || {}, o = { id: 'nt', title: n.title.replace(/\s*✓\s*$/, ''), lead: n.body, actions: [{ id: 'nt-ok', label: 'OK', primary: true, onclick: closeNotice }] };
     if (n.kind === 'payment-approved' || n.kind === 'rescheduled') {
       o.tone = 'ok'; o.icon = '✓';
@@ -3016,9 +3101,17 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       o.lead = isBal ? 'Your refund was added to your balance. Use it when you pay for your next booking.' : 'Your refund was sent to your GCash.';
       o.rows = [['Booking', d.ref], [isBal ? 'Added' : 'Amount refunded', peso(d.amount)], ['Method', isBal ? 'Refund balance' : 'GCash'], isBal ? ['New balance', peso(d.balance != null ? d.balance : myBalance().available)] : ['GCash reference', d.refundRef]];
       if (!isBal && rf.receiptPath) o.extra = h('button', { class: 'proof-btn dlg-thumbbtn', type: 'button', 'aria-label': 'Open the refund receipt full size', onclick: function () { openImg(rf.receiptPath); } }, fileImg(rf.receiptPath, 'Refund receipt', 'dlg-thumb'));
-    } else if (n.kind === 'booking-cancelled' && d.refundId) {
-      o.tone = 'warn'; o.icon = '!';
-      o.actions = [{ id: 'nt-later', label: 'Later', onclick: closeNotice }, { id: 'nt-ok', label: 'Choose now', primary: true, onclick: goChooseRefund }];
+    } else if (n.kind === 'booking-cancelled') {
+      var grpList = n.group || [n], pending = grpList.filter(function (x) { return x.data && x.data.refundId; }).length;
+      if (grpList.length > 1) {
+        o.title = grpList.length + ' bookings cancelled';
+        o.lead = pending ? 'Choose how to receive each refund, one after the other.' : 'These bookings were cancelled.';
+        cancelGroupBody(o, grpList);
+      } else if (d.venue) {
+        o.rows = [['Booking', d.ref], ['Schedule', d.schedule || [d.venue, d.court].filter(Boolean).join(' · ')], d.amount != null ? ['Refund', peso(d.amount)] : null, ['Status', d.status]];
+      }
+      if (pending) { o.tone = 'warn'; o.icon = '!'; o.actions = [{ id: 'nt-later', label: 'Later', onclick: closeNotice }, { id: 'nt-ok', label: pending > 1 ? 'Choose now (' + pending + ')' : 'Choose now', primary: true, onclick: goChooseRefund }]; }
+      else { o.tone = 'info'; o.icon = '!'; }
     } else if (n.kind === 'balance-linked') { o.tone = 'ok'; o.icon = '₱'; }
     else if (n.kind === 'payment-rejected' || n.kind === 'refund-denied') { o.tone = 'warn'; o.icon = '!'; }
     else o.icon = 'i';
@@ -3030,7 +3123,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   function closeNotice() {
     var n = state.notice;
     state.notice = null;
-    if (n) markRead([n.id]);
+    if (n) markRead(groupIds(n));
     renderNotice();
   }
 
@@ -3108,6 +3201,22 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   }
   function myRefundAcct() { var a = state.refundaccts[state.me]; return a && a.number && a.name && a.qrPath ? a : null; }
   var LEDGER_WORDS = { 'refund-credit': 'Refund kept as balance', 'booking-use': 'Used for a booking', 'link-in': 'Moved in from another account', 'link-out': 'Moved to another account', 'resched-credit': 'Price difference after a reschedule' };
+  // Balance history: every credit and use of the Refundable Balance, newest first, in a box that scrolls with the mouse wheel (its own panel, below the GCash refund details).
+  var bhSig = '';
+  function renderBalHist() {
+    var box = $('#pf-balhist');
+    if (!box) return;
+    var list = Object.keys(state.ledger).map(function (id) { return Object.assign({ id: id }, state.ledger[id]); }).filter(function (x) { return x.uid === state.me; }).sort(function (a, c) { return c.at - a.at; });
+    var sig = list.map(function (x) { return x.id + ':' + x.amount + ':' + x.balanceAfter; }).join(',');
+    if (sig === bhSig) return;
+    bhSig = sig;
+    var old = box.querySelector('.nf-scroll'), top = old ? old.scrollTop : 0;
+    fill(box,
+      h('div', { class: 'nf-head' }, h('h3', null, 'Balance history')),
+      list.length ? h('ul', { class: 'nf-list nf-scroll bh-list', tabindex: '0', role: 'region', 'aria-label': 'Balance history' }, list.map(function (x) { return h('li', null, h('strong', null, (x.amount > 0 ? '+' : '−') + peso(Math.abs(x.amount)) + ' · ' + (LEDGER_WORDS[x.type] || x.type)), h('span', null, (x.ref ? x.ref + ' · ' : '') + 'balance after ' + peso(x.balanceAfter)), h('small', null, when(x.at))); }))
+        : h('p', { class: 'note' }, 'No balance activity yet. Credits and uses of your refund balance are listed here.'));
+    var sc = box.querySelector('.nf-scroll'); if (sc) sc.scrollTop = top;
+  }
   var rpSig = '';
   function renderProfileRefunds() {
     var box = $('#pf-refund');
@@ -3115,8 +3224,8 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var acct = myRefundAcct(), raw = state.refundaccts[state.me] || {}, bal = myBalance();
     var act = state.rfAct;
     var refunds = Object.keys(state.refunds).map(function (id) { return Object.assign({ id: id }, state.refunds[id]); }).filter(function (r) { return r.by === state.me; }).sort(function (a, c) { return (c.requestedAt || 0) - (a.requestedAt || 0); });
-    var ledgerList = Object.keys(state.ledger).map(function (id) { return Object.assign({ id: id }, state.ledger[id]); }).filter(function (x) { return x.uid === state.me; }).sort(function (a, c) { return c.at - a.at; }).slice(0, 6);
-    var sig = [raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(','), ledgerList.length].join('|');
+    var sig = [raw.number, raw.name, raw.qrPath, bal.amount, bal.reserved, act ? act.id + act.method + act.busy + act.error : '', refunds.map(function (r) { return r.id + r.status + r.actualAmount; }).join(',')].join('|');
+    renderBalHist();
     if (sig === rpSig) return;
     rpSig = sig;
     var oldScroll = box.querySelector('.rf-scroll'), scrollTop = oldScroll ? oldScroll.scrollTop : 0;   // keep the place in the list when it refreshes
@@ -3148,8 +3257,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       h('div', { class: 'rf-bal' }, h('div', null, h('span', { class: 'note' }, 'Refund balance'), h('strong', null, peso(bal.available))), bal.reserved ? h('span', { class: 'note' }, peso(bal.reserved) + ' is set aside for a booking waiting for payment verification.') : h('span', { class: 'note' }, 'Use it when you pay for a booking.')),
       h('div', { class: 'nf-head' }, h('h3', null, 'Refund history')),
       cards.length ? h('div', { class: 'pay-list rf-scroll', tabindex: '0', role: 'region', 'aria-label': 'Refund history' }, cards) : h('p', { class: 'note' }, 'No refunds yet. If staff cancel a booking you paid for, the refund shows up here.'),
-      ledgerList.length ? h('div', { class: 'nf-head' }, h('h3', null, 'Balance history')) : null,
-      ledgerList.length ? h('ul', { class: 'nf-list' }, ledgerList.map(function (x) { return h('li', null, h('strong', null, (x.amount > 0 ? '+' : '−') + peso(Math.abs(x.amount)) + ' · ' + (LEDGER_WORDS[x.type] || x.type)), h('span', null, (x.ref ? x.ref + ' · ' : '') + 'balance after ' + peso(x.balanceAfter)), h('small', null, when(x.at))); })) : null);
+      null);
     var sc = box.querySelector('.rf-scroll'); if (sc) sc.scrollTop = scrollTop;
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (e) {} } } }
   }
@@ -3275,7 +3383,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var box = $('#rfedit');
     if (!state.rfEdit || gateState() !== 'ok') { state.rfEdit = false; reSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
     var raw = state.refundaccts[state.me] || {}, d = rfDraftNow(), e = d.errs || {};
-    var sig = [d.saving, d.error, JSON.stringify(e), !!d.qr, d.base].join('|');
+    var sig = [d.saving, d.error, JSON.stringify(e), !!d.qr, d.qrName, d.base].join('|');
     if (sig === reSig && !box.hidden) return;
     reSig = sig;
     var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
@@ -3295,17 +3403,11 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
             h('input', { id: 'rf-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', 'aria-invalid': e.name ? 'true' : null, 'aria-describedby': e.name ? 'rf-name-err' : null, value: d.name, oninput: function (ev) { d.name = ev.target.value; clearErr('name', 'rf-name')(); } }),
             e.name ? h('small', { id: 'rf-name-err', class: 'field-err', role: 'alert' }, e.name) : null),
           h('div', { class: 'field re-qr' + (e.qr ? ' bad' : '') }, h('span', null, 'Static GCash QR code'),
-            h('div', { class: 're-qrrow' },
-              h('div', { class: 're-qrprev' }, prev),
-              h('div', { class: 're-qrside' },
-                h('small', null, 'A screenshot of the Receive Money QR in your GCash app (JPG, PNG or WebP).'),
-                h('button', { id: 'rf-qr-btn', class: 'btn small', type: 'button', 'aria-describedby': e.qr ? 'rf-qr-err' : null, onclick: function () { $('#rf-qr').click(); } }, hasQr ? 'Replace QR code' : 'Upload QR code'),
-                d.qr ? h('small', { class: 're-ok' }, 'New QR ready. Press Save to keep it.') : null)),
-            h('input', { id: 'rf-qr', type: 'file', accept: 'image/*', hidden: true, 'aria-label': 'Upload your GCash QR code', onchange: function (ev) {
-              var f = ev.target.files && ev.target.files[0]; ev.target.value = ''; if (!f) return;
-              resizeImage(f).then(function (u) { d.qr = u; d.dirty = true; if (d.errs) delete d.errs.qr; d.error = ''; }).catch(function (er) { d.errs = Object.assign({}, d.errs, { qr: er.message }); })
-                .then(function () { reSig = ''; renderRfEdit(); });
-            } }),
+            h('small', { class: 're-hint' }, 'A screenshot of the Receive Money QR in your GCash app (JPG, PNG or WebP).'),
+            uploadField({ id: 'rf-qr', label: 'Upload your GCash QR code', empty: 'No QR code yet', removeLabel: 'Remove new QR', preview: prev.tagName === 'IMG' ? prev : null,
+              name: d.qr ? (d.qrName || 'New QR code') : raw.qrPath ? 'Saved QR code' : '', meta: d.qr ? dataSize(d.qr) + ' · press Save details to keep it' : '',
+              onFile: function (f) { resizeImage(f).then(function (u) { d.qr = u; d.qrName = f.name; d.dirty = true; if (d.errs) delete d.errs.qr; d.error = ''; }).catch(function (er) { d.errs = Object.assign({}, d.errs, { qr: er.message }); }).then(function () { reSig = ''; renderRfEdit(); }); },
+              onRemove: d.qr ? function () { d.qr = ''; d.qrName = ''; reSig = ''; renderRfEdit(); } : null }),
             e.qr ? h('small', { id: 'rf-qr-err', class: 'field-err', role: 'alert' }, e.qr) : null)),
         d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
         h('div', { class: 'dlg-actions' },
@@ -3360,7 +3462,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   /* ---------- Audit Trail (Super Admin only): everything important that happened, searchable ---------- */
   var AU_AREAS = { booking: 'Bookings', payment: 'Payments', refund: 'Refunds', balance: 'Balances', account: 'Accounts', role: 'Roles', permissions: 'Permissions', session: 'Sessions', settings: 'Settings', impersonation: 'Impersonation' };
   function auNow() {
-    if (!state.au) state.au = { q: '', area: '', actor: '', from: '', to: '', items: [], total: 0, all: 0, hasMore: false, areas: [], tampered: 0, loading: false, error: '', open: {}, loaded: false, bc: null, bcBusy: false, bcConfirm: '', bcReason: '', bcError: '' };
+    if (!state.au) state.au = { q: '', kind: '', area: '', actor: '', from: '', to: '', items: [], total: 0, all: 0, hasMore: false, areas: [], tampered: 0, loading: false, error: '', open: {}, loaded: false, bc: null, bcBusy: false, bcConfirm: '', bcReason: '', bcError: '' };
     return state.au;
   }
   var auSig = '', auTimer = 0;
@@ -3368,6 +3470,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var a = auNow(); if (a.loading) return;
     a.loading = true; a.error = ''; auRender(true);
     var body = { action: 'audit-list', q: a.q, area: a.area, actor: a.actor, limit: 60 };
+    if (a.kind) body.kind = a.kind;
     if (a.from) body.from = parse(a.from, '00:00').getTime();
     if (a.to) body.to = parse(a.to, '00:00').getTime() + 86400000 - 1;
     if (!reset && a.items.length) body.before = a.items[a.items.length - 1].id;
@@ -3408,6 +3511,14 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       .then(function () { flash('The balance of ' + m.name + ' was corrected to its history.', 'ok'); a.bcConfirm = ''; a.bcReason = ''; return payCall({ action: 'balance-check' }).then(function (r) { a.bc = r; }); })
       .catch(function (e) { a.bcError = e.message; }).then(function () { a.bcBusy = false; auRender(true); auLoad(true); });
   }
+  // Credits a refund that was marked Refunded to balance but never reached the history (verified on the server first; once only).
+  function auCredit(u) {
+    var a = auNow(); if (a.bcBusy) return;
+    a.bcBusy = true; a.bcError = ''; auRender(true);
+    payCall({ action: 'refund-credit-verify', id: u.id, confirm: true, reason: a.bcReason })
+      .then(function () { flash(peso(u.amount) + ' was credited to ' + u.name + ' and recorded in the audit trail.', 'ok'); a.bcConfirm = ''; a.bcReason = ''; return payCall({ action: 'balance-check' }).then(function (r) { a.bc = r; }); })
+      .catch(function (e) { a.bcError = e.message; }).then(function () { a.bcBusy = false; auRender(true); auLoad(true); });
+  }
   function renderAudit() { auRender(false); }
   function auRender(force) {
     var box = $('#view-audit');
@@ -3415,7 +3526,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     if (!isSuper()) { state.view = 'schedule'; render(); return; }
     var a = auNow();
     if (!a.loaded && !a.loading && !a.error) { auLoad(true); return; }
-    var sig = [a.loading, a.error, a.total, a.items.length, a.hasMore, a.tampered, a.bcBusy, a.bcError, a.bcConfirm, a.bc && a.bc.mismatches.length, a.bc && a.bc.checked, Object.keys(a.open).filter(function (k) { return a.open[k]; }).join(',')].join('|');
+    var sig = [a.loading, a.error, a.total, a.items.length, a.hasMore, a.tampered, a.bcBusy, a.bcError, a.bcConfirm, a.kind, a.bc && a.bc.mismatches.length, a.bc && (a.bc.uncredited || []).length, a.bc && (a.bc.staleReserved || []).length, a.bc && a.bc.checked, Object.keys(a.open).filter(function (k) { return a.open[k]; }).join(',')].join('|');
     if (!force && sig === auSig) return;
     auSig = sig;
     var ae = document.activeElement, focusKey = ae && ae.id && box.contains(ae) ? ae.id : '', selA = null, selB = null;
@@ -3435,7 +3546,21 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
             h('input', { id: 'bc-reason', type: 'text', maxlength: '200', placeholder: 'Reason (required)', value: a.bcReason, 'aria-label': 'Reason for the correction', oninput: function (e) { a.bcReason = e.target.value; } }),
             h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: a.bcBusy, onclick: function () { a.bcConfirm = ''; auRender(true); } }, 'Cancel'), h('button', { id: 'bc-do', class: 'btn small primary', type: 'button', disabled: a.bcBusy, onclick: function () { auFix(m); } }, 'Correct balance')))
             : h('button', { id: 'bc-fix-' + m.uid, class: 'btn small', type: 'button', onclick: function () { a.bcConfirm = m.uid; a.bcReason = ''; auRender(true); } }, 'Correct to history'));
-      })) : h('p', { class: 'au-ok' }, '✓ ' + (a.bc.checked === 1 ? 'The 1 balance matches' : 'All ' + a.bc.checked + ' balances match') + ' its history.')) : null);
+      })) : null) : null,
+      a.bc && (a.bc.uncredited || []).length ? h('div', { class: 'au-unc' },
+        h('p', { class: 'note' }, 'Refunds marked as added to the balance that have no credit in the balance history:'),
+        h('ul', { class: 'au-mm' }, a.bc.uncredited.map(function (u) {
+          var conf = a.bcConfirm === 'rf:' + u.id;
+          return h('li', null,
+            h('div', null, h('strong', null, u.name), h('span', null, 'Refund of ' + u.ref + ' · ' + peso(u.amount) + (u.at ? ' · ' + when(u.at) : ''))),
+            conf ? h('div', { class: 'au-fix' },
+              h('p', null, 'Credit ' + peso(u.amount) + ' to ' + u.name + '? The server checks again that no credit exists, adds exactly this once with its own history entry, and records it in the audit trail.'),
+              h('input', { id: 'bc-reason', type: 'text', maxlength: '200', placeholder: 'Reason (required)', value: a.bcReason, 'aria-label': 'Reason for the credit', oninput: function (e) { a.bcReason = e.target.value; } }),
+              h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: a.bcBusy, onclick: function () { a.bcConfirm = ''; auRender(true); } }, 'Cancel'), h('button', { id: 'bc-credit-do', class: 'btn small primary', type: 'button', disabled: a.bcBusy, onclick: function () { auCredit(u); } }, 'Credit verified refund')))
+              : h('button', { id: 'bc-credit-' + u.id, class: 'btn small', type: 'button', onclick: function () { a.bcConfirm = 'rf:' + u.id; a.bcReason = ''; auRender(true); } }, 'Credit verified refund'));
+        }))) : null,
+      a.bc && (a.bc.staleReserved || []).length ? h('p', { class: 'note' }, 'Set aside for payments that are not waiting any more: ' + a.bc.staleReserved.map(function (s) { return s.name + ' (' + peso(s.reserved) + ', expected ' + peso(s.expected) + ')'; }).join('; ') + '. Shown only; nothing was changed.') : null,
+      a.bc && !a.bc.mismatches.length && !(a.bc.uncredited || []).length ? h('p', { class: 'au-ok' }, '✓ ' + (a.bc.checked === 1 ? 'The 1 balance matches' : 'All ' + a.bc.checked + ' balances match') + ' its history.') : null);
     fill(box,
       h('div', { class: 'book-head' }, h('h2', null, 'Audit Trail'), h('button', { id: 'au-refresh', class: 'btn small', type: 'button', disabled: a.loading, onclick: function () { auLoad(true); } }, a.loading ? 'Loading…' : 'Refresh')),
       h('p', { class: 'note' }, 'Every important action on the site, written by the server when it happens. Only the Super Admin can see this page, and no one can edit or delete a record.'),
@@ -3447,9 +3572,11 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
         h('label', { class: 'field', for: 'au-area' }, 'Type', h('select', { id: 'au-area', onchange: function (e) { a.area = e.target.value; auLoad(true); } }, h('option', { value: '' }, 'Everything'), areas.map(function (k) { return h('option', Object.assign({ value: k }, a.area === k ? { selected: '' } : {}), AU_AREAS[k] || k); }))),
         h('label', { class: 'field', for: 'au-from' }, 'From', h('input', { id: 'au-from', type: 'date', value: a.from, onchange: function (e) { a.from = e.target.value; auLoad(true); } })),
         h('label', { class: 'field', for: 'au-to' }, 'To', h('input', { id: 'au-to', type: 'date', value: a.to, onchange: function (e) { a.to = e.target.value; auLoad(true); } })),
-        h('div', { class: 'au-clear' }, h('button', { id: 'au-clear', class: 'btn small', type: 'button', onclick: function () { a.q = ''; a.actor = ''; a.area = ''; a.from = ''; a.to = ''; auLoad(true); } }, 'Clear filters'))),
+        h('div', { class: 'au-clear' },
+          h('button', { id: 'au-bal', class: 'btn small' + (a.kind === 'balance.correct' ? ' primary' : ''), type: 'button', 'aria-pressed': String(a.kind === 'balance.correct'), onclick: function () { a.kind = a.kind === 'balance.correct' ? '' : 'balance.correct'; auLoad(true); } }, 'Balance corrections'),
+          h('button', { id: 'au-clear', class: 'btn small', type: 'button', onclick: function () { a.q = ''; a.kind = ''; a.actor = ''; a.area = ''; a.from = ''; a.to = ''; auLoad(true); } }, 'Clear filters'))),
       a.error ? h('p', { class: 'form-error', role: 'alert' }, a.error) : null,
-      a.loaded ? h('p', { class: 'note' }, a.total + (a.total === 1 ? ' record' : ' records') + (a.q || a.actor || a.area || a.from || a.to ? ' match your filters' : '')) : null,
+      a.loaded ? h('p', { class: 'note' }, a.total + (a.total === 1 ? ' record' : ' records') + (a.q || a.kind || a.actor || a.area || a.from || a.to ? ' match your filters' : '')) : null,
       a.items.length ? h('ul', { class: 'au-list' }, a.items.map(auItem)) : (a.loaded && !a.loading ? h('p', { class: 'note' }, 'Nothing matches.') : null),
       a.hasMore ? h('div', { class: 'au-more' }, h('button', { id: 'au-more', class: 'btn', type: 'button', disabled: a.loading, onclick: function () { auLoad(false); } }, a.loading ? 'Loading…' : 'Load older records')) : null);
     if (focusKey) { var el = document.getElementById(focusKey); if (el) { el.focus(); if (selA != null) { try { el.setSelectionRange(selA, selB); } catch (x) {} } } }
@@ -3981,11 +4108,10 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
         h('label', { class: 'field', for: 'rfc-' + r.id }, h('span', null, 'GCash reference ', h('em', { class: 'req' }, 'required')),
           h('input', { id: 'rfc-' + r.id, type: 'text', maxlength: '40', autocomplete: 'off', value: draftOf('rfc' + r.id), oninput: function (e) { setDraft('rfc' + r.id, e.target.value); } }))),
       h('div', { class: 'field' }, h('span', null, 'Refund receipt (screenshot) ', h('em', { class: 'req' }, 'required')),
-        h('input', { id: 'rfp-' + r.id, type: 'file', accept: 'image/*', onchange: function (e) {
-          var fl = e.target.files && e.target.files[0]; if (!fl) return;
-          resizeImage(fl).then(function (u) { setDraft('rfproof' + r.id, u); rfSig = ''; renderRefunds(); }).catch(function (er) { if (state.refAct) state.refAct.error = er.message; rfSig = ''; renderRefunds(); });
-        } }),
-        draftOf('rfproof' + r.id) ? h('img', { class: 'co-proof', src: draftOf('rfproof' + r.id), alt: 'Refund receipt preview' }) : null),
+        uploadField({ id: 'rfp-' + r.id, label: 'Refund receipt screenshot (required)', empty: 'No receipt selected yet', name: draftOf('rfproof' + r.id) ? (draftOf('rfname' + r.id) || 'Refund receipt') : '', meta: draftOf('rfproof' + r.id) ? dataSize(draftOf('rfproof' + r.id)) : '',
+          preview: draftOf('rfproof' + r.id) ? h('img', { class: 'upl-img', src: draftOf('rfproof' + r.id), alt: 'Refund receipt preview' }) : null,
+          onFile: function (fl) { resizeImage(fl).then(function (u) { setDraft('rfproof' + r.id, u); setDraft('rfname' + r.id, fl.name); rfSig = ''; renderRefunds(); }).catch(function (er) { if (state.refAct) state.refAct.error = er.message; rfSig = ''; renderRefunds(); }); },
+          onRemove: function () { setDraft('rfproof' + r.id, ''); setDraft('rfname' + r.id, ''); rfSig = ''; renderRefunds(); } })),
       act.error ? h('p', { class: 'form-error', role: 'alert' }, act.error) : null,
       h('div', { class: 'confirm-actions' }, h('button', { class: 'btn small', type: 'button', disabled: act.busy, onclick: function () { state.refAct = null; rfSig = ''; renderRefunds(); } }, 'No, go back'),
         h('button', { id: 'rfc-yes', class: 'btn small primary', type: 'button', disabled: act.busy, onclick: function () {
@@ -4056,7 +4182,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   function renderPayDlg() {
     var box = $('#paycfg'), d = state.payDlg;
     if (!d || !can('paysettings') || gateState() !== 'ok') { state.payDlg = null; pdSig = ''; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
-    var sig = [d.saving, d.error, !!d.qr, d.removeQr, (state.payCfg || {}).qrPath].join('|');
+    var sig = [d.saving, d.error, !!d.qr, d.qrName, d.removeQr, (state.payCfg || {}).qrPath].join('|');
     if (sig === pdSig && !box.hidden) return;
     pdSig = sig;
     var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '';
@@ -4071,13 +4197,10 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
           h('label', { class: 'field', for: 'pd-name' }, 'Account name', h('input', { id: 'pd-name', type: 'text', maxlength: '60', placeholder: 'Name shown in GCash', value: d.name, oninput: function (e) { d.name = e.target.value; } }))),
         h('section', { class: 'cfg-block' }, h('h3', null, 'Static QR code'),
           h('p', { class: 'note' }, 'Upload the QR code from your GCash app. Uploading a new one replaces the old one. It is stored privately and only shown to logged-in players.'),
-          qrShown ? h('div', { class: 'co-qrbox' }, qrShown) : h('p', { class: 'note' }, 'No QR code yet.'),
-          h('div', { class: 'submit-row' },
-            h('input', { id: 'pd-qr', type: 'file', accept: 'image/*', 'aria-label': 'Upload a QR code image', onchange: function (e) {
-              var f = e.target.files && e.target.files[0]; if (!f) return;
-              resizeImage(f).then(function (u) { d.qr = u; d.removeQr = false; d.error = ''; pdSig = ''; renderPayDlg(); }).catch(function (er) { d.error = er.message; pdSig = ''; renderPayDlg(); });
-            } }),
-            (state.payCfg && state.payCfg.qrPath) || d.qr ? h('button', { class: 'link', type: 'button', onclick: function () { d.qr = ''; d.removeQr = true; pdSig = ''; renderPayDlg(); } }, 'Remove QR code') : null)),
+          uploadField({ id: 'pd-qr', label: 'Upload a QR code image', empty: 'No QR code yet', removeLabel: 'Remove QR code', preview: qrShown,
+            name: d.qr ? (d.qrName || 'New QR code') : (!d.removeQr && state.payCfg && state.payCfg.qrPath ? 'Saved QR code' : ''), meta: d.qr ? dataSize(d.qr) + ' · press Save settings to keep it' : (d.removeQr ? 'Will be removed when you save' : ''),
+            onFile: function (f) { resizeImage(f).then(function (u) { d.qr = u; d.qrName = f.name; d.removeQr = false; d.error = ''; pdSig = ''; renderPayDlg(); }).catch(function (er) { d.error = er.message; pdSig = ''; renderPayDlg(); }); },
+            onRemove: function () { d.qr = ''; d.qrName = ''; d.removeQr = true; pdSig = ''; renderPayDlg(); } })),
         d.error ? h('p', { class: 'form-error', role: 'alert' }, d.error) : null,
         h('div', { class: 'confirm-actions' },
           h('button', { class: 'btn', type: 'button', onclick: closePayDlg }, 'Cancel'),

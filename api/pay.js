@@ -44,21 +44,37 @@ function gcashInput(b) {
   need(b.proof, 400, 'Upload a screenshot or photo of your GCash receipt.');
   return { gref, img: parseImage(b.proof) };
 }
+const round2 = n => Math.round(n * 100) / 100;
+const ledgerSum = (led, uid) => round2(Object.keys(led).reduce((n, k) => n + (led[k] && led[k].uid === uid ? Number(led[k].amount) || 0 : 0), 0));
+// Call inside withBalance. When the history already holds credit_<refundId> but the stored balance never received it (a request stopped between the two writes),
+// add exactly the missing part (never more than that credit, never twice) and record an automatic correction in the Audit Trail. Nothing in the history is touched.
+async function healCredit(uid, name, refundId, ref, actor) {
+  const bal = await getBal(uid), entry = await L.getDoc('ledger', 'credit_' + refundId);
+  if (!entry || entry.uid !== uid) return { healed: 0, balance: bal.amount };
+  const short = round2(ledgerSum(await B.allMap('ledger'), uid) - bal.amount), add = round2(Math.min(short, Number(entry.amount) || 0));
+  if (add < 0.005) return { healed: 0, balance: bal.amount };
+  const after = round2(bal.amount + add);
+  await putBal(uid, Object.assign({}, bal, { amount: after }));
+  await L.bump();
+  await L.audit(actor || null, 'balance.correct', 'Automatic correction: the Refundable Balance of ' + (name || 'a player') + ' was ' + B.money(bal.amount) + ' but its history showed the refund of ' + (ref || refundId) + ' as credited. ' + B.money(add) + ' was added (now ' + B.money(after) + '). No history was changed.', { subject: { id: uid, name }, refs: { refundId, ref, reason: 'Credit recorded in the history was missing from the balance', automatic: true }, before: { balance: bal.amount }, after: { balance: after }, amount: add });
+  return { healed: add, balance: after };
+}
 // Adds a refund to the player's Refundable Balance, once: the ledger entry credit_<refundId> is the one-time marker.
 async function creditRefundToBalance(id, r, uid, actor) {
   need(await lockOnce('ev:rfchoose:' + id, uid), 409, 'You already chose how to receive this refund.');
-  let newBalance = 0;
+  let newBalance = 0, fresh = false;
   try {
     await withBalance(uid, async () => {
       const bal = await getBal(uid);
       newBalance = bal.amount + r.refundable;
-      if (!(await putNew('ledger', 'credit_' + id, { uid, type: 'refund-credit', amount: r.refundable, balanceAfter: newBalance, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited.');   // one credit per refund, ever
-      await putBal(uid, Object.assign({}, bal, { amount: newBalance }));
+      if (await putNew('ledger', 'credit_' + id, { uid, type: 'refund-credit', amount: r.refundable, balanceAfter: newBalance, refundId: id, ref: r.bookingRef, at: Date.now() })) {   // one credit per refund, ever
+        fresh = true; await putBal(uid, Object.assign({}, bal, { amount: newBalance }));
+      } else newBalance = (await healCredit(uid, r.byName, id, r.bookingRef, actor)).balance;   // a first attempt wrote the history but stopped before the balance: finish it, never credit twice
     });
   } catch (e) { await unlock('ev:rfchoose:' + id); throw e; }
   await put('refunds', id, Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: r.refundable, refundRef: 'REFUND BALANCE', chosenAt: Date.now(), refundedAt: Date.now(), refundedByName: 'Refund balance' }));
   await L.bump();
-  await L.audit(actor || null, 'balance.credit', B.money(r.refundable) + ' added to ' + (r.byName || 'a player') + "'s Refundable Balance (refund of " + r.bookingRef + ')', { subject: { id: uid, name: r.byName }, refs: { refundId: id, ref: r.bookingRef }, amount: r.refundable, before: { balance: Math.round((newBalance - r.refundable) * 100) / 100 }, after: { balance: newBalance } });
+  if (fresh) await L.audit(actor || null, 'balance.credit', B.money(r.refundable) + ' added to ' + (r.byName || 'a player') + "'s Refundable Balance (refund of " + r.bookingRef + ')', { subject: { id: uid, name: r.byName }, refs: { refundId: id, ref: r.bookingRef }, amount: r.refundable, before: { balance: Math.round((newBalance - r.refundable) * 100) / 100 }, after: { balance: newBalance } });
   await B.notify([uid], { event: 'refund-done', refId: id, kind: 'refund-done', read: true, data: { ref: r.bookingRef, amount: r.refundable, method: 'balance', balance: newBalance }, title: 'Refund added to your balance', body: B.money(r.refundable) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
   return newBalance;
 }
@@ -209,7 +225,7 @@ async function auditPost(w, b, pre, out) {
 }
 
 // While impersonating, these stay with the real owner of the account (credentials, payout details, devices) or are Super Admin only.
-const NOT_WHILE_IMPERSONATING = { 'refund-account': 1, push: 1, 'impersonate-start': 1, 'user-create': 1, 'balance-link': 1, 'balance-search': 1, 'balance-check': 1, 'balance-fix': 1, 'audit-list': 1, settings: 1 };
+const NOT_WHILE_IMPERSONATING = { 'refund-account': 1, push: 1, 'impersonate-start': 1, 'user-create': 1, 'balance-link': 1, 'balance-search': 1, 'balance-check': 1, 'balance-fix': 1, 'refund-credit-verify': 1, 'audit-list': 1, settings: 1 };
 const actions = {
   /* ----- Super Admin: impersonate (use the site as another person). The token is short-lived, names the Super Admin, and is re-checked on every request ----- */
   async 'impersonate-start'(w, b) {
@@ -276,7 +292,8 @@ const actions = {
     const from = Number(b.from) || 0, to = Number(b.to) || 0, before = String(b.before || ''), limit = Math.min(200, Math.max(10, Number(b.limit) || 60));
     const rows = Object.keys(all).sort().reverse().map(id => Object.assign({ id }, all[id]));
     const areas = Array.from(new Set(rows.map(r => r.area))).sort(), tampered = rows.filter(r => r.sig !== L.auditSig(r)).length;
-    let list = rows.filter(r => (!area || r.area === area) && (!from || r.at >= from) && (!to || r.at <= to)
+    const act = String(b.kind || '');
+    let list = rows.filter(r => (!area || r.area === area) && (!act || r.action === act) &&(!from || r.at >= from) && (!to || r.at <= to)
       && (!actor || [r.actor && r.actor.name, r.actor && r.actor.id, r.actor && r.actor.role].join(' ').toLowerCase().indexOf(actor) >= 0)
       && (!q || [r.summary, r.action, r.actor && r.actor.name, r.subject && r.subject.name, JSON.stringify(r.refs || {})].join(' ').toLowerCase().indexOf(q) >= 0));
     const total = list.length;
@@ -291,7 +308,40 @@ const actions = {
     const sums = {}; Object.keys(led).forEach(k => { const e = led[k]; if (e && e.uid) sums[e.uid] = Math.round(((sums[e.uid] || 0) + (Number(e.amount) || 0)) * 100) / 100; });
     const uids = Array.from(new Set(Object.keys(bals).concat(Object.keys(sums)))), bad = [];
     uids.forEach(uid => { const stored = Math.round((Number((bals[uid] || {}).amount) || 0) * 100) / 100, ledger = sums[uid] || 0; if (Math.abs(stored - ledger) >= 0.005) bad.push({ uid, name: (members[uid] && members[uid].name) || uid, stored, ledger, diff: Math.round((stored - ledger) * 100) / 100, reserved: Number((bals[uid] || {}).reserved) || 0, entries: Object.keys(led).filter(k => led[k].uid === uid).length }); });
-    return { checked: uids.length, mismatches: bad };
+    // Refunds recorded as paid into the balance that have no credit in the history at all (the credit was never written).
+    const refs = await B.allMap('refunds'), credited = {};
+    Object.keys(led).forEach(k => { if (led[k] && led[k].refundId) credited[led[k].refundId] = 1; if (k.startsWith('credit_')) credited[k.slice(7)] = 1; });
+    const uncredited = Object.keys(refs).filter(id => { const r = refs[id]; return r.status === 'refunded' && r.method === 'balance' && !credited[id]; })
+      .map(id => ({ id, uid: refs[id].by, name: refs[id].byName || (members[refs[id].by] && members[refs[id].by].name) || refs[id].by, ref: refs[id].bookingRef, amount: Number(refs[id].actualAmount != null ? refs[id].actualAmount : refs[id].refundable) || 0, at: refs[id].refundedAt || null }));
+    // Reserved amounts that no waiting payment accounts for (shown only: releasing one is a separate, deliberate step).
+    const pays = await B.allMap('payments'), held = {};
+    Object.keys(pays).forEach(k => { const p = pays[k]; if (p && p.kind === 'booking' && Number(p.balanceUsed) > 0 && p.status === 'pending_verification') held[p.by] = (held[p.by] || 0) + Number(p.balanceUsed); });
+    const staleReserved = Object.keys(bals).filter(uid => (Number(bals[uid].reserved) || 0) - (held[uid] || 0) >= 0.005).map(uid => ({ uid, name: (members[uid] && members[uid].name) || uid, reserved: Number(bals[uid].reserved) || 0, expected: held[uid] || 0 }));
+    return { checked: uids.length, mismatches: bad, uncredited, staleReserved };
+  },
+  // A refund the player kept as balance (status Refunded) that has no credit in the history: verified, then credited once with its own history entry and an audit record.
+  async 'refund-credit-verify'(w, b) {
+    need(w.isSuper && !w.suspended, 403, 'Only the Super Admin can credit a verified refund.');
+    const id = String(b.id || ''), reason = String(b.reason || '').trim();
+    need(b.confirm === true && id, 400, 'Confirm the credit first.');
+    need(reason.length >= 3 && reason.length <= 200, 400, 'Write a short reason (3 to 200 characters).');
+    const r = await L.getDoc('refunds', id); need(r, 404, 'Refund not found.');
+    need(r.status === 'refunded' && r.method === 'balance', 409, 'Only a refund that was kept as Refundable Balance and marked Refunded can be credited here.');
+    const amount = Number(r.actualAmount != null ? r.actualAmount : r.refundable) || 0;
+    need(amount > 0, 409, 'This refund has no amount to credit.');
+    need(await lockOnce('ev:rfverify:' + id, w.uid), 409, 'This refund is already being credited.');
+    try {
+      return await withBalance(r.by, async () => {
+        const led = await B.allMap('ledger');
+        need(!Object.keys(led).some(k => k === 'credit_' + id || (led[k] && led[k].refundId === id)), 409, 'This refund already has a credit in the history, so nothing is added. Run the balance check to see if the balance matches.');
+        const bal = await getBal(r.by), after = round2(bal.amount + amount);
+        need(await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: after, refundId: id, ref: r.bookingRef, correction: true, at: Date.now() }), 409, 'This refund was already credited.');
+        await putBal(r.by, Object.assign({}, bal, { amount: after }));
+        await L.bump();
+        await L.audit(w, 'balance.correct', who(w) + ' credited ' + B.money(amount) + ' to ' + (r.byName || 'a player') + "'s Refundable Balance: the refund of " + r.bookingRef + ' was marked Refunded to balance but had no credit in the history. ' + reason, { subject: { id: r.by, name: r.byName }, refs: { refundId: id, ref: r.bookingRef, reason }, before: { balance: bal.amount }, after: { balance: after }, amount });
+        return { ok: true, balance: after };
+      });
+    } catch (e) { await unlock('ev:rfverify:' + id); throw e; }
   },
   // Sets a stored balance back to what its ledger adds up to. Nothing else changes: no ledger entry, payment or refund record is touched, and the change is audited.
   async 'balance-fix'(w, b) {
@@ -523,9 +573,10 @@ const actions = {
       const after = B.startMs(s.date, s.hour) <= now, k = s.by + '|' + s.ref + '|' + (after ? 'after' : 'before');
       (byPlayer[k] = byPlayer[k] || []).push({ s, paid, pct: 100, refundable: paid, after });
     }
-    const made = [], choose = []; let totalRefundable = 0, totalPaid = 0, chooseAmount = 0, credited = 0, balance = null;
+    const batch = newId('cb_'), made = [], choose = []; let totalRefundable = 0, totalPaid = 0, chooseAmount = 0, credited = 0, balance = null;
     for (const key of Object.keys(byPlayer)) {
       const g = byPlayer[key], first = g[0].s, after = g[0].after, id = newId('rf_'), paidSum = sum(g, x => x.paid), refundable = sum(g, x => x.refundable);
+      const slotsOf = g.map(x => x.s), info = status => ({ ref: first.ref, batch, venue: first.venue || '', court: Array.from(new Set(slotsOf.map(x => x.court))).join(', '), schedule: B.scheduleText(slotsOf), amount: refundable, status });
       const own = first.by === w.uid;   // the player cancelled it themselves: they already know, so no pop-up or push for it
       totalPaid += paidSum; totalRefundable += refundable;
       const doc = {
@@ -537,16 +588,16 @@ const actions = {
       if (after) {   // started hour: straight to the Refundable Balance (once; if that step fails the refund stays waiting and can only be kept as balance)
         try {
           balance = await creditRefundToBalance(id, doc, first.by, w); credited += refundable;
-          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref }, title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' was added to your Refundable Balance.' });
+          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: info('Added to Refundable Balance'), title: 'Booking cancelled', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' was added to your Refundable Balance.' });
         } catch (e) {
           console.error('after-start credit failed:', e && e.message);
           choose.push(id); chooseAmount += refundable;
-          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: keep your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' goes to your Refundable Balance. Please confirm it.' });
+          await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: Object.assign(info('Confirm: keep as Refundable Balance'), { refundId: id }), title: 'Booking cancelled: keep your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled after it started. ' + B.money(refundable) + ' goes to your Refundable Balance. Please confirm it.' });
         }
         continue;
       }
       choose.push(id); chooseAmount += refundable;
-      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: { ref: first.ref, refundId: id }, title: 'Booking cancelled: choose your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled before it started. You can get back ' + B.money(refundable) + '. Choose to request it by GCash or to keep it as refund balance for future bookings.' });
+      await B.notify([first.by], { event: 'booking-cancelled', refId: id, kind: 'booking-cancelled', read: own, data: Object.assign(info('Choose your refund'), { refundId: id }), title: 'Booking cancelled: choose your refund', body: B.scheduleText(g.map(x => x.s)) + ' was cancelled before it started. You can get back ' + B.money(refundable) + '. Choose to request it by GCash or to keep it as refund balance for future bookings.' });
     }
     await L.bump();
     return { ok: true, refunds: made, choose, refundable: totalRefundable, paid: totalPaid, chooseAmount, credited, balance };
@@ -698,8 +749,8 @@ const actions = {
         await withBalance(r.by, async () => {
           const bal = await getBal(r.by);
           newBalance = bal.amount + amount;
-          if (!(await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: bal.amount + amount, refundId: id, ref: r.bookingRef, at: Date.now() }))) throw err(409, 'This refund was already credited to the balance.');
-          await putBal(r.by, Object.assign({}, bal, { amount: bal.amount + amount }));
+          if (await putNew('ledger', 'credit_' + id, { uid: r.by, type: 'refund-credit', amount, balanceAfter: bal.amount + amount, refundId: id, ref: r.bookingRef, at: Date.now() })) await putBal(r.by, Object.assign({}, bal, { amount: bal.amount + amount }));
+          else newBalance = (await healCredit(r.by, r.byName, id, r.bookingRef, w)).balance;   // already recorded earlier: finish the balance if it never got it, never credit twice
         });
         await put('refunds', id, Object.assign({}, r, { status: 'refunded', refundable: amount, actualAmount: amount, refundRef: 'REFUND BALANCE', approvedBy: w.uid, approvedByName: w.member.name, approvedAt: Date.now(), refundedBy: w.uid, refundedByName: w.member.name, refundedAt: Date.now() }));
         await L.bump();
@@ -765,7 +816,9 @@ const actions = {
     let doc = r;
     if (B.isAwaiting(r) && locks['ev:rfchoose:' + id] != null) {
       const credit = await L.getDoc('ledger', 'credit_' + id);
-      if (credit) {   // the balance was credited but the refund record never caught up: finish it, without crediting again
+      if (credit) {   // the history shows the credit but the refund record (and maybe the balance) never caught up: finish both, without crediting again
+        const h = await withBalance(r.by, () => healCredit(r.by, r.byName, id, r.bookingRef, w));
+        if (h.healed) fixed.push('added the ' + B.money(h.healed) + ' that the history showed but the balance was missing');
         doc = Object.assign({}, r, { status: 'refunded', method: 'balance', actualAmount: credit.amount, refundRef: 'REFUND BALANCE', refundedAt: credit.at || Date.now(), refundedByName: 'Refund balance' });
         await put('refunds', id, doc); await L.bump(); fixed.push('finished a refund balance credit that had already been recorded (it was not credited again)');
         await B.notify([r.by], { event: 'refund-done', refId: id, kind: 'refund-done', data: { ref: r.bookingRef, amount: credit.amount, method: 'balance', balance: credit.balanceAfter }, title: 'Refund added to your balance', body: B.money(credit.amount) + ' from booking ' + r.bookingRef + ' was added to your refund balance.' });
