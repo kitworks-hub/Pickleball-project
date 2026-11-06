@@ -22,7 +22,7 @@ async function read(req, res) {
   const want = Number(req.query && req.query.rev);
   const rev = await L.getRev();
   if (want === rev) return res.status(200).json({ rev, same: true });
-  const names = READ_COLS.concat(['payments', 'refunds', 'notifications', 'refundaccts', 'balances', 'ledger', 'balancelinks', 'config']);
+  const names = READ_COLS.concat(['payments', 'notifications', 'config']);
   const r = await L.redis(names.map(c => ['HGETALL', L.K(c)]));
   const cols = {};
   names.slice(0, -1).forEach((c, i) => { cols[c] = mapOf(r[i]); });
@@ -33,25 +33,15 @@ async function read(req, res) {
     if (!b.by || (b.status === 'hold' && Number(b.holdUntil) <= now)) { delete cols.bookings[id]; return; }   // claims with no owner, and holds that ran out
     if (b.by !== w.uid && !staffSees) { delete b.paid; delete b.payId; delete b.moveFrom; }
   });
-  // payments, refunds and notifications: staff with the permission see all, everyone else only their own
+  // payments and notifications: staff with the permission see all, everyone else only their own
   const onlyMine = (col, perm, ownerField) => {
     if (perm && w.can(perm)) return;
     Object.keys(cols[col]).forEach(id => { if (cols[col][id][ownerField] !== w.uid) delete cols[col][id]; });
   };
-  const onlyMineKeyed = (col, perm) => { if (perm && w.can(perm)) return; Object.keys(cols[col]).forEach(id => { if (id !== w.uid) delete cols[col][id]; }); };   // documents named after the person
-  onlyMine('payments', 'payments', 'by'); onlyMine('refunds', 'refunds', 'by'); onlyMine('notifications', null, 'to'); onlyMine('ledger', 'refunds', 'uid');
-  onlyMineKeyed('refundaccts', 'refunds'); onlyMineKeyed('balances', 'refunds');
-  if (!w.canLinkBalances) cols.balancelinks = {};   // the audit history of balance links is for Super Admin and Admin only
+  onlyMine('payments', 'payments', 'by'); onlyMine('notifications', null, 'to');
   // A player's level always follows the levels in Session Configurations: one that is no longer offered is not shown (and is never kept in sync by hand)
   const levels = B.levelsOf(config.options);
   Object.keys(cols.members).forEach(id => { const m = cols.members[id]; if (m.level && levels.indexOf(m.level) < 0) { m.levelRemoved = m.level; delete m.level; } });
-  // Refunds opened before players could choose a method look like what they are: waiting for the player. Reviewers also see what blocks each one.
-  const locks = w.can('refunds') ? await B.allMap('locks') : null;
-  Object.keys(cols.refunds).forEach(id => {
-    const rf = cols.refunds[id];
-    if (locks) rf.blockers = B.refundBlockers(id, rf, locks);   // worked out from the stored record, before it is shown as waiting
-    if (B.isAwaiting(rf) && rf.status !== 'awaiting_user') { rf.legacyStatus = rf.status; rf.status = 'awaiting_user'; }
-  });
   res.status(200).json({ rev, cols, config });
 }
 

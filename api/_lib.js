@@ -233,12 +233,12 @@ const clearThrottle = key => clearHit('rl:' + key);
 const clientIp = req => String(req.headers['x-forwarded-for'] || (req.socket && req.socket.remoteAddress) || 'ip').split(',')[0].trim();
 
 /* ---------- roles and permissions (same table as the page) ---------- */
-const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers', 'payments', 'refunds', 'paysettings', 'roleaccess'];
+const FEATURE_KEYS = ['view', 'join', 'roster', 'host', 'edit', 'remove', 'people', 'options', 'moveplayers', 'book', 'bookconfig', 'managebookings', 'viewbookers', 'payments', 'paysettings', 'roleaccess'];
 const ALL_ON = {}; FEATURE_KEYS.forEach(k => { ALL_ON[k] = true; });
 const DEFAULTS = {
-  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, refunds: true, paysettings: true, roleaccess: true },
-  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false },
-  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, refunds: false, paysettings: false, roleaccess: false }
+  admin: { view: true, join: true, roster: true, host: true, edit: true, remove: true, people: true, options: true, moveplayers: true, book: true, bookconfig: true, managebookings: true, viewbookers: true, payments: true, paysettings: true, roleaccess: true },
+  staff: { view: true, join: true, roster: true, host: true, edit: true, remove: false, people: false, options: true, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, paysettings: false, roleaccess: false },
+  player: { view: true, join: true, roster: true, host: false, edit: false, remove: false, people: false, options: false, moveplayers: false, book: true, bookconfig: false, managebookings: false, viewbookers: false, payments: false, paysettings: false, roleaccess: false }
 };
 function permsFor(role, cfgDefs) {
   if (role === 'super_admin') return ALL_ON;
@@ -267,7 +267,6 @@ async function whoIs(req) {
   return {
     uid: tok.id, member, role, defs, suspended, impBy,
     isSuper: role === 'super_admin',
-    canLinkBalances: !suspended && (role === 'super_admin' || role === 'admin'),   // not a role-table permission: only Super Admin and Admin
     can: k => !suspended && perms[k] === true
   };
 }

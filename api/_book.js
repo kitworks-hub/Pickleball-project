@@ -7,10 +7,6 @@ const HOLD_MS = 15 * 60000;          // how long picked hours are held while the
 const RETRY_HOLD_MS = 30 * 60000;    // after a payment is denied, how long the hours stay held for a corrected resubmission
 const DEFAULT_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 const DEFAULT_RATES = [{ from: 7, to: 17, price: 200 }, { from: 17, to: 22, price: 300 }];
-// The refund rules: before the booked start time a paid hour is refunded in full (GCash or Refundable Balance, the player's choice);
-// after the start time the amount paid goes to the Refundable Balance only.
-const REFUND_RULES = [{ when: 'before_start', percent: 100, to: 'gcash_or_balance' }, { when: 'after_start', percent: 100, to: 'balance' }];
-const DEFAULT_POLICY = [{ hours: 48, percent: 100 }, { hours: 24, percent: 50 }, { hours: 0, percent: 0 }];
 const pad = n => String(n).padStart(2, '0');
 
 /* ---------- configuration ---------- */
@@ -42,21 +38,8 @@ async function columns(cfg) {
 }
 async function payCfg() {
   const c = (await L.getDoc('config', 'payment')) || {};
-  const policy = Array.isArray(c.refundPolicy) && c.refundPolicy.length ? c.refundPolicy : DEFAULT_POLICY;
-  return { gcashNumber: c.gcashNumber || '', accountName: c.accountName || '', qrPath: c.qrPath || '', refundPolicy: normPolicy(policy) };
+  return { gcashNumber: c.gcashNumber || '', accountName: c.accountName || '', qrPath: c.qrPath || '' };
 }
-function normPolicy(p) {
-  const out = [];
-  (p || []).forEach(x => { const h = Number(x && x.hours), pc = Number(x && x.percent); if (h >= 0 && h <= 720 && pc >= 0 && pc <= 100) out.push({ hours: Math.round(h), percent: Math.round(pc) }); });
-  out.sort((a, b) => b.hours - a.hours);
-  return out.length ? out : DEFAULT_POLICY.map(x => Object.assign({}, x));
-}
-// Share of the amount paid that comes back if the booking is cancelled this many hours before it starts.
-function refundPercent(policy, hoursUntil) {
-  for (const t of policy) if (hoursUntil >= t.hours) return t.percent;
-  return 0;
-}
-
 /* ---------- slots ---------- */
 const slug = x => String(x).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const slotId = (date, venue, court, hour) => date + '_' + (venue ? slug(venue) + '_' : '') + slug(court) + '_' + pad(hour);
@@ -180,33 +163,9 @@ async function pushTo(uid, n) {
   return { sent, failed };
 }
 
-/* ---------- refunds: states, and why one cannot be processed ---------- */
-// A refund opened before players could choose how to receive it (status requested or approved, but no method) is really still
-// waiting for the player: nobody knows where the money should go.
 const DEFAULT_LEVELS = ['Open play', 'Beginner 2.0\u20132.5', 'Intermediate 3.0\u20133.5', 'Advanced 4.0+'];
 // The levels set in Session Configurations are the source of truth for a player's level.
 const levelsOf = opts => (opts && Array.isArray(opts.levels) && opts.levels.length ? opts.levels : DEFAULT_LEVELS).map(String);
-const isAwaiting = r => !!r && (r.status === 'awaiting_user' || ((r.status === 'requested' || r.status === 'approved') && !r.method));
-const acctOk = a => !!(a && a.number && a.name && a.qrPath);
-// What is blocking a refund, in plain words, with what to do about it. repair: true means "Fix and remind" can clear it.
-function refundBlockers(id, r, locks) {
-  const out = [], name = r.byName || 'The player', amt = money(r.refundable || 0), has = k => !!(locks && locks[k] != null);
-  if (r.status === 'refunded' || r.status === 'denied') return out;
-  if (isAwaiting(r)) {
-    const old = r.status !== 'awaiting_user';
-    out.push({ code: old ? 'legacy' : 'awaiting', repair: old, text: old
-      ? 'This refund was opened before players could choose how to receive it, so it has no method and no GCash details. ' + name + ' needs to choose how to receive ' + amt + '.'
-      : name + ' has not chosen how to receive ' + amt + ' yet.', fix: 'They can choose from the Refundable Balance box. "Fix and remind" sends them a reminder.' });
-    if (has('ev:rfchoose:' + id)) out.push({ code: 'stuck-choose', repair: true, text: 'An earlier attempt to choose did not finish.', fix: '"Fix and remind" clears it so they can choose again.' });
-    return out;
-  }
-  if (r.method === 'gcash' && !acctOk(r.acct)) out.push({ code: 'no-details', repair: true, text: name + "'s GCash number, account name or QR code is missing from this request, so there is nowhere to send the money.", fix: '"Fix and remind" returns it to them to complete their details and choose again.' });
-  if (!(Number(r.refundable) > 0) || Number(r.refundable) > Number(r.paid)) out.push({ code: 'amount', repair: false, text: 'The refund amount (' + amt + ' of ' + money(r.paid || 0) + ' paid) is not valid.', fix: 'Deny this request with a reason, or ask an admin to look at it.' });
-  if (has('ev:rfdone:' + id)) out.push({ code: 'stuck-done', repair: true, text: 'An earlier attempt to record this refund did not finish.', fix: '"Fix and remind" clears it so it can be processed again.' });
-  if (has('ev:rfapprove:' + id) && r.status === 'requested') out.push({ code: 'stuck-approve', repair: true, text: 'An earlier approval did not finish.', fix: '"Fix and remind" clears it.' });
-  if (locks && Object.keys(locks).some(k => k.startsWith('gcash:') && locks[k] === id)) out.push({ code: 'stuck-ref', repair: true, text: 'A GCash reference number is being held by an unfinished attempt on this refund.', fix: '"Fix and remind" frees it.' });
-  return out;
-}
 
 /* ---------- small helpers ---------- */
 const money = n => '₱' + Number(n).toLocaleString('en-PH');
@@ -225,7 +184,7 @@ function scheduleText(slots) {
 }
 
 module.exports = {
-  HOLD_MS, RETRY_HOLD_MS, REFUND_RULES, DEFAULT_POLICY, bookingCfg, priceOf, columns, payCfg, normPolicy, refundPercent,
+  HOLD_MS, RETRY_HOLD_MS, bookingCfg, priceOf, columns, payCfg,
   slotId, courtKey, startMs, occupies, allMap, sameVenue, sessionBlocking, bookingBlocking,
-  DEFAULT_LEVELS, levelsOf, isAwaiting, acctOk, refundBlockers, usersWith, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
+  DEFAULT_LEVELS, levelsOf, usersWith, notify, pushTo, firebaseAccount, money, hourText, dateText, refCode, scheduleText, safeId, pad
 };
