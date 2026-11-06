@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0a2a6e">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;1,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<script>try { var kt = localStorage.getItem('kl-theme'); if (kt === 'light' || kt === 'dark') document.documentElement.setAttribute('data-theme', kt); } catch (e) {}</script>
+<script>try { var kt = localStorage.getItem('kl-theme'); document.documentElement.setAttribute('data-theme', kt === 'light' ? 'light' : 'dark'); } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }</script>
 <style>
 /* Layout: navy masthead with the MPC logo; below it a log in / sign up gate, then the app (Dashboard, Profile, Users, Role access). */
 :root {
@@ -688,6 +688,17 @@ table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
 .row .meta .email { color: var(--ink); overflow-wrap: anywhere; }
 footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: no-preference) { .btn, .cal-day { transition: background-color 0.15s, border-color 0.15s; } }
+/* phones and tablets: bigger touch targets, pop-ups that scroll inside the visible screen (also in landscape) */
+.modal-panel { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.modal-panel { max-height: min(88dvh, 680px); }
+@media (max-height: 520px) { .modal { align-items: flex-start; padding: 8px 12px; } .modal-panel { max-height: calc(100dvh - 16px); } }
+@media (max-width: 700px), (pointer: coarse) {
+  .btn, .btn.small { min-height: 40px; }
+  .actions .link, .p-actions .link { display: inline-flex; align-items: center; min-height: 40px; padding-inline: 8px; }
+  .modal-close { width: 40px; height: 40px; }
+  input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; }
+}
+@media (max-width: 480px) { .logo { width: 120px; border-radius: 22px; } }
 </style>
 
 <header class="band">
@@ -1238,10 +1249,15 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   function join(s) {
     var cur = myActiveSession();
     if (cur && cur.id !== s.id) { flash('You are already in ' + (cur.title || 'another session') + '. You can join another session once it ends.', 'err'); return; }
+    if (state.joining) return;   // a second tap while the first is still saving does nothing
+    state.joining = s.id; render();
+    var saved = false;
     saveMine(function (c) {
       Object.keys(c.joined).forEach(function (id) { if (!state.sessions.some(function (x) { return x.id === id; })) delete c.joined[id]; });   // tidy entries for deleted sessions
       c.joined[s.id] = Date.now();
-    }).then(function () { flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); });
+      saved = true;
+    }).then(function () { if (saved && state.players[state.me] && state.players[state.me].joined && state.players[state.me].joined[s.id]) flash('You are signed up for ' + (s.title || 'the session') + '. You cannot leave until it ends.', 'ok'); })
+      .then(function () { state.joining = null; render(); });
   }
   // Removing a session opens a dialog. Nothing is deleted until "Yes, remove" is pressed.
   function lockScroll() { document.body.style.overflow = (state.playersFor || state.confirmRemove || state.confirmUser || state.newUser || state.impAsk || state.ue || state.checkout || state.cancelFlow || state.rfInfo || state.rfEdit || state.thanks || state.notice || state.payDlg || state.imgView || state.edit || state.bookCfg || state.mb || state.sessCfg || state.bkList) ? 'hidden' : ''; }
@@ -1334,15 +1350,18 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var changed = !orig || orig.date !== d.date || orig.start !== d.start || Number(orig.duration) !== duration || orig.court !== cNew || orig.venue !== vNew;
     var clash = changed ? bookingOnSession(d.date, vNew, cNew, d.start, duration) : null;
     if (clash) { editError('That court is already booked at that time (booking ' + clash.ref + '). Pick another court or time.', ['court', 'date', 'start'], '#e-court'); return; }
+    if (state.edit.saving) return;
+    state.edit.saving = true; editSig = ''; renderEditDialog(); flash('Saving…', '');
     var patch = {
       title: d.title.trim() || '-', date: d.date, start: d.start, duration: duration,
       court: d.court.trim() || '-', venue: d.venue.trim() || '-', level: d.level, format: d.format, capacity: cap
     };
-    queue(function () { return state.db.doc('sessions/' + id).update(patch); }, 'Could not save the changes.').then(function () {
-      if (state.edit && state.edit.id === id) {
-        state.edit = null; flash('Session updated.', 'ok'); render();
-        var b = document.getElementById('ed-' + id); if (b) b.focus();
-      }
+    var done = false;
+    queue(function () { return state.db.doc('sessions/' + id).update(patch).then(function () { done = true; }); }, 'Could not save the changes.').then(function () {
+      if (!state.edit || state.edit.id !== id) return;
+      if (!done) { state.edit.saving = false; editSig = ''; renderEditDialog(); return; }   // the error message stays; the dialog stays open so nothing typed is lost
+      state.edit = null; flash('Session updated.', 'ok'); render();
+      var b = document.getElementById('ed-' + id); if (b) b.focus();
     });
   }
   function editFields(s) {
@@ -1385,7 +1404,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       state.edit.error ? h('p', { class: 'form-error', role: 'alert' }, state.edit.error) : null,
       h('div', { class: 'confirm-actions' },
         h('button', { class: 'btn', type: 'button', onclick: closeEdit }, 'Cancel'),
-        h('button', { class: 'btn primary', type: 'button', onclick: saveEdit }, 'Save changes')));
+        h('button', { id: 'e-save', class: 'btn primary', type: 'button', disabled: !!state.edit.saving, 'aria-busy': state.edit.saving ? 'true' : null, onclick: saveEdit }, state.edit.saving ? 'Saving…' : 'Save changes')));
   }
   // The edit dialog. It is rebuilt only when something it shows changes, so typing and focus are not disturbed by live updates.
   var editSig = '';
@@ -1399,7 +1418,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       lockScroll();
       return;
     }
-    var sig = [e.id, e.error || '', JSON.stringify(e.errorKeys || []), JSON.stringify(opts())].join('|');
+    var sig = [e.id, e.error || '', JSON.stringify(e.errorKeys || []), !!e.saving, JSON.stringify(opts())].join('|');
     if (sig === editSig && !box.hidden) return;
     editSig = sig;
     var ae = document.activeElement, hadFocus = box.contains(ae), focusKey = hadFocus ? ae.id : '', selA = null, selB = null;
@@ -1429,10 +1448,13 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
 
   /* ---------- players pop-up ---------- */
   var modalSig = '';
+  var busyUids = {};   // people whose sign-ups are being saved right now
   var pendingRemovePlayer = null;   // 'sessionId|accountId' while the red "Tap again" step is showing
   // Roles with the moveplayers permission can take someone out of a session or move them. This is the only way out of a session.
   function changeSignups(uid, mutator, message) {
     if (!state.db || !state.canWrite || !can('moveplayers')) { flash('Your role cannot change who is in a session.', 'err'); return; }
+    if (busyUids[uid]) return;
+    busyUids[uid] = true; flash('Saving…', '');
     var saved = false;
     queue(function () {
       var existing = state.players[uid];
@@ -1440,7 +1462,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       if (!cur.joined) cur.joined = {};
       mutator(cur);
       return state.db.doc('signups/' + uid).set(cur).then(function () { saved = true; });
-    }, 'Could not update that player.').then(function () { if (saved) flash(message, 'ok'); });
+    }, 'Could not update that player.').then(function () { delete busyUids[uid]; if (saved) flash(message, 'ok'); });
   }
   function removePlayer(s, r) {
     var key = s.id + '|' + r.uid;
@@ -1561,7 +1583,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       actions.push(myIdx < cap ? h('span', { class: 'pill' }, "✓ You're in") : h('span', { class: 'pill wl' }, 'Waitlist #' + (myIdx - cap + 1)));
       ruleNote = 'You cannot leave a session once you have joined it.';
     } else if (can('join')) {
-      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin || blocked, onclick: function () { join(s); } }, full ? 'Join waitlist' : 'Join'));
+      actions.push(h('button', { class: 'btn primary', type: 'button', disabled: !canJoin || blocked || !!state.joining, 'aria-busy': state.joining === s.id ? 'true' : null, onclick: function () { join(s); } }, state.joining === s.id ? 'Joining…' : full ? 'Join waitlist' : 'Join'));
       if (blocked) ruleNote = 'You are already in ' + (activeSession.title || 'another session') + '. You can join another once it ends.';
     }
     if (canEditSession(s)) actions.push(h('button', { id: 'ed-' + s.id, class: 'link', type: 'button', 'aria-haspopup': 'dialog', onclick: function () { startEdit(s); } }, 'Edit'));
@@ -1654,11 +1676,18 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     box.append(h('div', { class: 'cal-pop', role: 'dialog', 'aria-label': 'Choose a date' }, head, grid));
   }
 
+  var listSig = '';
   function renderList(all) {
     activeSession = myActiveSession();
     var box = $('#list');
-    box.replaceChildren();
     var shown = all.filter(function (s) { return passes(s, false); });
+    var lsig = [state.me, state.canWrite, can('join'), can('roster'), can('host'), activeSession && activeSession.id, state.joining, all.length, JSON.stringify(filters), shown.map(function (s) {
+      var l = roster(s.id);
+      return [s.id, s.title, s.date, s.start, s.duration, s.court, s.venue, s.level, s.format, s.capacity, l.length, l.findIndex(function (r) { return r.uid === state.me; }), canEditSession(s), canRemoveSession(s)].join(':');
+    }).join('|')].join('~');
+    if (lsig === listSig && box.firstChild) return;   // nothing on the cards changed: keep the page as it is
+    listSig = lsig;
+    box.replaceChildren();
     var dayEmpty = filters.day !== 'all' && all.length > 0 && !all.some(function (s) { return s.date === filters.day; });
     if (!shown.length && dayEmpty) {
       var pick = parse(filters.day, '00:00');
@@ -4378,7 +4407,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     function sync(force) {
       if (busy && !force) return busy;
       var p = call('GET', '/api/data?rev=' + (force ? -1 : rev)).then(function (j) {
-        if (!j.same) { rev = j.rev; snap = j; }
+        if (!j.same && j.rev >= rev) { rev = j.rev; snap = j; }
         notify();
       }).catch(function (e) { if (!snap) subs.forEach(function (s) { if (s.err) s.err(e); }); });
       busy = p;
@@ -4419,7 +4448,22 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       window.addEventListener('online', function () { sync(); });
     }
     function subscribe(s) { subs.push(s); start(); if (snap) notify(); else sync(); }
-    function write(body) { return call('POST', '/api/data', body).then(function (j) { return sync(true).then(function () { return j; }); }); }
+    // A change the server accepted is shown straight away (set / update / delete on one document); the confirmed copy arrives right after in the background.
+    function patchLocal(body) {
+      if (!snap || !body || !body.path || body.op === 'add' || body.op === 'acquire') return false;
+      var p = body.path.split('/'), bag = p[0] === 'config' ? (snap.config = snap.config || {}) : ((snap.cols = snap.cols || {})[p[0]] = (snap.cols[p[0]] || {}));
+      if (body.op === 'delete') delete bag[p[1]];
+      else if (body.op === 'set') bag[p[1]] = body.data;
+      else if (body.op === 'update') bag[p[1]] = Object.assign({}, bag[p[1]] || {}, body.data);
+      else return false;
+      return true;
+    }
+    function write(body) {
+      return call('POST', '/api/data', body).then(function (j) {
+        if (patchLocal(body)) { notify(); sync(true); return j; }
+        return sync(true).then(function () { return j; });
+      });
+    }
     return {
       live: connect,
       refresh: function () { return sync(true); },
@@ -4497,11 +4541,11 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   }
 
   /* ---------- light / dark ----------
-     Follows the device until someone picks a side; the choice is kept on that device (kl-theme). */
+     Dark by default; a saved choice (kl-theme) wins, and the head script applies it before the first paint. */
   function themeNow() {
     var t = document.documentElement.getAttribute('data-theme');
     if (t === 'light' || t === 'dark') return t;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark';   // dark is the default until someone picks light
   }
   function toggleTheme() {
     var next = themeNow() === 'dark' ? 'light' : 'dark';
@@ -4949,33 +4993,35 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   }
 
   // Opens the live data once someone is logged in (nothing is loaded before that).
+  var renderPending = false;
+  function renderSoon() { if (renderPending) return; renderPending = true; Promise.resolve().then(function () { renderPending = false; render(); }); }   // every collection of one refresh arrives together: draw once
   function startData() {
     if (state.db || !state.token) return;
     var db = state.db = makeDb(function () { forceLogout('Your session ended. Please log in again.'); });
-    function onErr(e) { state.phase = 'error'; render(); }
+    function onErr(e) { state.phase = 'error'; renderSoon(); }
     db.collection('sessions').onSnapshot(function (snap) {
       state.sessions = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
-      state.loaded.sessions = true; purgeEnded(); render();
+      state.loaded.sessions = true; purgeEnded(); renderSoon();
     }, onErr);
     db.collection('signups').onSnapshot(function (snap) {
       var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
-      state.players = next; state.loaded.players = true; render();
+      state.players = next; state.loaded.players = true; renderSoon();
     }, onErr);
     db.collection('members').onSnapshot(function (snap) {
       var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
-      state.accounts = next; state.loaded.accounts = true; render();
+      state.accounts = next; state.loaded.accounts = true; renderSoon();
     }, onErr);
     db.collection('roles').onSnapshot(function (snap) {
       var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
-      state.roles = next; state.loaded.roles = true; render();
+      state.roles = next; state.loaded.roles = true; renderSoon();
     }, onErr);
     db.doc('config/roles').onSnapshot(function (snap) {
       state.cfg = snap.exists ? (snap.data() || {}) : {};
-      state.loaded.cfg = true; render();
+      state.loaded.cfg = true; renderSoon();
     }, onErr);
     db.doc('config/booking').onSnapshot(function (snap) {
       state.bookingCfg = snap.exists ? (snap.data() || {}) : {};
-      render();
+      renderSoon();
     }, function () {});
     db.collection('bookings').onSnapshot(function (snap) {
       var map = {}, list = [];
@@ -4984,20 +5030,20 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
         if (x && x.by && x.date && x.court && typeof x.hour === 'number') { var rec = Object.assign({ id: d.id }, x); map[slotKey(x.date, x.venue || '', x.court, x.hour)] = rec; list.push(rec); }
       });
       state.bookingMap = map; state.bookingList = list;
-      purgeEnded(); render();
+      purgeEnded(); renderSoon();
     }, function () {});
     db.doc('config/options').onSnapshot(function (snap) {
       state.options = snap.exists ? (snap.data() || {}) : {};
-      render();
+      renderSoon();
     }, function () {});
     db.doc('config/payment').onSnapshot(function (snap) {
       state.payCfg = snap.exists ? (snap.data() || {}) : {};
-      render();
+      renderSoon();
     }, function () {});
     [['payments', 'payments'], ['refunds', 'refunds'], ['notifications', 'notifs'], ['refundaccts', 'refundaccts'], ['balances', 'balances'], ['ledger', 'ledger'], ['balancelinks', 'balancelinks']].forEach(function (c) {
       db.collection(c[0]).onSnapshot(function (snap) {
         var next = {}; snap.docs.forEach(function (d) { next[d.id] = d.data(); });
-        state[c[1]] = next; render();
+        state[c[1]] = next; renderSoon();
       }, function () {});
     });
     // public settings: the Realtime address and, if the site has Firebase, the phone-push keys (no secrets)
@@ -5005,7 +5051,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       state.fbCfg = c.firebase || null;
       if (c.realtime) db.live(c.realtime);
       refreshPush();
-      render();
+      renderSoon();
     }).catch(function () {});
   }
 
