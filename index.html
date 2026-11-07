@@ -318,7 +318,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .notice-ref strong { font: 800 1.5rem/1.1 var(--mono); letter-spacing: 0.04em; color: var(--accent); overflow-wrap: anywhere; }
 .nf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .nf-head h4 { margin: 0; font: 700 var(--fs-m)/1.2 var(--display); text-transform: uppercase; }
-.nf-list.nf-scroll { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+.nf-list.nf-scroll { max-height: min(460px, 70vh); overflow-y: auto; overscroll-behavior: contain; padding: 2px 6px 4px 2px; scrollbar-width: thin; scrollbar-color: var(--rule) transparent; scroll-padding-block: 8px; }
 .upl { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px dashed var(--rule); border-radius: 10px; background: var(--paper); min-width: 0; }
 .upl-prev { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; display: grid; place-items: center; background: #fff; border: 1px solid var(--rule); }
 .upl-prev img, .upl-img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; max-height: none; margin: 0; border: 0; }
@@ -338,10 +338,25 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .cn-status { font-weight: 600; color: var(--accent); }
 .nf-list.nf-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 .nf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.nf-list li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; }
-.nf-list li.unread { border-color: var(--accent); background: var(--paper); }
-.nf-list span { color: var(--muted); font-size: var(--fs-s); overflow-wrap: anywhere; }
-.nf-list small { color: var(--muted); font: 500 0.72rem/1.2 var(--mono); }
+.nf-list li { display: flex; gap: 12px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 12px; background: var(--card); }
+.nt-card { --tone: var(--accent); position: relative; }
+.nt-card.tone-ok { --tone: var(--ok); } .nt-card.tone-warn { --tone: var(--warn); } .nt-card.tone-danger { --tone: var(--danger); }
+.nt-card.unread { background: var(--paper); border-color: var(--tone); box-shadow: inset 3px 0 0 var(--tone); }
+.nt-icon { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.95rem; color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, transparent); border: 1.5px solid var(--tone); }
+.nt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.nt-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 10px; }
+.nt-type { display: inline-flex; align-items: center; gap: 6px; font: 700 0.68rem/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tone); }
+.nt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); display: inline-block; }
+.nt-time { color: var(--muted); font: 500 0.7rem/1.2 var(--mono); white-space: nowrap; }
+.nt-title { font: 700 var(--fs-m)/1.3 var(--body); overflow-wrap: anywhere; }
+.nt-body { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; overflow-wrap: anywhere; }
+.nt-rows { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: var(--fs-s); }
+.nt-rows dt { color: var(--muted); }
+.nt-rows dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.nt-ref { display: inline-block; padding: 1px 7px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font: 600 0.78rem/1.4 var(--mono); letter-spacing: 0.04em; }
+.nt-more summary { cursor: pointer; color: var(--muted); font-size: 0.74rem; }
+.nt-more p { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
+@media (max-width: 420px) { .nf-list li { padding: 10px 12px; gap: 10px; } .nt-icon { flex-basis: 30px; width: 30px; height: 30px; } .nt-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .nt-rows dd { margin-bottom: 4px; } }
 .req { font-style: normal; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 4px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: var(--fs-s); }
 .kv dt { color: var(--muted); }
@@ -3000,6 +3015,40 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     if (pushSupport() !== 'on') return;
     pushToken().then(function (t) { return payCall({ action: 'push', op: 'register', token: t, ua: navigator.userAgent }); }).catch(function () {});
   }
+  var NT_TYPES = {
+    'payment-approved': { label: 'Payment approved', tone: 'ok', icon: '✓' },
+    'payment-rejected': { label: 'Payment not approved', tone: 'warn', icon: '!' },
+    'payment-submitted': { label: 'New payment', tone: 'info', icon: '₱' },
+    'rescheduled': { label: 'Booking rescheduled', tone: 'info', icon: '⇄' },
+    'reschedule': { label: 'Booking rescheduled', tone: 'info', icon: '⇄' },
+    'booking-cancelled': { label: 'Booking cancelled', tone: 'danger', icon: '✕' },
+    'booking-confirmed': { label: 'Booking confirmed', tone: 'ok', icon: '✓' },
+    'booking': { label: 'Booking', tone: 'info', icon: 'i' }
+  };
+  // the facts a notice carries, as short label / value rows (the long sentence is kept under "Full message")
+  function nfRows(n) {
+    var d = n.data || {}, rows = [];
+    if (d.ref) rows.push(['Reference', h('span', { class: 'nt-ref' }, d.ref)]);
+    var where = d.schedule || (Array.isArray(d.slots) && d.slots.length ? slotRuns(d.slots).join('; ') : '') || [d.venue, d.court].filter(Boolean).join(' · ');
+    if (where) rows.push(['Booking', where]);
+    if (d.amount != null && d.amount !== '') rows.push(['Amount', peso(d.amount)]);
+    if (d.paidWith) rows.push(['Paid with', d.paidWith]);
+    if (d.reason) rows.push(['Reason', d.reason]);
+    return rows;
+  }
+  function nfCard(n) {
+    var ty = NT_TYPES[n.kind] || { label: 'Notification', tone: 'info', icon: 'i' }, rows = nfRows(n);
+    var title = String(n.title || '').replace(/\s*✓\s*$/, '');
+    return h('li', { class: 'nt-card tone-' + ty.tone + (n.read ? '' : ' unread') },
+      h('span', { class: 'nt-icon', 'aria-hidden': 'true' }, ty.icon),
+      h('div', { class: 'nt-main' },
+        h('div', { class: 'nt-top' },
+          h('span', { class: 'nt-type' }, ty.label, n.read ? null : h('i', { class: 'nt-dot', 'aria-label': 'Unread' })),
+          h('time', { class: 'nt-time' }, when(n.at))),
+        title && title.toLowerCase() !== ty.label.toLowerCase() ? h('strong', { class: 'nt-title' }, title) : null,
+        rows.length ? h('dl', { class: 'nt-rows' }, rows.reduce(function (acc, r) { acc.push(h('dt', null, r[0]), h('dd', null, r[1])); return acc; }, [])) : (n.body ? h('p', { class: 'nt-body' }, n.body) : null),
+        rows.length && n.body ? h('details', { class: 'nt-more' }, h('summary', null, 'Full message'), h('p', null, n.body)) : null));
+  }
   var nfSig = '';
   function renderNotify() {
     var box = $('#pf-notify'), sup = pushSupport(), list = notices().slice(0, 50), busy = state.pushBusy;
@@ -3018,7 +3067,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
             .then(function () { state.pushBusy = false; nfSig = ''; renderNotify(); });
         } }, busy ? 'One moment…' : sup === 'on' ? 'Turn off phone notifications' : 'Turn on phone notifications'))) : null,
       list.length ? h('div', { class: 'nf-head' }, h('h4', null, 'Recent Notifications'), list.some(function (n) { return !n.read; }) ? h('button', { class: 'link', type: 'button', onclick: function () { markRead(list.filter(function (n) { return !n.read; }).map(function (n) { return n.id; })); } }, 'Mark all read') : null) : null,
-      list.length ? h('ul', { class: 'nf-list nf-scroll', tabindex: '0', 'aria-label': 'Recent Notifications' }, list.map(function (n) { return h('li', { class: n.read ? '' : 'unread' }, h('strong', null, n.title), h('span', null, n.body), h('small', null, when(n.at))); })) : h('p', { class: 'note' }, 'Nothing yet. Payment and booking updates will show up here.'));
+      list.length ? h('ul', { class: 'nf-list nf-scroll', tabindex: '0', 'aria-label': 'Recent Notifications' }, list.map(nfCard)) : h('p', { class: 'note' }, 'Nothing yet. Payment and booking updates will show up here.'));
     var sc = box.querySelector('.nf-scroll'); if (sc) sc.scrollTop = scrollTop;
   }
 
