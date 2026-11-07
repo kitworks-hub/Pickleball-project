@@ -383,20 +383,23 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .sum-list li { padding-bottom: 6px; }
 .pay-card { padding: 12px; gap: 10px; }
 @media (max-width: 480px) { .dlg-actions { flex-direction: column-reverse; } }
-.bk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: stretch; }
+.bk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
 .bk-card { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 12px; }
 .bk-card.st-hold { border-style: dashed; border-color: var(--warn); }
-.bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+.bk-when { flex: 1 1 140px; min-width: 0; }
 .bk-when strong { display: block; font: 700 1rem/1.25 var(--display); }
 .bk-ref { display: block; margin-top: 2px; font: 500 0.74rem/1.2 var(--mono); color: var(--muted); letter-spacing: 0.04em; }
-.bk-state { display: flex; align-items: center; gap: 10px; }
+.bk-state { display: flex; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px 10px; margin-left: auto; }
 .bk-state strong { font: 800 1.1rem/1 var(--display); }
 .bk-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.bk-runs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 16px; padding: 9px 12px; background: var(--paper); border-radius: 8px; font-size: var(--fs-s); }
+.bk-runs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 2px 16px; padding: 10px 12px; background: var(--paper); border-radius: 8px; font-size: var(--fs-s); }
 .bk-runs li span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .bk-runs li small { color: var(--muted); font-size: 0.72rem; line-height: 1.25; }
 .bk-time { text-align: right; align-items: flex-end; font-weight: 600; }
 .bk-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.78rem; }
+.bk-note { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.4; }
+@media (max-width: 420px) { .bk-card { padding: 12px; gap: 10px; } .bk-runs li { grid-template-columns: minmax(0, 1fr); } .bk-time { text-align: left; align-items: flex-start; } .bk-state { margin-left: 0; justify-content: flex-start; } }
 .bk-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 2px; }
 .bk-actions .btn { flex: 1 1 110px; }
 .btn.danger-outline { background: transparent; border-color: var(--danger); color: var(--danger); }
@@ -2241,9 +2244,9 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var err = cf.error ? h('p', { class: 'form-error', role: 'alert' }, cf.error) : null, o;
     if (cf.step === 'confirm') {
       var nh = cf.runs.reduce(function (n, r) { return n + (r.to - r.from); }, 0);
-      o = { id: 'cx', tone: 'warn', icon: '!', title: nh > 1 ? 'Cancel ' + nh + ' court hours?' : 'Cancel this booking?', lead: 'You are about to cancel the following. The hours are released straight away and this cannot be undone. Cancelled bookings are non-refundable.',
+      o = { id: 'cx', tone: 'warn', icon: '!', title: nh > 1 ? 'Cancel All Bookings' : 'Cancel Booking', lead: (nh > 1 ? 'All of the bookings below will be cancelled' : 'The booking below will be cancelled') + ' and released straight away. This cannot be undone. Cancelled bookings are non-refundable.',
         extra: h('div', null, cancelList(cf.runs), err), note: 'Booking reference: ' + cf.ref,
-        actions: [{ id: 'cx-keep', label: 'Keep booking', onclick: closeCancelFlow }, { id: 'cx-yes', label: cf.busy ? 'Cancelling…' : 'Yes, cancel booking', primary: true, cls: 'danger', disabled: cf.busy, onclick: confirmCancel }] };
+        actions: [{ id: 'cx-keep', label: 'Keep booking', onclick: closeCancelFlow }, { id: 'cx-yes', label: cf.busy ? 'Cancelling…' : nh > 1 ? 'Yes, cancel all' : 'Yes, cancel', primary: true, cls: 'danger', disabled: cf.busy, onclick: confirmCancel }] };
     } else {
       o = { id: 'cx', tone: 'ok', icon: '✓', title: 'Booking Cancelled Successfully', lead: 'Your booking has been cancelled and the court hours are available again. Cancelled bookings are non-refundable.',
         extra: cancelList(cf.runs), note: 'Booking reference: ' + cf.ref, actions: [{ id: 'cx-ok', label: 'Done', primary: true, onclick: closeCancelFlow }] };
@@ -2276,6 +2279,10 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       h('button', { class: 'btn small danger-outline', type: 'button', onclick: function () { payCall({ action: 'release', ref: ref }).then(function () { flash('Those hours were released.', 'ok'); }).catch(fail('Could not release them.')); } }, 'Cancel'));
     else if (st === 'confirmed' && cancelIds.length) acts.push(upcomingIds.length ? h('button', { id: 'mine-' + ref, class: 'btn small', type: 'button', onclick: function () { openManage(ref, 'mine-' + ref); } }, 'Reschedule') : null,
       h('button', { id: 'mine-cx-' + ref, class: 'btn small danger-outline', type: 'button', onclick: function () { startCancelFlow(ref); } }, 'Cancel Booking'));
+    else if (st === 'pending') acts.push(
+      h('button', { class: 'btn small', type: 'button', disabled: true, title: 'Available once staff verify the payment' }, 'Reschedule'),
+      h('button', { class: 'btn small danger-outline', type: 'button', disabled: true, title: 'Available once staff verify the payment' }, 'Cancel Booking'),
+      h('button', { id: 'mine-' + ref, class: 'btn small', type: 'button', onclick: function () { openManage(ref, 'mine-' + ref); } }, 'Details'));
     else acts.push(h('button', { id: 'mine-' + ref, class: 'btn small', type: 'button', onclick: function () { openManage(ref, 'mine-' + ref); } }, 'Details'));
     return h('article', { class: 'bk-card st-' + st },
       h('div', { class: 'bk-top' },
@@ -2283,6 +2290,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
         h('div', { class: 'bk-state' }, h('span', { class: 'chip st-' + st }, statusWords(st)), h('strong', null, peso(total)))),
       h('ul', { class: 'bk-runs' }, runs.map(function (r) { return h('li', null, h('span', null, h('strong', null, r.court), r.venue ? h('small', null, r.venue) : null), h('span', { class: 'bk-time' }, (runs.some(function (q) { return q.date !== runs[0].date; }) ? dateLabel(r.date) + ' · ' : '') + hourText(r.from) + ' – ' + hourText(r.to), h('small', null, plural(r.to - r.from, 'hour')))); })),
       bookingPayNote(ref) || rej ? h('div', { class: 'bk-meta' }, bookingPayNote(ref), rej ? h('span', { class: 'pay-reason' }, 'Payment not approved' + (rej.reason ? ': ' + rej.reason : '') + '.') : null) : null,
+      st === 'pending' ? h('p', { class: 'bk-note' }, 'Reschedule and Cancel Booking unlock once staff verify your payment.') : null,
       h('div', { class: 'bk-actions' }, acts));
   }
 
