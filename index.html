@@ -361,8 +361,6 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .nt-rows dt { color: var(--muted); }
 .nt-rows dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .nt-ref { display: inline-block; padding: 1px 7px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font: 600 0.78rem/1.4 var(--mono); letter-spacing: 0.04em; }
-.nt-more summary { cursor: pointer; color: var(--muted); font-size: 0.74rem; }
-.nt-more p { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
 @media (max-width: 420px) { .nf-list .nt-bk { grid-template-columns: minmax(0, 1fr); } .nt-bk-when { text-align: left; } .nf-list li { padding: 10px 12px; gap: 10px; } .nt-icon { flex-basis: 30px; width: 30px; height: 30px; } .nt-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .nt-rows dd { margin-bottom: 4px; } }
 .req { font-style: normal; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); margin-left: 4px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: var(--fs-s); }
@@ -3032,7 +3030,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     'booking-confirmed': { label: 'Booking confirmed', tone: 'ok', icon: '✓' },
     'booking': { label: 'Booking', tone: 'info', icon: 'i' }
   };
-  // the facts a notice carries, as short label / value rows (the long sentence is kept under "Full message")
+  // the facts a notice carries, as short label / value rows
   // the booked court hours of a notice, one entry per court run: { court, venue, date, time }
   function nfBookings(n) {
     var d = n.data || {}, out = [];
@@ -3081,8 +3079,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
         title && title.toLowerCase() !== ty.label.toLowerCase() ? h('strong', { class: 'nt-title' }, title) : null,
         d.ref ? h('div', { class: 'nt-refline' }, h('span', null, 'Reference'), h('span', { class: 'nt-ref' }, d.ref)) : null,
         bks.length ? nfBookingCard(bks) : null,
-        rows.length ? h('dl', { class: 'nt-rows' }, rows.reduce(function (acc, r) { acc.push(h('dt', null, r[0]), h('dd', null, r[1])); return acc; }, [])) : (!hasFacts && n.body ? h('p', { class: 'nt-body' }, n.body) : null),
-        hasFacts && n.body ? h('details', { class: 'nt-more' }, h('summary', null, 'Full message'), h('p', null, n.body)) : null));
+        rows.length ? h('dl', { class: 'nt-rows' }, rows.reduce(function (acc, r) { acc.push(h('dt', null, r[0]), h('dd', null, r[1])); return acc; }, [])) : (!hasFacts && n.body ? h('p', { class: 'nt-body' }, n.body) : null)));
   }
   var nfSig = '';
   function renderNotify() {
