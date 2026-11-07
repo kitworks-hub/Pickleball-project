@@ -193,3 +193,8 @@ Eight sample sessions (ids `seed01` to `seed08`) were added with placeholder ven
 - **Notification pop-ups while impersonating:** `renderNotice` never opens a pop-up when `state.imp` is set, and `markRead` does nothing then (the server also ignores `markread` for impersonation tokens), so a Super Admin looking around as someone neither sees nor answers that person's pop-ups. The person sees each notice once; pressing OK saves `read: true` on the server (retried once if the request fails), so it does not return after a refresh, navigation or later impersonation.
 - **Footer:** `body` is a flex column with `min-height: calc(100dvh - 16px)` (the 16px is the default body margin), `main.wrap` grows to fill it and the footer has `margin-top: auto` plus 28px of padding above, so it sits at the bottom of every page, short or long, without fixed positioning.
 - **Users page:** each row's description is only the role (Super admin, Admin, Staff, Player or a custom role's name).
+
+## Booking UI polish
+
+- The GCash QR in the booking checkout is a button (`proof-btn`) that opens the same enlarged preview as a payment proof (`openImg`).
+- The player's cancel dialog (`startCancelFlow`, `renderCancelFlow`) lists exactly what is cancelled, one card per court run (`cancelRuns`, `cancelList`: court, hours, venue, date and time), with the booking reference as a small note; the success pop-up is "Booking Cancelled Successfully" with the same list, a short non-refundable message and the reference as secondary text. Upcoming Bookings cards in one row share a height and keep their buttons at the bottom (`.bk-list`, `.bk-actions`).

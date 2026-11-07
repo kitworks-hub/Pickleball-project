@@ -331,6 +331,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .cn-list li { padding: 8px 10px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; font-size: var(--fs-s); display: grid; gap: 2px; }
 .cn-top { display: flex; justify-content: space-between; gap: 8px; }
 .cn-line { color: var(--muted); overflow-wrap: anywhere; }
+.cn-hrs { color: var(--muted); font-size: 0.74rem; white-space: nowrap; }
+.cn-when { font-weight: 600; }
+.dlg .cn-list { max-height: 240px; margin: 0; padding: 0 4px 0 0; }
+.dlg .cn-list li { text-align: left; }
 .cn-status { font-weight: 600; color: var(--accent); }
 .nf-list.nf-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 .nf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -379,7 +383,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .sum-list li { padding-bottom: 6px; }
 .pay-card { padding: 12px; gap: 10px; }
 @media (max-width: 480px) { .dlg-actions { flex-direction: column-reverse; } }
-.bk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: start; }
+.bk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; align-items: stretch; }
 .bk-card { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 12px; }
 .bk-card.st-hold { border-style: dashed; border-color: var(--warn); }
 .bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
@@ -393,8 +397,8 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .bk-runs li small { color: var(--muted); font-size: 0.72rem; line-height: 1.25; }
 .bk-time { text-align: right; align-items: flex-end; font-weight: 600; }
 .bk-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.78rem; }
-.bk-actions { display: flex; gap: 8px; margin-top: 2px; }
-.bk-actions .btn { flex: 1 1 0; }
+.bk-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 2px; }
+.bk-actions .btn { flex: 1 1 110px; }
 .btn.danger-outline { background: transparent; border-color: var(--danger); color: var(--danger); }
 .btn.danger-outline:hover:not(:disabled) { background: var(--danger); color: var(--on-danger); }
 .mb-panel { gap: 10px; }
@@ -2021,7 +2025,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
                 h('p', { class: 'note' }, 'Send it by GCash to:'),
                 h('div', { class: 'co-line' }, h('span', null, 'GCash number'), h('strong', null, pc.gcashNumber), h('button', { class: 'btn small', type: 'button', onclick: function () { copyText(pc.gcashNumber, 'GCash number'); } }, 'Copy')),
                 h('div', { class: 'co-line' }, h('span', null, 'Account name'), h('strong', null, pc.accountName || '-'))),
-              pc.qrPath ? h('div', { class: 'co-qrbox' }, fileImg(pc.qrPath, 'GCash QR code', 'co-qr'), h('small', null, 'or scan this QR')) : null)
+              pc.qrPath ? h('div', { class: 'co-qrbox' }, h('button', { class: 'proof-btn', type: 'button', 'aria-label': 'Open the GCash QR code full size', onclick: function () { openImg(pc.qrPath); } }, fileImg(pc.qrPath, 'GCash QR code', 'co-qr')), h('small', null, 'or scan this QR · tap to enlarge')) : null)
           : h('p', { class: 'form-error', role: 'alert' }, 'Payments are not set up yet. Please ask an admin to add the GCash details, then try again.')),
         h('div', { class: 'co-fields' },
           h('label', { class: 'field', for: 'co-ref' }, h('span', null, 'GCash reference number ', h('em', { class: 'req' }, 'required')),
@@ -2184,12 +2188,31 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
 
   /* ---------- cancelling your own booking: a confirmation, then a plain "cancelled" message. Cancelled bookings are non-refundable. ---------- */
   var cfSig = '';
+  // consecutive hours on one court and day become one line: court, venue, date and time
+  function cancelRuns(list) {
+    var s = list.slice().sort(function (a, b) { return a.date.localeCompare(b.date) || (a.venue || '').localeCompare(b.venue || '') || a.court.localeCompare(b.court) || a.hour - b.hour; }), runs = [];
+    s.forEach(function (p) {
+      var l = runs[runs.length - 1], v = p.venue || '';
+      if (l && l.date === p.date && l.court === p.court && l.venue === v && l.to === p.hour) l.to = p.hour + 1;
+      else runs.push({ date: p.date, court: p.court, venue: v, from: p.hour, to: p.hour + 1 });
+    });
+    return runs;
+  }
+  function cancelList(runs) {
+    return h('ul', { class: 'cn-list', 'aria-label': 'Court hours' }, runs.map(function (r) {
+      var n = r.to - r.from;
+      return h('li', null,
+        h('div', { class: 'cn-top' }, h('strong', null, r.court), h('span', { class: 'cn-hrs' }, plural(n, 'hour'))),
+        r.venue ? h('div', { class: 'cn-line' }, r.venue) : null,
+        h('div', { class: 'cn-when' }, dateLabel(r.date) + ' · ' + hourText(r.from) + ' – ' + hourText(r.to)));
+    }));
+  }
   function startCancelFlow(ref, ids) {
     var now = Date.now(), mine = state.bookingList.filter(function (x) {
       return (x.ref || x.id) === ref && x.by === state.me && (!x.status || x.status === 'confirmed') && !hourEndedAt(x, now) && (!ids || ids.indexOf(x.id) >= 0);
     });
     if (!mine.length) { flash('Nothing here can be cancelled any more.', 'err'); return; }
-    state.cancelFlow = { step: 'confirm', ref: ref, ids: mine.map(function (x) { return x.id; }), schedule: slotRuns(mine).join('; '), busy: false, error: '' };
+    state.cancelFlow = { step: 'confirm', ref: ref, ids: mine.map(function (x) { return x.id; }), runs: cancelRuns(mine), busy: false, error: '' };
     cfSig = '';
     renderCancelFlow();
     var b = $('#cx-keep'); if (b) b.focus();
@@ -2217,11 +2240,13 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     cfSig = sig;
     var err = cf.error ? h('p', { class: 'form-error', role: 'alert' }, cf.error) : null, o;
     if (cf.step === 'confirm') {
-      o = { id: 'cx', tone: 'warn', icon: '!', title: 'Cancel this booking?', lead: 'The hours are released straight away and this cannot be undone. Cancelled bookings are non-refundable.',
-        rows: [['Booking', h('span', { class: 'dlg-ref' }, cf.ref)], ['When', cf.schedule]], extra: err,
+      var nh = cf.runs.reduce(function (n, r) { return n + (r.to - r.from); }, 0);
+      o = { id: 'cx', tone: 'warn', icon: '!', title: nh > 1 ? 'Cancel ' + nh + ' court hours?' : 'Cancel this booking?', lead: 'You are about to cancel the following. The hours are released straight away and this cannot be undone. Cancelled bookings are non-refundable.',
+        extra: h('div', null, cancelList(cf.runs), err), note: 'Booking reference: ' + cf.ref,
         actions: [{ id: 'cx-keep', label: 'Keep booking', onclick: closeCancelFlow }, { id: 'cx-yes', label: cf.busy ? 'Cancelling…' : 'Yes, cancel booking', primary: true, cls: 'danger', disabled: cf.busy, onclick: confirmCancel }] };
     } else {
-      o = { id: 'cx', tone: 'ok', icon: '✓', title: 'Booking cancelled', lead: 'The hours were released. Cancelled bookings are non-refundable.', rows: [['Booking', cf.ref]], actions: [{ id: 'cx-ok', label: 'OK', primary: true, onclick: closeCancelFlow }] };
+      o = { id: 'cx', tone: 'ok', icon: '✓', title: 'Booking Cancelled Successfully', lead: 'Your booking has been cancelled and the court hours are available again. Cancelled bookings are non-refundable.',
+        extra: cancelList(cf.runs), note: 'Booking reference: ' + cf.ref, actions: [{ id: 'cx-ok', label: 'Done', primary: true, onclick: closeCancelFlow }] };
     }
     box.replaceChildren(h('div', { class: 'modal-backdrop', onclick: cf.step === 'confirm' || cf.step === 'done' ? closeCancelFlow : null }), dlgStatus(o));
     box.hidden = false;
