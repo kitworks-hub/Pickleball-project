@@ -58,7 +58,8 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--paper); color: var(--ink); font: 400 var(--fs-m)/1.5 var(--body); }
+body { background: var(--paper); color: var(--ink); font: 400 var(--fs-m)/1.5 var(--body); min-height: calc(100vh - 16px); min-height: calc(100dvh - 16px); display: flex; flex-direction: column; }
+main.wrap { flex: 1 0 auto; width: 100%; display: flex; flex-direction: column; }
 h1, h2, h3, p { margin: 0; }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -550,7 +551,7 @@ table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; }
 .tile span { font-size: var(--fs-s); color: var(--muted); }
 .dash-search { max-width: 360px; }
 .row .meta .email { color: var(--ink); overflow-wrap: anywhere; }
-footer { padding-block: 0 40px; font-size: var(--fs-s); color: var(--muted); text-align: center; }
+footer { margin-top: auto; padding-block: 28px 40px; font-size: var(--fs-s); color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: no-preference) { .btn, .cal-day { transition: background-color 0.15s, border-color 0.15s; } }
 /* shared by the Create user and Edit user pop-ups */
 .re-panel { gap: 12px; align-items: stretch; text-align: left; width: min(420px, 100%); position: relative; }
@@ -1653,12 +1654,6 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     var order = roleOrder(defs);
     var uids = Object.keys(state.accounts);
     var all = upcoming();
-    var upIds = {};
-    all.forEach(function (s) { upIds[s.id] = 1; });
-    function upcomingFor(u) {
-      var j = (state.players[u] && state.players[u].joined) || {};
-      return Object.keys(j).filter(function (sid) { return upIds[sid]; }).length;
-    }
 
     // Overview
     var weekAgo = Date.now() - 7 * 86400000;
@@ -1696,7 +1691,6 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     });
     if (!shown.length) { box.append(h('p', { class: 'note' }, q ? 'No members match “' + dashQuery.trim() + '”.' : 'No members yet.')); return; }
     var rows = shown.map(function (u) {
-      var r = state.roles[u] || {};
       var opts = assignable(u);
       var cur = roleOf(u);
       var ctl = [];
@@ -1706,15 +1700,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
       } else {
         ctl.push(h('span', { class: 'chip role' }, roleLabel(cur)));
       }
-      var created = Number(state.accounts[u].createdAt);
-      var n = upcomingFor(u);
-      var facts = [(isOwnerAccount(u) ? 'Owner · ' : '') + roleLabel(cur)];
-      if (created) facts.push('joined ' + mfmt.format(new Date(created)));
-      if (state.accounts[u].level) facts.push('level ' + state.accounts[u].level);
-      facts.push(n + (n === 1 ? ' upcoming session' : ' upcoming sessions'));
-      var acct = state.accounts[u];
-      if (Number(r.pwReset) > Number(acct.pwSetAt || 0)) facts.push('password reset pending');
-      if (r.suspended) facts.push('access paused');
+      var facts = [roleLabel(cur)];
       return h('div', { class: 'row' },
         h('div', { class: 'meta' },
           h('strong', { class: 'with-av' }, avatarEl(u, personName(u), 'xs'), personName(u) + (u === state.me ? ' (you)' : '')),
@@ -2857,7 +2843,11 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
     ids.forEach(function (id) { staleSent[id] = 1; });
     markRead(ids);
   }
-  function markRead(ids) { if (ids.length) payCall({ action: 'markread', ids: ids }).catch(function () {}); }
+  // Acknowledging is saved on the server (notifications/{id}.read), so it survives refresh, navigation and a new login. While impersonating, the person's notices are left alone.
+  function markRead(ids) {
+    if (!ids.length || state.imp) return;
+    payCall({ action: 'markread', ids: ids }).catch(function () { setTimeout(function () { if (!state.imp) payCall({ action: 'markread', ids: ids }).catch(function () {}); }, 2500); });
+  }
   // Cancellations made in one request share data.batch: they open ONE pop-up listing every booking, not one pop-up each.
   function sameBatch(n) {
     var b = n.data && n.data.batch;
@@ -2877,7 +2867,7 @@ try {   // a Super Admin impersonating someone keeps their own login in kl-imp; 
   }
   function renderNotice() {
     var box = $('#notice');
-    if (gateState() !== 'ok') { state.notice = null; box.hidden = true; box.replaceChildren(); lockScroll(); return; }
+    if (gateState() !== 'ok' || state.imp) { state.notice = null; box.hidden = true; box.replaceChildren(); box.removeAttribute('data-nid'); lockScroll(); return; }   // a Super Admin looking around as someone else never sees (or answers) that person's pop-ups
     clearObsoleteNotices();
     if (!state.notice && !state.checkout && !state.thanks) {
       var unread = notices().filter(function (n) { return !n.read && !seenNotice[n.id]; }).reverse();
