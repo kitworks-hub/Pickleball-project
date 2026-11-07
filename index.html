@@ -387,10 +387,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .bk-card { display: flex; flex-direction: column; gap: 18px; padding: 18px 18px; background: var(--card); border: 1.5px solid var(--rule); border-radius: 12px; }
 .bk-card.st-hold { border-style: dashed; border-color: var(--warn); }
 .bk-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 12px; padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
-.bk-when { flex: 1 1 140px; min-width: 0; }
+.bk-when { flex: 1 1 0; min-width: 96px; }
 .bk-when strong { display: block; font: 700 1rem/1.25 var(--display); }
 .bk-ref { display: block; margin-top: 2px; font: 500 0.74rem/1.2 var(--mono); color: var(--muted); letter-spacing: 0.04em; }
-.bk-state { display: flex; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px 10px; margin-left: auto; }
+.bk-state { display: flex; flex: 0 0 auto; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px 10px; margin-left: auto; }
 .bk-state strong { font: 800 1.1rem/1 var(--display); }
 .bk-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .bk-runs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px 16px; padding: 14px 16px; background: var(--paper); border-radius: 8px; font-size: var(--fs-s); }
@@ -399,7 +399,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .bk-time { text-align: right; align-items: flex-end; font-weight: 600; }
 .bk-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.78rem; }
 .bk-note { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.4; }
-@media (max-width: 420px) { .bk-runs li { grid-template-columns: minmax(0, 1fr); } .bk-time { text-align: left; align-items: flex-start; } .bk-state { margin-left: 0; justify-content: flex-start; } }
+@media (max-width: 420px) { .bk-runs li { grid-template-columns: minmax(0, 1fr); } .bk-time { text-align: left; align-items: flex-start; } .bk-state { margin-left: 0; } }
 .bk-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 2px; }
 .bk-actions .btn { flex: 1 1 110px; }
 .btn.danger-outline { background: transparent; border-color: var(--danger); color: var(--danger); }
